@@ -1393,7 +1393,7 @@ body.compact .reasoning-content { max-height: 250px; }
     flex-wrap: nowrap;
   }
   .input-wrapper textarea {
-    font-size: 16px;         /* ← empêche le zoom auto iOS */
+    font-size: 16px; 
     min-width: 0;
     padding: 4px 0;
     max-height: 120px;
@@ -1401,7 +1401,10 @@ body.compact .reasoning-content { max-height: 250px; }
     line-height: 1.4;
   }
   .send-btn,
-  .upload-btn { width: 34px; height: 34px; }
+  .upload-btn { 
+    width: 34px; 
+    height: 34px; 
+  }
   .upload-btn svg { width: 18px; height: 18px; }
 
   /* Aperçus fichiers */
@@ -1682,7 +1685,6 @@ body.compact .reasoning-content { max-height: 250px; }
       <button id="cancelImageModeBtn">Annuler</button>
     </div>
 
-    <!-- NOUVEAU : Les aperçus de fichiers sont maintenant au-dessus -->
     <div id="filePreviews"></div>
 
     <div class="input-wrapper" id="inputWrapperEl">
