@@ -2,7 +2,7 @@
 <html lang="fr" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>DeepChat · Multi-Provider AI</title>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
@@ -54,7 +54,11 @@
   --code-bg: #f6f8fa;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
+html, body { height: 100%; height: 100dvh; }
+button, a, .conv-item, .welcome-card, .file-chip, .theme-option,
+.image-mode-banner, .msg-toggle-btn {
+  -webkit-tap-highlight-color: transparent;
+}
 body {
   font-family: var(--font);
   background: var(--bg-app);
@@ -316,9 +320,9 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   border-bottom-right-radius: 4px; 
   white-space: pre-wrap;
   display: flex;
-  flex-direction: column; /* Empile les éléments : d'abord l'image, puis le texte */
-  align-items: flex-end; /* Aligne tout à droite */
-  gap: 8px; /* Espace entre l'image et le texte */
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 .message.assistant .bubble { background: var(--bg-msg-ai); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
 .bubble p { margin: 6px 0; }
@@ -832,7 +836,7 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
 .file-chip.image-chip .file-chip-thumbnail {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Remplit le carré proprement sans écraser */
+  object-fit: cover;
   display: block;
 }
 .file-chip.image-chip .file-chip-remove {
@@ -849,9 +853,6 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   align-items: center;
   justify-content: center;
   z-index: 10;
-}
-.file-chip.image-chip .file-chip-remove:hover {
-  background: var(--danger);
 }
 .file-chip.image-chip .file-chip-remove:hover {
   background: var(--danger);
@@ -886,7 +887,7 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   height: auto;
   display: inline-block;
   border-radius: 12px;
-  object-fit: cover; 
+  object-fit: cover;
   border: 1px solid var(--border);
   cursor: zoom-in;
   transition: opacity 0.15s, transform 0.15s;
@@ -1243,39 +1244,306 @@ body.compact .welcome { padding: 20px 10px; min-height: 40vh; }
 body.compact .avatar { width: 26px; height: 26px; font-size: 11px; }
 body.compact .reasoning-content { max-height: 250px; }
 
+/* ============================================================
+   RESPONSIVE MOBILE
+   ============================================================ */
 @media (max-width: 768px) {
+
+  /* ---------- SIDEBAR ---------- */
   .sidebar {
-    position: fixed; left: 0; top: 0; bottom: 0;
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: min(290px, 85vw) !important;
     transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 50;
     box-shadow: var(--shadow);
-    width: 270px !important;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
   body.sidebar-mobile-open .sidebar { transform: translateX(0); }
   body.sidebar-mobile-open .backdrop { display: block; }
-  body.sidebar-collapsed .sidebar { width: 270px !important; }
+
+  /* Force le contenu plein même si "collapsed" a été mis sur desktop */
   body.sidebar-collapsed .brand-text,
   body.sidebar-collapsed .new-chat-btn span,
   body.sidebar-collapsed .search-box,
   body.sidebar-collapsed .conversation-list,
   body.sidebar-collapsed .footer-btn span { display: block; }
-  body.sidebar-collapsed .new-chat-btn { width: auto; height: auto; padding: 10px 14px; margin: 0 16px 12px; border-radius: var(--radius-sm); }
-  body.sidebar-collapsed .brand-text { display: block; }
+  body.sidebar-collapsed .new-chat-btn {
+    width: auto; height: auto;
+    padding: 10px 14px;
+    margin: 0 16px 12px;
+    border-radius: var(--radius-sm);
+  }
   body.sidebar-collapsed .sidebar-header { flex-direction: row; padding: 16px; }
   body.sidebar-collapsed .sidebar-footer { align-items: stretch; padding: 8px; }
-  body.sidebar-collapsed .footer-btn { width: 100%; height: auto; padding: 9px 10px; justify-content: flex-start; }
-  .topbar { padding-left: 60px; flex-wrap: wrap; }
-  .topbar-group input { width: 140px; }
-  .chat-messages { padding: 16px; }
-  .input-area { padding: 8px 12px 16px; }
-  .bubble { font-size: calc(var(--base-font-size) * 1.0); }
+  body.sidebar-collapsed .footer-btn {
+    width: 100%; height: auto;
+    padding: 9px 10px;
+    justify-content: flex-start;
+  }
+
+  /* Boutons renommer/supprimer toujours visibles (pas de hover sur tactile) */
+  .conv-item-edit,
+  .conv-item-delete { display: flex; opacity: 0.6; }
+
+  /* Bouton d'ouverture du menu : plus gros pour le tactile */
+  #openSidebarBtn {
+    width: 40px;
+    height: 40px;
+    top: 10px;
+    left: 10px;
+  }
+  #openSidebarBtn svg { width: 22px; height: 22px; }
+
+  /* ---------- TOPBAR ---------- */
+  .topbar {
+    padding: 8px 10px 8px 56px;
+    min-height: 52px;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+  .topbar-group {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    gap: 0;
+  }
+  .topbar-group select {
+    max-width: none;
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: 13px;
+    text-overflow: ellipsis;
+  }
+  .topbar-group input {
+    width: 100%;
+    min-width: 0;
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+  .topbar-divider { margin: 0; opacity: 0.5; }
+  .topbar-right { flex-shrink: 0; gap: 2px; }
+  .topbar-right .icon-btn { width: 38px; height: 38px; }
+
+  /* ---------- CHAT ---------- */
+  .chat-messages {
+    padding: 12px 12px 8px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .messages-inner { gap: 14px; }
+  .message { gap: 8px; }
+  .avatar { width: 28px; height: 28px; font-size: 12px; }
+  .message-body { max-width: calc(100% - 40px); }
+  .bubble {
+    padding: 10px 12px;
+    font-size: 15px;
+    max-width: 100%;
+  }
+  .bubble pre {
+    font-size: 12px;
+    padding: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Actions toujours visibles au toucher (pas de hover) */
+  .message-actions { opacity: 1; }
+  .action-btn { padding: 6px 10px; font-size: 11.5px; }
+  .code-actions { opacity: 1; }
+  .img-actions { opacity: 1; }
+
+  /* Images : jamais plus larges que l'écran */
+  .user-image-preview img { max-width: 70vw; max-height: 220px; }
+  .generated-image-container { max-width: 100%; }
+
+  /* Reasoning */
+  .reasoning-content { font-size: 13px; max-height: 240px; }
+  .reasoning-header { padding: 8px 10px; }
+
+  /* ---------- WELCOME ---------- */
+  .welcome {
+    padding: 20px 12px;
+    min-height: 50vh;
+    min-height: 50dvh;
+    gap: 12px;
+  }
+  .welcome-icon {
+    width: 52px; height: 52px;
+    font-size: 22px; border-radius: 12px;
+  }
+  .welcome h1 { font-size: 20px; }
+  .welcome p { font-size: 13px; }
+  .welcome-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .welcome-card { padding: 12px; font-size: 12.5px; }
+
+  /* ---------- INPUT AREA ---------- */
+  .input-area {
+    padding: 8px 10px calc(10px + env(safe-area-inset-bottom));
+  }
+  .input-wrapper {
+    padding: 6px 6px 6px 8px;
+    border-radius: 14px;
+    gap: 2px;
+    flex-wrap: nowrap;
+  }
+  .input-wrapper textarea {
+    font-size: 16px;         /* ← empêche le zoom auto iOS */
+    min-width: 0;
+    padding: 8px 4px;
+    max-height: 140px;
+    margin-left: 0;
+  }
+  .send-btn,
+  .upload-btn { width: 38px; height: 38px; }
+  .upload-btn svg { width: 20px; height: 20px; }
+
+  /* Aperçus fichiers */
+  #filePreviews { padding: 0 4px; gap: 6px; margin-bottom: 6px; }
+  .file-chip.image-chip { width: 50px; height: 50px; }
+  .file-chip { max-width: 100px; }
+  .file-chip-remove {
+    width: 18px; height: 18px;
+    font-size: 13px;
+  }
+
+  /* Compteur de tokens plus discret */
+  .token-counter { font-size: 10px; padding: 0 4px; }
+  .context-bar-wrap { max-width: 100px; }
+
+  /* Bannière mode image : passe en colonne */
+  .image-mode-banner {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .image-mode-options { gap: 8px; }
+  .image-mode-options select { font-size: 14px; padding: 4px 8px; }
+
+  /* Bannière édition */
+  .edit-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 12.5px;
+  }
+
+  /* Bouton scroll-bottom plus gros */
+  .scroll-bottom-btn {
+    width: 42px; height: 42px;
+    bottom: 16px; right: 16px;
+  }
+
+  /* ---------- MODALES PLEIN ÉCRAN ---------- */
+  .modal-overlay { padding: 0; align-items: stretch; }
+  .modal {
+    max-width: 100%;
+    max-height: 100dvh;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+  }
+  .modal-header {
+    padding: 12px 16px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+  }
+  .modal-header h2 { font-size: 16px; }
+  .modal-body {
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-tabs { padding: 8px 12px 0; gap: 2px; }
+  .tab-btn { padding: 8px 10px; font-size: 12.5px; }
+
+  /* Inputs : 16px pour éviter le zoom iOS */
+  .form-input,
+  .form-textarea,
+  .provider-key-row input,
+  .provider-key-row input[type="password"] { font-size: 16px; }
+
+  /* Formulaire : les inputs wrap proprement */
+  .form-row { flex-wrap: wrap; }
+  .form-row input { min-width: 0; }
+  .test-btn { min-width: 70px; }
+  .provider-name { flex-wrap: wrap; row-gap: 4px; }
+
+  /* Galerie */
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+  .gallery-item .g-actions { opacity: 1; }
+
+  /* Thème */
+  .theme-options { gap: 6px; }
+  .theme-option { padding: 12px 8px; font-size: 12px; }
+  .theme-option-icon { width: 32px; height: 32px; font-size: 15px; }
+
+  /* Toasts pleine largeur */
+  .toast-container {
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    transform: none;
+    align-items: stretch;
+  }
+  .toast { max-width: 100%; font-size: 13px; text-align: center; }
+
+  #customProviderForm { padding: 12px; }
+  .danger-zone { padding: 12px; }
+
+  /* Ajustements mode compact */
+  body.compact .chat-messages { padding: 10px 10px 6px; }
+  body.compact .input-area { padding: 6px 10px calc(8px + env(safe-area-inset-bottom)); }
 }
+
+/* ---------- TRÈS PETITS ÉCRANS ---------- */
 @media (max-width: 480px) {
-  .topbar-group select { max-width: 130px; font-size: 12px; }
-  .topbar-group input { width: 130px; font-size: 12px; }
-  .welcome-grid { grid-template-columns: 1fr; }
+  .topbar { padding-left: 52px; gap: 6px; }
+  .topbar-group select { padding: 6px 4px; font-size: 12.5px; }
+  .topbar-divider { display: none; }
+  .topbar-right { gap: 0; }
+  .topbar-right .icon-btn { width: 36px; height: 36px; }
+
+  .bubble { font-size: 14.5px; }
+  .avatar { width: 26px; height: 26px; font-size: 11px; }
+  .message-body { max-width: calc(100% - 36px); }
+
+  .welcome h1 { font-size: 18px; }
+  .welcome-card { padding: 10px; }
+
+  .tab-btn { padding: 6px 8px; font-size: 11.5px; }
+  .form-label { font-size: 12px; }
+  .modal-header h2 { font-size: 15px; }
+
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .image-mode-options select { font-size: 13px; }
   .image-mode-options { gap: 6px; }
+}
+
+/* ---------- TÉLÉPHONES EN PAYSAGE ---------- */
+@media (orientation: landscape) and (max-height: 500px) {
+  .chat-messages { padding: 8px 12px; }
+  .welcome {
+    min-height: 0;
+    padding: 12px;
+    gap: 8px;
+  }
+  .welcome-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .welcome-card { padding: 8px 10px; }
+  .input-wrapper textarea { max-height: 80px; }
+  .modal { height: 100dvh; }
 }
 </style>
 </head>
@@ -1975,7 +2243,6 @@ function showNotification(title, body) {
 // ==== TOKEN COUNTER ====
 function estimateTokens(text) {
   if (!text) return 0;
-  // Approximation : ~3.5 chars/token pour le français
   return Math.ceil(text.length / 3.5);
 }
 function getContextLimit() {
@@ -2133,7 +2400,6 @@ async function regenerateImageFromMsg(msgIndex) {
     return;
   }
 
-  // Supprime l'image et tout ce qui suit
   conv.messages = conv.messages.slice(0, msgIndex);
   conv.upd = Date.now();
   saveConversations();
@@ -2221,7 +2487,6 @@ function updateImageModeUI() {
         inputWrapperEl.classList.remove('image-mode');
         messageInput.placeholder = 'Écrivez votre message… (ex: \'Dessine-moi un chat\' ou \'/image un chat astronaute\')';
     }
-    // Sync selects
     const rs = $('imageRatioSelect');
     const ss = $('imageSizeSelect');
     if (rs) rs.value = imageRatio;
@@ -2247,7 +2512,6 @@ cancelImageModeBtn.addEventListener('click', () => {
     updateImageModeUI();
 });
 
-// Selects ratio/taille
 document.addEventListener('change', (e) => {
     if (e.target && e.target.id === 'imageRatioSelect') {
         imageRatio = e.target.value;
@@ -2258,7 +2522,6 @@ document.addEventListener('change', (e) => {
     }
 });
 
-// Lightbox
 imageLightbox.addEventListener('click', (e) => {
     if (e.target === imageLightbox || e.target === lightboxImg) {
         imageLightbox.classList.remove('active');
@@ -2668,7 +2931,6 @@ async function deleteConversation(id) {
   if (!conversations[id]) return;
   if (!confirm('Supprimer cette conversation ?')) return;
 
-  // 1. Supprimer les blobs IndexedDB associés
   const conv = conversations[id];
   const toDelete = [];
   conv.messages.forEach(m => {
@@ -2677,7 +2939,6 @@ async function deleteConversation(id) {
   });
   for (const key of toDelete) await idbDeleteImage(key);
 
-  // 2. Retirer la conversation
   delete conversations[id];
   delete drafts[id];
   try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch(e) {}
@@ -2693,14 +2954,11 @@ async function deleteConversation(id) {
 }
 let saveQueue = Promise.resolve();
 
-// Transforme une copie des conversations en version "sparse" (sans dataUrl)
-// et pousse les blobs dans IndexedDB. N'altère PAS l'objet en mémoire.
 async function serializeConversationsForStorage() {
   const clone = JSON.parse(JSON.stringify(conversations));
   for (const convId of Object.keys(clone)) {
     const conv = clone[convId];
     for (const msg of conv.messages) {
-      // 1. Images jointes par l'utilisateur
       if (Array.isArray(msg.images)) {
         for (const img of msg.images) {
           if (img.dataUrl && !img.idbKey) {
@@ -2717,7 +2975,6 @@ async function serializeConversationsForStorage() {
           delete img.base64;
         }
       }
-      // 2. Image générée (content = "![IMAGE]data:...")
       if (typeof msg.content === 'string' && msg.content.startsWith('![IMAGE]data:')) {
         const dataUrl = msg.content.substring(8);
         if (!msg.imageIdbKey) {
@@ -2728,7 +2985,7 @@ async function serializeConversationsForStorage() {
             msg.imageIdbKey = id;
           } catch (e) {
             console.warn('[IDB] save generated image failed', e.message);
-            continue; // fallback : on garde le dataUrl en clair
+            continue;
           }
         }
         msg.content = `![IMAGE]idb:${msg.imageIdbKey}`;
@@ -2757,19 +3014,16 @@ async function doSaveConversations() {
 }
 
 function saveConversations() {
-  // File d'attente : garantit l'ordre des sauvegardes sans race condition
   saveQueue = saveQueue.then(() => doSaveConversations()).catch(e => console.warn('[saveQueue]', e));
   return saveQueue;
 }
 
-// Recharge les blobs depuis IndexedDB et reconstitue dataUrl / base64 / content
 async function hydrateConversations() {
   const t0 = performance.now();
   let migrated = 0;
   for (const convId of Object.keys(conversations)) {
     const conv = conversations[convId];
     for (const msg of conv.messages) {
-      // 1. Images jointes
       if (Array.isArray(msg.images)) {
         for (const img of msg.images) {
           if (img.idbKey && !img.dataUrl) {
@@ -2781,7 +3035,6 @@ async function hydrateConversations() {
                 img.mime = img.mime || rec.mime || 'image/png';
                 migrated++;
               } else {
-                // Blob introuvable : on dégrade proprement
                 img.dataUrl = '';
                 img.base64 = '';
                 img.missing = true;
@@ -2793,7 +3046,6 @@ async function hydrateConversations() {
           }
         }
       }
-      // 2. Image générée
       if (typeof msg.content === 'string' && msg.content.startsWith('![IMAGE]idb:')) {
         const idbKey = msg.content.substring(12);
         try {
@@ -2838,7 +3090,6 @@ function renderConversations() {
     return;
   }
 
-  // Séparateurs de date
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const yesterdayStart = todayStart - 86400000;
@@ -3014,7 +3265,6 @@ function addMessage(role, content, opts={}) {
         imgContainer.appendChild(img);
         imgContainer.appendChild(spinner);
 
-        // Boutons actions
         const actions = buildImageActions({
           imageUrl: imageUrl,
           messageIndex: opts.messageIndex
@@ -3034,7 +3284,6 @@ function addMessage(role, content, opts={}) {
         };
         bubble.appendChild(imgContainer);
 
-        // Preview du prompt
         const preview = buildImagePromptPreview(opts);
         if (preview) bubble.appendChild(preview);
     } else {
@@ -3057,9 +3306,6 @@ function addMessage(role, content, opts={}) {
         renderMarkdown(bubble, content);
     }
   } else {
-    // === GESTION DE L'UTILISATEUR ===
-
-    // 1. On ajoute l'image (au-dessus)
     if (opts.images && opts.images.length > 0) {
       const imgGrid = document.createElement('div');
       imgGrid.className = 'user-image-preview';
@@ -3067,20 +3313,16 @@ function addMessage(role, content, opts={}) {
         const imgEl = document.createElement('img');
         imgEl.src = img.dataUrl;
         imgEl.alt = img.name || 'Image jointe';
-        
-        // Clic pour agrandir
         imgEl.onclick = (e) => {
           e.stopPropagation();
           lightboxImg.src = img.dataUrl;
           imageLightbox.classList.add('active');
         };
-        
         imgGrid.appendChild(imgEl);
       });
       bubble.appendChild(imgGrid);
     }
 
-    // 2. On ajoute le texte (en dessous)
     if (content && content !== '🖼️ [Image jointe]') {
       const wrap = document.createElement('div');
       wrap.className = 'msg-content-wrap';
@@ -3111,7 +3353,6 @@ function addMessage(role, content, opts={}) {
       }, 10);
     }
 
-    // 3. Les fichiers (les images ont déjà leur aperçu visuel — pas de doublon en badge)
     const nonImageFiles = (opts.files || []).filter(f => !f.type.startsWith('image/'));
     if (nonImageFiles.length > 0) bubble.insertAdjacentHTML('beforeend', generateFileBadgesHTML(nonImageFiles));
   }
@@ -3162,7 +3403,6 @@ function addMessageActions(body, isLast) {
     regenBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Régénérer';
     regenBtn.onclick = regenerate;
     actions.appendChild(regenBtn);
-    // Le bouton "Continuer" n'a pas de sens sur une image générée
     const isImageMsg = !!bubble.querySelector('.generated-image-container');
     if (!isImageMsg) {
       const contBtn = document.createElement('button');
@@ -3306,16 +3546,15 @@ async function streamChat(history, callbacks, signal) {
 async function fetchWithRetry(url, options, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     const res = await fetch(url, options);
-    // Si le serveur est surchargé (503) ou si le quota est atteint (429)
     if (res.status === 503 || res.status === 429) {
-      const delay = Math.pow(2, i) * 1000; // Attend 1s, puis 2s, puis 4s
-      console.warn(`[API Gemini] Surcharge (${res.status}). Nouvelle tentative dans ${delay}ms...`);
+      const delay = Math.pow(2, i) * 1000;
+      console.warn(`[API] Surcharge (${res.status}). Nouvelle tentative dans ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       continue;
     }
     return res;
   }
-  throw new Error("Le serveur Gemini est actuellement surchargé. Veuillez réessayer dans quelques minutes.");
+  throw new Error("Le serveur est actuellement surchargé. Veuillez réessayer dans quelques minutes.");
 }
 
 async function readSSE(res, extract, onDelta, onReasoning) {
@@ -3382,7 +3621,6 @@ async function sendMessage() {
     } catch (err) { console.error("Erreur de lecture fichier", err); }
   }
 
-  // Analyse auto : si images jointes sans texte
   const hasImage = currentAttachedFiles.some(f => f.type.startsWith('image/'));
   if (hasImage && !text) {
     finalPromptContent = "Décris cette image en détail." + (finalPromptContent ? '\n' + finalPromptContent : '');
@@ -3719,11 +3957,8 @@ async function continueGeneration(body, bubble) {
       return;
   }
 
-  // On NE pousse PAS de message utilisateur "continue".
-// conv.messages se termine déjà par la réponse partielle de l'assistant,
-// ce qui déclenche la continuation directe côté API (assistant prefill).
-conv.upd = Date.now();
-saveConversations();
+  conv.upd = Date.now();
+  saveConversations();
 
   isStreaming = true;
   userScrolledDuringStream = false;
@@ -4151,7 +4386,6 @@ function addCustomProvider() {
 }
 
 async function exportConversations() {
-  // S'assure que toutes les images sont chargées en mémoire avant d'exporter
   await hydrateConversations();
   const data = JSON.stringify(conversations, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
@@ -4210,7 +4444,6 @@ $('newChatBtn').addEventListener('click', newConversation);
 $('newChatBtn2').addEventListener('click', newConversation);
 $('cancelEditBtn').addEventListener('click', () => { cancelEdit(); messageInput.value = ''; autoResize(); updateTokenCounter(); });
 
-// Gallery
 $('galleryBtn').addEventListener('click', openGallery);
 $('closeGalleryBtn').addEventListener('click', () => $('galleryModal').classList.remove('open'));
 $('galleryModal').addEventListener('click', (e) => { if (e.target === $('galleryModal')) $('galleryModal').classList.remove('open'); });
@@ -4323,28 +4556,19 @@ fileInput.addEventListener('change', (e) => {
   e.target.value = '';
 });
 
-// ==== COLLER DEPUIS LE PRESSE-PAPIERS (Ctrl+V) ====
 document.addEventListener('paste', (e) => {
-  // On récupère les données du presse-papiers
   const items = (e.clipboardData || e.originalEvent.clipboardData).items;
   let hasImage = false;
 
   for (let index in items) {
     const item = items[index];
-    
-    // Si l'élément collé est un fichier (une image)
     if (item.kind === 'file') {
       const blob = item.getAsFile();
-      
       if (blob && blob.type.startsWith('image/')) {
         hasImage = true;
-        
-        // On donne un nom à l'image (ex: screenshot_2024-05-20_14-30-00.png)
         const ext = blob.type.split('/')[1] || 'png';
         const timeStr = new Date().toISOString().replace(/[:.]/g, '-');
         const file = new File([blob], `screenshot_${timeStr}.${ext}`, { type: blob.type });
-
-        // Vérification de la taille (même limite que ton code : 4MB)
         if (file.size > 4 * 1024 * 1024) {
           showToast("L'image collée dépasse 4MB.", 'error');
         } else {
@@ -4354,7 +4578,6 @@ document.addEventListener('paste', (e) => {
     }
   }
 
-  // Si on a trouvé une image, on l'affiche et on empêche le texte brut de s'afficher dans le textarea
   if (hasImage) {
     e.preventDefault(); 
     renderFilePreviews();
@@ -4377,36 +4600,28 @@ function renderFilePreviews() {
     chip.className = 'file-chip';
     
     if (file.type.startsWith('image/')) {
-      // --- NOUVEAU : Affichage en miniature pour les images ---
       chip.classList.add('image-chip');
-      
       const img = document.createElement('img');
       img.src = URL.createObjectURL(file);
       img.className = 'file-chip-thumbnail';
-      
-      // NOUVEAU : Clic sur la miniature pour l'agrandir
       img.onclick = (e) => {
-        e.stopPropagation(); // Évite de cliquer dans la zone de texte en même temps
+        e.stopPropagation();
         lightboxImg.src = img.src;
         imageLightbox.classList.add('active');
       };
-      
       chip.appendChild(img);
-      
       const removeBtn = document.createElement('span');
       removeBtn.className = 'file-chip-remove';
       removeBtn.innerHTML = '×';
       removeBtn.title = 'Supprimer';
       removeBtn.onclick = (e) => {
         e.stopPropagation();
-        URL.revokeObjectURL(img.src); // Nettoie la mémoire
+        URL.revokeObjectURL(img.src);
         currentAttachedFiles.splice(index, 1);
         renderFilePreviews();
       };
       chip.appendChild(removeBtn);
-      
     } else {
-      // --- Comportement normal pour les fichiers texte/code ---
       let icon = '📄';
       if (file.name.endsWith('.js') || file.name.endsWith('.py')) icon = '⚙️';
       const shortName = file.name.length > 10 ? file.name.substring(0, 8) + '...' : file.name;
@@ -4518,7 +4733,6 @@ if (dropZone) {
   });
 }
 
-// ==== AUTOSAVE (beforeunload) ====
 window.addEventListener('beforeunload', () => {
   if (currentConvId) {
     drafts[currentConvId] = messageInput.value;
@@ -4527,7 +4741,6 @@ window.addEventListener('beforeunload', () => {
   saveConversations();
 });
 
-// ==== INIT ====
 (function init() {
   checkMobile();
   if (localStorage.getItem('deepchat_sidebar') === '1') document.body.classList.add('sidebar-collapsed');
@@ -4535,7 +4748,6 @@ window.addEventListener('beforeunload', () => {
   initProviderSelect();
   updateImageModeUI();
 
-  // Restaurer ratio/size dans les selects
   const rs = $('imageRatioSelect');
   const ss = $('imageSizeSelect');
   if (rs) rs.value = imageRatio;
@@ -4546,7 +4758,6 @@ window.addEventListener('beforeunload', () => {
   } else {
     console.warn('[DeepChat] highlight.js NOT loaded — colors will fallback to plain text');
   }
-  // Hydratation asynchrone des images depuis IndexedDB, puis rendu
   (async () => {
     try {
       await hydrateConversations();
