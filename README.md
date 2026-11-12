@@ -17,7 +17,7 @@
 A powerful, 100% client-side, multi-provider AI chat interface. Connect to Groq, Mistral, Gemini, Hugging Face, Agnes, or any custom OpenAI-compatible API from a single, beautiful interface. No backend, no data collection — your API keys and conversations never leave your browser.
 
 ## 🔗 Live Demo
-👉 **[Test DeepChat here](https://bstudio136.github.io/MONIA/)**
+👉 **[Test DeepChat here](https://bstudio136.github.io/monia/)**
 
 ## ✨ Features
 
@@ -90,7 +90,7 @@ This project is under the MIT License. You are free to use and modify it for you
 Une interface de chat IA puissante, 100% côté client, compatible avec de multiples fournisseurs. Connectez-vous à Groq, Mistral, Gemini, Hugging Face, Agnes ou n'importe quelle API personnalisée compatible OpenAI depuis une interface unique et magnifique. Aucun serveur, aucune collecte de données — vos clés API et conversations ne quittent jamais votre navigateur.
 
 ## 🔗 Démo en direct
-👉 **[Tester DeepChat ici](https://bstudio136.github.io/MONIA/)**
+👉 **[Tester DeepChat ici](https://bstudio136.github.io/monia/)**
 
 ## ✨ Fonctionnalités
 
