@@ -2280,9 +2280,9 @@ const DEFAULT_PROVIDERS = {
     label: 'Groq',
     endpoint: 'https://api.groq.com/openai/v1/chat/completions',
     models: [
-      'openai/gpt-oss-120b',   // ✅ Fiable
-      'openai/gpt-oss-20b',    // ✅ Fiable
-      'qwen/qwen3.8-27b'       // ✅ Fiable
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+      'qwen/qwen3.8-27b'
     ],
     format: 'openai',
     testUrl: 'https://api.groq.com/openai/v1/models',
@@ -2324,35 +2324,12 @@ const DEFAULT_PROVIDERS = {
     label: 'OpenRouter',
     endpoint: 'https://openrouter.ai/api/v1/chat/completions',
     models: [
-      'openrouter/free',                      // ✅ Routeur automatique (le plus sûr)
-      'deepseek/deepseek-r1:free',            // ✅ DeepSeek (raisonnement)
-      'deepseek/deepseek-v4-flash:free',      // ✅ DeepSeek (rapide)
-      'meta-llama/llama-3.3-70b-instruct:free',
-      'nvidia/nemotron-3-super-120b-a12b:free'
+      'openrouter/free' // ✅ Le seul modèle 100% fiable qui trouve toujours un modèle gratuit (dont DeepSeek)
     ],
     format: 'openai',
     testUrl: 'https://openrouter.ai/api/v1/models',
     testType: 'bearer',
     apiKeyUrl: 'https://openrouter.ai/keys'
-  },
-
-  nvidia: {
-    label: 'NVIDIA NIM',
-    endpoint: 'https://integrate.api.nvidia.com/v1/chat/completions',
-    models: [
-      'deepseek-ai/deepseek-v4-flash',                 // ✅ DeepSeek V4 Flash (gratuit)
-      'deepseek-ai/deepseek-v4-pro',                   // ✅ DeepSeek V4 Pro (gratuit)
-      'deepseek-ai/deepseek-r1-distill-qwen-32b',      // ✅ DeepSeek R1 Distill (gratuit)
-      'openai/gpt-oss-120b',                            // ✅ GPT-OSS 120B
-      'openai/gpt-oss-20b',                             // ✅ GPT-OSS 20B
-      'google/gemma-4-31b-it',                          // ✅ Gemma 4
-      'z-ai/glm-5.2',                                   // ✅ GLM 5.2
-      'moonshotai/kimi-k2.6'                            // ✅ Kimi K2.6
-    ],
-    format: 'openai',
-    testUrl: 'https://integrate.api.nvidia.com/v1/models',
-    testType: 'bearer',
-    apiKeyUrl: 'https://build.nvidia.com'
   },
 
   cloudflare: {
@@ -2374,9 +2351,9 @@ const DEFAULT_PROVIDERS = {
     label: 'TokenHarbor',
     endpoint: 'https://tokenharbor.ai/v1/chat/completions',
     models: [
-      'deepseek-v4-flash:free',       // ✅ DeepSeek V4 Flash (gratuit, suffixe :free)
-      'deepseek-v4.1-flash:free',     // ✅ DeepSeek V4.1 Flash (gratuit)
-      'mimo-v2.5:free'                // ✅ MiMo V2.5 (gratuit)
+      'deepseek-v4-flash:free',
+      'deepseek-v4.1-flash:free',
+      'mimo-v2.5:free'
     ],
     format: 'openai',
     testUrl: 'https://tokenharbor.ai/v1/models',
