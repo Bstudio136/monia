@@ -2293,7 +2293,7 @@ const DEFAULT_PROVIDERS = {
   mistral: {
     label: 'Mistral',
     endpoint: 'https://api.mistral.ai/v1/chat/completions',
-    models: ['mistral-small-latest', 'mistral-medium-latest', 'codestral-latest', 'magistral-medium-latest'],
+    models: ['codestral-latest', 'mistral-medium-latest', 'mistral-small-latest', 'magistral-medium-latest'],
     format: 'openai',
     testUrl: 'https://api.mistral.ai/v1/models',
     testType: 'bearer',
@@ -2303,7 +2303,7 @@ const DEFAULT_PROVIDERS = {
   gemini: {
     label: 'Gemini',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent',
-    models: ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'],
+    models: ['gemini-3.5-flash', 'gemini-3.5-flash-lite'],
     format: 'gemini',
     testUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
     testType: 'query',
