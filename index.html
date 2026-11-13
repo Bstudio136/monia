@@ -1880,6 +1880,20 @@ body.compact .reasoning-content { max-height: 250px; }
   </div>
   <nav class="conversation-list" id="conversationList"></nav>
   <div class="sidebar-footer">
+    <!-- ✨ NOUVEAU : Sélecteur de langue ✨ -->
+    <div class="footer-btn" style="cursor: default; padding-right: 12px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="2" y1="12" x2="22" y2="12"></line>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+      </svg>
+      <select id="languageSelect" style="background: transparent; border: none; color: var(--text-secondary); outline: none; font-size: 13.5px; cursor: pointer; width: 100%; font-family: inherit;">
+        <option value="fr" style="color: black;">Français</option>
+        <option value="en" style="color: black;">English</option>
+        <option value="it" style="color: black;">Italiano</option>
+        <option value="tr" style="color: black;">Türkçe</option>
+      </select>
+    </div>
     <button class="footer-btn" id="settingsBtn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="3"/>
@@ -2238,7 +2252,7 @@ body.compact .reasoning-content { max-height: 250px; }
           </p>
           <h3 style="font-size:16px; margin-bottom:12px;">Créateur</h3>
           <p style="color:var(--text-secondary); line-height:1.6; margin-bottom:16px;">
-            Développé par <strong>bstudio136</strong>.<br>
+            Développé par <strong>Bstudio136</strong>.<br>
             <a href="https://bstudio136.github.io/mylink/" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">Voir mes projets</a>
           </p>
         </div>
@@ -2776,7 +2790,7 @@ async function regenerateImageFromMsg(msgIndex) {
   const size = msg.imageSize || imageSize;
 
   if (!prompt) {
-    showToast('Prompt d\'origine introuvable', 'error');
+    showToast((translations[currentLang] || translations.fr).promptNotFound, 'error');
     return;
   }
 
@@ -2812,9 +2826,9 @@ function openGallery() {
 
   if (images.length === 0) {
     count.textContent = '';
-    grid.innerHTML = '<p class="g-empty">Aucune image générée dans cette conversation.</p>';
+    grid.innerHTML = `<p class="g-empty">${(translations[currentLang] || translations.fr).noImages}</p>`;
   } else {
-    count.textContent = `${images.length} image${images.length > 1 ? 's' : ''} dans cette conversation`;
+    count.textContent = `${images.length} ${(translations[currentLang] || translations.fr).imgCount}`;
     images.forEach(img => {
       const item = document.createElement('div');
       item.className = 'gallery-item';
@@ -2860,12 +2874,12 @@ function updateImageModeUI() {
         imageBtn.classList.add('active');
         imageModeBanner.classList.add('active');
         inputWrapperEl.classList.add('image-mode');
-        messageInput.placeholder = '🎨 Décrivez l\'image à générer…';
+        messageInput.placeholder = (translations[currentLang] || translations.fr).describeImage;
     } else {
         imageBtn.classList.remove('active');
         imageModeBanner.classList.remove('active');
         inputWrapperEl.classList.remove('image-mode');
-        messageInput.placeholder = 'Écrivez votre message…';
+        messageInput.placeholder = (translations[currentLang] || translations.fr).placeholder;
     }
     const rs = $('imageRatioSelect');
     const ss = $('imageSizeSelect');
@@ -2875,16 +2889,16 @@ function updateImageModeUI() {
 
 imageBtn.addEventListener('click', () => {
     if (!apiKeys['agnes']) {
-        showToast('Configurez d\'abord une clé API Agnes dans les paramètres.', 'warning');
+        showToast((translations[currentLang] || translations.fr).apiKeyMissingAgnes, 'warning');
         return;
     }
     forceImageMode = !forceImageMode;
     updateImageModeUI();
     if (forceImageMode) {
-        showToast('🎨 Mode image activé', 'success');
+        showToast((translations[currentLang] || translations.fr).imgModeOn, 'success');
         messageInput.focus();
     } else {
-        showToast('Mode image désactivé');
+        showToast((translations[currentLang] || translations.fr).imgModeOff);
     }
 });
 cancelImageModeBtn.addEventListener('click', () => {
@@ -3253,13 +3267,14 @@ const BRAIN_ICON = '<svg class="brain-icon" viewBox="0 0 24 24" fill="none" stro
 const CHEVRON_ICON = '<svg class="reasoning-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>';
 
 function createReasoningBlock() {
+  const t = translations[currentLang] || translations.fr;
   const block = document.createElement('div');
   block.className = 'reasoning-block streaming';
   block.innerHTML = `
     <div class="reasoning-header">
       ${BRAIN_ICON}
-      <span class="reasoning-label">Réflexion</span>
-      <span class="reasoning-status">en cours<span class="reasoning-dots"><span></span><span></span><span></span></span></span>
+      <span class="reasoning-label">${t.reasoning}</span>
+      <span class="reasoning-status">${t.reasoningInProgress}<span class="reasoning-dots"><span></span><span></span><span></span></span></span>
       ${CHEVRON_ICON}
     </div>
     <div class="reasoning-content"></div>
@@ -3270,23 +3285,27 @@ function createReasoningBlock() {
   };
   return block;
 }
-function updateReasoningBlock(block, text) {
-  const content = block.querySelector('.reasoning-content');
-  content.textContent = text;
-  content.scrollTop = content.scrollHeight;
-}
+
 function updateReasoningStatus(block, startTime) {
+  const t = translations[currentLang] || translations.fr;
   const status = block.querySelector('.reasoning-status');
   if (!status) return;
   const elapsed = Math.round((Date.now() - startTime) / 1000);
-  status.innerHTML = `en cours (${elapsed}s)<span class="reasoning-dots"><span></span><span></span><span></span></span>`;
+  status.innerHTML = `${t.reasoningInProgress} (${elapsed}s)<span class="reasoning-dots"><span></span><span></span><span></span></span>`;
 }
+
+function updateReasoningBlock(block, content) {
+  const contentEl = block.querySelector('.reasoning-content');
+  if (contentEl) contentEl.textContent = content;
+}
+
 function finalizeReasoningBlock(block, durationMs, hasContent) {
+  const t = translations[currentLang] || translations.fr;
   if (!hasContent) { block.remove(); return; }
   block.classList.remove('streaming');
   block.classList.remove('expanded');
   const status = block.querySelector('.reasoning-status');
-  status.textContent = 'terminée' + (durationMs ? ' · ' + formatDuration(durationMs) : '');
+  status.textContent = t.reasoningFinished + (durationMs ? ' · ' + formatDuration(durationMs) : '');
 }
 
 function initProviderSelect() {
@@ -3377,8 +3396,9 @@ function newConversation() {
     drafts[currentConvId] = messageInput.value;
     try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch(e) {}
   }
+  const t = translations[currentLang] || translations.fr;
   const id = 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-  conversations[id] = { id, title: 'Nouvelle conversation', messages: [], created: Date.now(), upd: Date.now() };
+  conversations[id] = { id, title: t.newChatTitle, messages: [], created: Date.now(), upd: Date.now() };
   currentConvId = id;
   messageInput.value = '';
   cancelEdit();
@@ -3391,6 +3411,7 @@ function newConversation() {
   updateTokenCounter();
   document.body.classList.remove('sidebar-mobile-open');
 }
+
 function loadConversation(id) {
   if (isStreaming) return;
   if (currentConvId && currentConvId !== id) {
@@ -3409,7 +3430,7 @@ function loadConversation(id) {
 }
 async function deleteConversation(id) {
   if (!conversations[id]) return;
-  if (!confirm('Supprimer cette conversation ?')) return;
+  if (!confirm((translations[currentLang] || translations.fr).confirmDelete)) return;
 
   const conv = conversations[id];
   const toDelete = [];
@@ -3565,7 +3586,7 @@ function renderConversations() {
   if (entries.length === 0) {
     const d = document.createElement('div');
     d.className = 'conv-empty';
-    d.textContent = filter ? 'Aucun résultat' : 'Aucune conversation';
+    d.textContent = filter ? (translations[currentLang] || translations.fr).emptySearch : (translations[currentLang] || translations.fr).emptyChat;
     conversationList.appendChild(d);
     return;
   }
@@ -3577,12 +3598,13 @@ function renderConversations() {
   let lastGroup = null;
 
   entries.forEach(c => {
+    const t = translations[currentLang] || translations.fr;
     const ts = c.upd || c.created || 0;
     let group;
-    if (ts >= todayStart) group = 'Aujourd\'hui';
-    else if (ts >= yesterdayStart) group = 'Hier';
-    else if (ts >= weekAgo) group = '7 derniers jours';
-    else group = 'Plus ancien';
+    if (ts >= todayStart) group = t.today;
+    else if (ts >= yesterdayStart) group = t.yesterday;
+    else if (ts >= weekAgo) group = t.last7;
+    else group = t.older;
     if (group !== lastGroup) {
       const sep = document.createElement('div');
       sep.className = 'conv-date-separator';
@@ -3595,7 +3617,9 @@ function renderConversations() {
     item.className = 'conv-item' + (c.id === currentConvId ? ' active' : '');
     const title = document.createElement('span');
     title.className = 'conv-item-title';
-    title.textContent = c.title;
+    // Traduit le titre si c'est le titre par défaut
+    const defaultTitles = ['Nouvelle conversation', 'New chat', 'Nuova chat', 'Yeni sohbet'];
+    title.textContent = defaultTitles.includes(c.title) ? t.newChatTitle : c.title;
     title.title = "Double-cliquez pour renommer";
     const startEdit = () => {
       const input = document.createElement('input');
@@ -3624,12 +3648,12 @@ function renderConversations() {
     title.ondblclick = (e) => { e.stopPropagation(); startEdit(); };
     const edit = document.createElement('button');
     edit.className = 'conv-item-edit';
-    edit.title = 'Renommer';
+    edit.title = t.tooltipRename;
     edit.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L14 13l-4 1 1-4 7.5-7.5z"></path></svg>';
     edit.onclick = (e) => { e.stopPropagation(); startEdit(); };
     const del = document.createElement('button');
     del.className = 'conv-item-delete';
-    del.title = 'Supprimer';
+    del.title = t.tooltipDelete;
     del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
     del.onclick = (e) => { e.stopPropagation(); deleteConversation(c.id); };
     item.appendChild(title);
@@ -3661,17 +3685,18 @@ function renderCurrentConversation() {
   updateTokenCounter();
 }
 function renderWelcome() {
+  const t = translations[currentLang] || translations.fr;
   const div = document.createElement('div');
   div.className = 'welcome';
   div.innerHTML = `
     <div class="welcome-icon">D</div>
-    <h1>Comment puis-je vous aider ?</h1>
-    <p>Posez une question, demandez du code, générez des images… Essayez <b>"Dessine-moi un chat"</b> ou cliquez sur le bouton 🎨.</p>
+    <h1>${t.welcomeTitle}</h1>
+    <p>${t.welcomeText}</p>
     <div class="welcome-grid">
-      <button class="welcome-card" data-prompt="/image un chat astronaute sur la lune"><strong>🎨 Générer une image</strong>Chat astronaute (Agnes)</button>
-      <button class="welcome-card" data-prompt="Explique-moi les principes SOLID avec des exemples concrets en JavaScript."><strong>Principes SOLID</strong>Explications avec exemples JS</button>
-      <button class="welcome-card" data-prompt="Écris une fonction Python qui trouve le plus long palindrome dans une chaîne."><strong>Algorithme</strong>Plus long palindrome en Python</button>
-      <button class="welcome-card" data-prompt="Compare les avantages et inconvénients de React, Vue et Svelte en 2024."><strong>Comparaison</strong>React vs Vue vs Svelte</button>
+      <button class="welcome-card" data-prompt="/image un chat astronaute sur la lune"><strong>${t.card1T}</strong>${t.card1D}</button>
+      <button class="welcome-card" data-prompt="Explique-moi les principes SOLID avec des exemples concrets en JavaScript."><strong>${t.card2T}</strong>${t.card2D}</button>
+      <button class="welcome-card" data-prompt="Écris une fonction Python qui trouve le plus long palindrome dans une chaîne."><strong>${t.card3T}</strong>${t.card3D}</button>
+      <button class="welcome-card" data-prompt="Compare les avantages et inconvénients de React, Vue et Svelte en 2024."><strong>${t.card4T}</strong>${t.card4D}</button>
     </div>`;
   messagesInner.appendChild(div);
   div.querySelectorAll('.welcome-card').forEach(b => {
@@ -3741,7 +3766,7 @@ function addMessage(role, content, opts={}) {
         img.dataset.generated = "true";
         const spinner = document.createElement('div');
         spinner.className = 'image-loading-spinner';
-        spinner.textContent = 'Chargement...';
+        spinner.textContent = (translations[currentLang] || translations.fr).loading;
         imgContainer.appendChild(img);
         imgContainer.appendChild(spinner);
 
@@ -3759,7 +3784,7 @@ function addMessage(role, content, opts={}) {
             };
         };
         img.onerror = () => {
-            spinner.textContent = 'Erreur de chargement';
+            spinner.textContent = (translations[currentLang] || translations.fr).loadError;
             spinner.classList.add('error');
         };
         bubble.appendChild(imgContainer);
@@ -3821,12 +3846,12 @@ function addMessage(role, content, opts={}) {
           bubble.appendChild(fade);
           const toggleBtn = document.createElement('button');
           toggleBtn.className = 'msg-toggle-btn';
-          toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg> Voir plus';
+          toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg> ' + (translations[currentLang] || translations.fr).showMore;
           toggleBtn.onclick = (e) => {
             e.stopPropagation();
             const isExpanded = wrap.classList.toggle('expanded');
             fade.style.display = isExpanded ? 'none' : 'block';
-            toggleBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: ${isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'}"><polyline points="6 9 12 15 18 9"></polyline></svg> ${isExpanded ? 'Réduire' : 'Voir plus'}`;
+            toggleBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: ${isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'}"><polyline points="6 9 12 15 18 9"></polyline></svg> ${isExpanded ? (translations[currentLang] || translations.fr).showLess : (translations[currentLang] || translations.fr).showMore}`;
           };
           bubble.appendChild(toggleBtn);
         }
@@ -3874,20 +3899,20 @@ function addMessageActions(body, isLast) {
   const bubble = body.querySelector('.bubble');
   const copyBtn = document.createElement('button');
   copyBtn.className = 'action-btn';
-  copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier';
+  copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ' + (translations[currentLang] || translations.fr).copy;
   copyBtn.onclick = () => navigator.clipboard.writeText(bubble.innerText).then(() => showToast('Copié !', 'success'));
   actions.appendChild(copyBtn);
   if (isLast) {
     const regenBtn = document.createElement('button');
     regenBtn.className = 'action-btn';
-    regenBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> Régénérer';
+    regenBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> ' + (translations[currentLang] || translations.fr).regen;
     regenBtn.onclick = regenerate;
     actions.appendChild(regenBtn);
     const isImageMsg = !!bubble.querySelector('.generated-image-container');
     if (!isImageMsg) {
       const contBtn = document.createElement('button');
       contBtn.className = 'action-btn';
-      contBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg> Continuer';
+      contBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg> ' + (translations[currentLang] || translations.fr).continueBtn;
       contBtn.onclick = () => continueGeneration(body, bubble);
       actions.appendChild(contBtn);
     }
@@ -4188,7 +4213,7 @@ async function runImageGeneration(prompt, ratio, size) {
         img.dataset.generated = "true";
         const spinner = document.createElement('div');
         spinner.className = 'image-loading-spinner';
-        spinner.textContent = 'Chargement...';
+        spinner.textContent = (translations[currentLang] || translations.fr).loading;
         imgContainer.appendChild(img);
         imgContainer.appendChild(spinner);
 
@@ -4694,7 +4719,7 @@ function updateProviderModelUI(providerKey) {
     item.className = 'model-item';
     item.innerHTML = `
       <span class="drag-handle">⋮⋮</span>
-      <input type="text" class="model-id" value="${escapeHtml(model)}" placeholder="ID du modèle">
+      <input type="text" class="model-id" value="${escapeHtml(model)}" placeholder="ID">
       <button class="btn-del-model" title="Supprimer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
       </button>
@@ -4732,17 +4757,18 @@ function updateProviderModelUI(providerKey) {
 function renderProviderKeys() {
   const container = $('providerKeysContainer');
   container.innerHTML = '';
+  const t = translations[currentLang] || translations.fr; 
   
   Object.entries(PROVIDERS).forEach(([k, p]) => {
     const row = document.createElement('div');
     row.className = 'provider-key-row';
     
     const status = apiKeys[k] 
-      ? '<span class="provider-status set">Définie</span>' 
-      : '<span class="provider-status">Non définie</span>';
+      ? `<span class="provider-status set">${t.defined}</span>` 
+      : `<span class="provider-status">${t.undefined}</span>`;
       
     const keyLink = p.apiKeyUrl
-      ? ` <a href="${p.apiKeyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);text-decoration:none;margin-left:6px;">Obtenir une clé ↗</a>`
+      ? ` <a href="${p.apiKeyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);text-decoration:none;margin-left:6px;">${t.getKey} ↗</a>`
       : '';
 
     row.innerHTML = `
@@ -4759,7 +4785,7 @@ function renderProviderKeys() {
         <div class="form-row">
           <input type="password" data-provider="${k}" placeholder="Clé API ${p.label}" value="${apiKeys[k] ? '••••••••••••' : ''}">
           <button class="btn btn-secondary" data-toggle="${k}" title="Afficher/Masquer" style="padding:8px 12px;">👁</button>
-          <button class="btn btn-secondary test-btn" data-test="${k}">Tester</button>
+          <button class="btn btn-secondary test-btn" data-test="${k}">${t.testBtn}</button>
         </div>
 
         <!-- Section Paramètres personnalisés -->
@@ -4767,24 +4793,24 @@ function renderProviderKeys() {
           <div onclick="const el = this.nextElementSibling; el.style.display = el.style.display === 'none' ? 'block' : 'none'; this.querySelector('.arrow').style.transform = el.style.display === 'none' ? 'rotate(0deg)' : 'rotate(90deg)';" 
                style="font-size: 12px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; user-select: none;">
             <span class="arrow" style="display:inline-block; transition: transform 0.2s; font-weight: bold; font-size: 14px;">›</span> 
-            Paramètres personnalisés
+            ${t.customSettings}
           </div>
           
           <div style="display: none; margin-top: 10px;">
             <div class="form-group">
-              <label class="form-label">URL de base</label>
+              <label class="form-label">${t.baseUrl}</label>
               <input type="text" class="form-input" data-custom-url="${k}" value="${p.endpoint || ''}">
             </div>
             
             <div class="form-group" style="background: rgba(127,127,127,0.05); padding: 10px; border-radius: 8px; border: 1px solid var(--border);">
               <label class="form-label" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-                <span>Modèles</span>
-                <button class="btn btn-secondary" data-fetch-models="${k}" style="padding: 4px 8px; font-size: 11px;">🔄 Récupérer les modèles disponibles</button>
+                <span>${t.modelsLabel}</span>
+                <button class="btn btn-secondary" data-fetch-models="${k}" style="padding: 4px 8px; font-size: 11px;">${t.fetchModels}</button>
               </label>
               
               <!-- Nouvelle liste de modèles dynamique -->
               <div class="model-list" id="model-list-${k}"></div>
-              <button class="btn-add-model" data-add-model="${k}">+ Ajouter un modèle</button>
+              <button class="btn-add-model" data-add-model="${k}">${t.addModel}</button>
             </div>
           </div>
         </div>
@@ -5006,8 +5032,9 @@ function renderProviderKeys() {
 function renderCustomProviders() {
   const container = $('customProvidersContainer');
   container.innerHTML = '';
+  const t = translations[currentLang] || translations.fr;
   if (customProviders.length === 0) {
-    container.innerHTML = '<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px;">Aucun fournisseur personnalisé.</p>';
+    container.innerHTML = `<p style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px;">${t.noCustom}</p>`;
     return;
   }
   customProviders.forEach((cp, i) => {
@@ -5023,7 +5050,7 @@ function renderCustomProviders() {
           <strong style="font-size:13px;">${escapeHtml(cp.label)}</strong>${cpLink}
           <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${escapeHtml(cp.endpoint)}</div>
         </div>
-        <button class="btn btn-danger" data-del-cp="${i}" style="padding:4px 8px;font-size:11px;">Supprimer</button>
+        <button class="btn btn-danger" data-del-cp="${i}" style="padding:4px 8px;font-size:11px;">${t.deleteBtn}</button>
       </div>
       <div class="form-row">
         <input type="password" data-cp-key="${i}" placeholder="Clé API ${escapeHtml(cp.label)}" value="${apiKeys[cp.id] ? '••••••••••••' : ''}">
@@ -5496,9 +5523,473 @@ window.addEventListener('beforeunload', () => {
   saveConversations();
 });
 
+// ==== SYSTEME DE TRADUCTION (i18n) ====
+const translations = {
+  fr: {
+    newChat: "Nouvelle conversation", newChatTitle: "Nouvelle conversation", search: "Rechercher…", settings: "Paramètres", appearance: "Apparence",
+    placeholder: "Écrivez votre message…", welcomeTitle: "Comment puis-je vous aider ?", 
+    welcomeText: "Posez une question, demandez du code, générez des images… Essayez <b>\"Dessine-moi un chat\"</b> ou cliquez sur le bouton 🎨.",
+    card1T: "🎨 Générer une image", card1D: "Chat astronaute (Agnes)",
+    card2T: "Principes SOLID", card2D: "Explications avec exemples JS",
+    card3T: "Algorithme", card3D: "Plus long palindrome en Python",
+    card4T: "Comparaison", card4D: "React vs Vue vs Svelte",
+    today: "Aujourd'hui", yesterday: "Hier", last7: "7 derniers jours", older: "Plus ancien",
+    emptySearch: "Aucun résultat", emptyChat: "Aucune conversation", noImages: "Aucune image générée dans cette conversation.",
+    tabApi: "Clés API", tabGen: "Génération", tabApp: "Apparence", tabChat: "Chat", tabData: "Données", tabShort: "Raccourcis", tabAbout: "À propos",
+    apiDesc: "Vos clés sont stockées localement dans ce navigateur uniquement. Testez-les pour vérifier leur validité.",
+    defined: "Définie", undefined: "Non définie", getKey: "Obtenir une clé", testBtn: "Tester",
+    customProviders: "Fournisseurs personnalisés", addBtn: "+ Ajouter", customDesc: "Ajoutez n'importe quelle API compatible OpenAI (endpoint + modèles + clé).", noCustom: "Aucun fournisseur personnalisé.",
+    genSys: "Prompt système (personnalité / instructions)", genSysHint: "Ce prompt est ajouté au début de chaque conversation (invisible dans le chat).",
+    genTemp: "Température (créativité)", genMax: "Tokens maximaux",
+    appTheme: "Thème", appDark: "Sombre", appLight: "Clair", appSys: "Système", appAccent: "Couleur d'accent", appCustomColor: "Couleur personnalisée", appFont: "Taille du texte", appBubble: "Largeur des bulles", appCompact: "Mode compact",
+    chatOpts: "Options d'affichage", chatReason: "Afficher les réflexions (reasoning)", chatReasonHint: "Montre le raisonnement interne des modèles compatibles", chatTs: "Afficher l'horodatage", chatTsHint: "Heure d'envoi de chaque message", chatScroll: "Retour automatique en bas", chatScrollHint: "Défile automatiquement à la fin du stream", chatSound: "Notification sonore", chatSoundHint: "Un petit son quand la réponse est terminée",
+    dataExport: "Exporter les conversations", dataExportBtn: "📥 Exporter", dataImport: "Importer des conversations", dataImportBtn: "📤 Importer", dataClear: "Effacer toutes les conversations", dataClearBtn: "Tout effacer", dataKeys: "Réinitialiser les clés API", dataKeysBtn: "Réinitialiser les clés", dataReset: "Réinitialiser les paramètres", dataResetBtn: "Réinitialiser",
+    copy: "Copier", regen: "Régénérer", continueBtn: "Continuer", edit: "Modifier",
+    reasoning: "Réflexion", reasoningInProgress: "en cours", reasoningFinished: "terminée",
+    loading: "Chargement...", loadError: "Erreur de chargement", loadImagesError: "Impossible de charger les images. Les messages texte restent accessibles.",
+    imgModeActive: "Mode image actif", imgModeDesc: "votre prochaine requête génèrera une image Agnes", ratio: "Ratio", size: "Taille", cancel: "Annuler", describeImage: "🎨 Décrivez l'image à générer…",
+    customSettings: "Paramètres personnalisés", baseUrl: "URL de base", modelsLabel: "Modèles",
+    cpName: "Nom", cpEndpoint: "Endpoint Chat", cpTestUrl: "Test URL", cpModels: "Modèles (séparés par virgule)",
+    scToggle: "Basculer la barre latérale", scNew: "Nouvelle conversation", scSettings: "Ouvrir les paramètres", scExport: "Exporter les conversations", scSend: "Envoyer le message", scNewLine: "Nouvelle ligne", scImage: "Mode image", scClose: "Fermer les modales",
+    aboutCreator: "Créateur", aboutLink: "Voir mes projets", confirmDelete: "Supprimer cette conversation ?",
+    aboutDesc: "DeepChat est un client de chat multi-fournisseurs (multi-provider AI) qui vous permet de discuter avec différents modèles d'intelligence artificielle (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) depuis une interface unique. Il supporte le streaming, le raisonnement (reasoning), la génération d'images, le rendu Markdown, la coloration syntaxique, les pièces jointes, et bien plus encore. Toutes les données (conversations, clés API) sont stockées localement dans votre navigateur pour une confidentialité maximale.",
+    // === AJOUTS ===
+    inputHfModel: "ID modèle HF",
+    settingsTitle: "Paramètres",
+    galleryTitle: "Galerie d'images",
+    downloadImg: "Télécharger",
+    enter: "Entrée",
+    shiftEnter: "Shift + Entrée",
+    escape: "Échap",
+    fetchModels: "🔄 Récupérer les modèles disponibles",
+    addModel: "+ Ajouter un modèle",
+    deleteBtn: "Supprimer",
+    showMore: "Voir plus",
+    showLess: "Voir moins",
+    promptNotFound: "Prompt introuvable",
+    imgCount: "image(s)",
+    apiKeyMissingAgnes: "Clé API Agnes manquante. Configurez-la dans les paramètres.",
+    sysPromptPlaceholder: "Laissez vide pour ne rien envoyer…",
+    developedBy: "Développé par",
+    presetDefault: "Défaut",
+    presetConcise: "Concis",
+    presetDeveloper: "Développeur",
+    presetTeacher: "Pédagogue",
+    presetCreative: "Créatif",
+    dataExportDesc: "Télécharge toutes vos conversations au format JSON (sauvegarde).",
+    dataImportDesc: "Restaure des conversations depuis un fichier JSON.",
+    compactModeHint: "Réduit les espacements pour afficher plus de messages",
+    dataClearDesc: "Supprime définitivement toutes vos conversations.",
+    dataKeysDesc: "Supprime toutes les clés API enregistrées.",
+    dataResetDesc: "Restaure les paramètres par défaut.",
+    activateLabel: "Activer",
+    tooltipRename: "Renommer",
+    tooltipDelete: "Supprimer",
+    tooltipAttach: "Joindre un fichier",
+    tooltipImageMode: "Mode image — générer une image avec Agnes (ou tapez /image)",
+    imgModeOn: "Mode image activé",
+    imgModeOff: "Mode image désactivé"
+  },
+  en: {
+    newChat: "New chat", newChatTitle: "New chat", search: "Search...", settings: "Settings", appearance: "Appearance",
+    placeholder: "Type your message...", welcomeTitle: "How can I help you?", 
+    welcomeText: "Ask a question, request code, generate images... Try <b>\"Draw me a cat\"</b> or click the 🎨 button.",
+    card1T: "🎨 Generate an image", card1D: "Astronaut cat (Agnes)",
+    card2T: "SOLID Principles", card2D: "Explanations with JS examples",
+    card3T: "Algorithm", card3D: "Longest palindrome in Python",
+    card4T: "Comparison", card4D: "React vs Vue vs Svelte",
+    today: "Today", yesterday: "Yesterday", last7: "Last 7 days", older: "Older",
+    emptySearch: "No results", emptyChat: "No conversations", noImages: "No images generated in this conversation.",
+    tabApi: "API Keys", tabGen: "Generation", tabApp: "Appearance", tabChat: "Chat", tabData: "Data", tabShort: "Shortcuts", tabAbout: "About",
+    apiDesc: "Your keys are stored locally in this browser only. Test them to verify their validity.",
+    defined: "Defined", undefined: "Not defined", getKey: "Get key", testBtn: "Test",
+    customProviders: "Custom providers", addBtn: "+ Add", customDesc: "Add any OpenAI-compatible API (endpoint + models + key).", noCustom: "No custom provider.",
+    genSys: "System prompt (personality / instructions)", genSysHint: "This prompt is added at the beginning of each conversation (invisible in chat).",
+    genTemp: "Temperature (creativity)", genMax: "Max tokens",
+    appTheme: "Theme", appDark: "Dark", appLight: "Light", appSys: "System", appAccent: "Accent color", appCustomColor: "Custom color", appFont: "Text size", appBubble: "Bubble width", appCompact: "Compact mode",
+    chatOpts: "Display options", chatReason: "Show reasoning", chatReasonHint: "Shows the internal reasoning of compatible models", chatTs: "Show timestamp", chatTsHint: "Time each message was sent", chatScroll: "Auto-scroll to bottom", chatScrollHint: "Automatically scrolls at the end of the stream", chatSound: "Sound notification", chatSoundHint: "A little sound when the response is finished",
+    dataExport: "Export conversations", dataExportBtn: "📥 Export", dataImport: "Import conversations", dataImportBtn: "📤 Import", dataClear: "Clear all conversations", dataClearBtn: "Clear all", dataKeys: "Reset API keys", dataKeysBtn: "Reset keys", dataReset: "Reset settings", dataResetBtn: "Reset",
+    copy: "Copy", regen: "Regenerate", continueBtn: "Continue", edit: "Edit",
+    reasoning: "Reasoning", reasoningInProgress: "in progress", reasoningFinished: "finished",
+    loading: "Loading...", loadError: "Loading error", loadImagesError: "Failed to load images. Text messages remain accessible.",
+    imgModeActive: "Image mode active", imgModeDesc: "your next request will generate an Agnes image", ratio: "Ratio", size: "Size", cancel: "Cancel", describeImage: "🎨 Describe the image to generate...",
+    customSettings: "Custom settings", baseUrl: "Base URL", modelsLabel: "Models",
+    cpName: "Name", cpEndpoint: "Chat Endpoint", cpTestUrl: "Test URL", cpModels: "Models (comma separated)",
+    scToggle: "Toggle sidebar", scNew: "New chat", scSettings: "Open settings", scExport: "Export conversations", scSend: "Send message", scNewLine: "New line", scImage: "Image mode", scClose: "Close modals",
+    aboutCreator: "Creator", aboutLink: "See my projects", confirmDelete: "Delete this conversation?",
+    aboutDesc: "DeepChat is a multi-provider AI chat client that allows you to chat with different AI models (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) from a single interface. It supports streaming, reasoning, image generation, Markdown rendering, syntax highlighting, attachments, and much more. All data (conversations, API keys) is stored locally in your browser for maximum privacy.",
+    // === AJOUTS ===
+    inputHfModel: "HF model ID",
+    settingsTitle: "Settings",
+    galleryTitle: "Image gallery",
+    downloadImg: "Download",
+    enter: "Enter",
+    shiftEnter: "Shift + Enter",
+    escape: "Escape",
+    fetchModels: "🔄 Fetch available models",
+    addModel: "+ Add a model",
+    deleteBtn: "Delete",
+    showMore: "Show more",
+    showLess: "Show less",
+    promptNotFound: "Prompt not found",
+    imgCount: "image(s)",
+    apiKeyMissingAgnes: "Agnes API key missing. Configure it in settings.",
+    sysPromptPlaceholder: "Leave empty to send nothing...",
+    developedBy: "Developed by",
+    presetDefault: "Default",
+    presetConcise: "Concise",
+    presetDeveloper: "Developer",
+    presetTeacher: "Teacher",
+    presetCreative: "Creative",
+    dataExportDesc: "Downloads all your conversations in JSON format (backup).",
+    dataImportDesc: "Restores conversations from a JSON file.",
+    compactModeHint: "Reduces spacing to show more messages",
+    dataClearDesc: "Permanently deletes all your conversations.",
+    dataKeysDesc: "Deletes all saved API keys.",
+    dataResetDesc: "Restores default settings.",
+    activateLabel: "Enable",
+    tooltipRename: "Rename",
+    tooltipDelete: "Delete",
+    tooltipAttach: "Attach a file",
+    tooltipImageMode: "Image mode — generate an image with Agnes (or type /image)",
+    imgModeOn: "Image mode enabled",
+    imgModeOff: "Image mode disabled"
+  },
+  it: {
+    newChat: "Nuova chat", newChatTitle: "Nuova chat", search: "Cerca...", settings: "Impostazioni", appearance: "Aspetto",
+    placeholder: "Scrivi il tuo messaggio...", welcomeTitle: "Come posso aiutarti?", 
+    welcomeText: "Fai una domanda, chiedi codice, genera immagini... Prova <b>\"Disegnami un gatto\"</b> o clicca sul pulsante 🎨.",
+    card1T: "🎨 Genera un'immagine", card1D: "Gatto astronauta (Agnes)",
+    card2T: "Principi SOLID", card2D: "Spiegazioni con esempi JS",
+    card3T: "Algoritmo", card3D: "Palindromo più lungo in Python",
+    card4T: "Confronto", card4D: "React vs Vue vs Svelte",
+    today: "Oggi", yesterday: "Ieri", last7: "Ultimi 7 giorni", older: "Più vecchio",
+    emptySearch: "Nessun risultato", emptyChat: "Nessuna conversazione", noImages: "Nessuna immagine generata in questa conversazione.",
+    tabApi: "Chiavi API", tabGen: "Generazione", tabApp: "Aspetto", tabChat: "Chat", tabData: "Dati", tabShort: "Scorciatoie", tabAbout: "Informazioni",
+    apiDesc: "Le tue chiavi sono memorizzate localmente in questo browser. Testale per verificarne la validità.",
+    defined: "Definito", undefined: "Non definito", getKey: "Ottieni chiave", testBtn: "Test",
+    customProviders: "Provider personalizzati", addBtn: "+ Aggiungi", customDesc: "Aggiungi qualsiasi API compatibile con OpenAI.", noCustom: "Nessun provider personalizzato.",
+    genSys: "Prompt di sistema (personalità / istruzioni)", genSysHint: "Questo prompt viene aggiunto all'inizio di ogni conversazione.",
+    genTemp: "Temperatura (creatività)", genMax: "Token massimi",
+    appTheme: "Tema", appDark: "Scuro", appLight: "Chiaro", appSys: "Sistema", appAccent: "Colore d'accento", appCustomColor: "Colore personalizzato", appFont: "Dimensione testo", appBubble: "Larghezza fumetti", appCompact: "Modalità compatta",
+    chatOpts: "Opzioni di visualizzazione", chatReason: "Mostra il ragionamento", chatReasonHint: "Mostra il ragionamento interno dei modelli compatibili", chatTs: "Mostra data e ora", chatTsHint: "Ora di invio di ogni messaggio", chatScroll: "Scorrimento automatico in basso", chatScrollHint: "Scorre automaticamente alla fine del flusso", chatSound: "Notifica sonora", chatSoundHint: "Un piccolo suono al termine della risposta",
+    dataExport: "Esporta conversazioni", dataExportBtn: "📥 Esporta", dataImport: "Importa conversazioni", dataImportBtn: "📤 Importa", dataClear: "Cancella tutte le conversazioni", dataClearBtn: "Cancella tutto", dataKeys: "Ripristina chiavi API", dataKeysBtn: "Ripristina chiavi", dataReset: "Ripristina impostazioni", dataResetBtn: "Ripristina",
+    copy: "Copia", regen: "Rigenera", continueBtn: "Continua", edit: "Modifica",
+    reasoning: "Ragionamento", reasoningInProgress: "in corso", reasoningFinished: "terminato",
+    loading: "Caricamento...", loadError: "Errore di caricamento", loadImagesError: "Impossibile caricare le immagini. I messaggi di testo rimangono accessibili.",
+    imgModeActive: "Modalità immagine attiva", imgModeDesc: "la tua prossima richiesta genererà un'immagine Agnes", ratio: "Proporzioni", size: "Dimensione", cancel: "Annulla", describeImage: "🎨 Descrivi l'immagine da generare...",
+    customSettings: "Impostazioni personalizzate", baseUrl: "URL di base", modelsLabel: "Modelli",
+    cpName: "Nome", cpEndpoint: "Endpoint Chat", cpTestUrl: "URL di test", cpModels: "Modelli (separati da virgola)",
+    scToggle: "Attiva/disattiva barra laterale", scNew: "Nuova chat", scSettings: "Apri impostazioni", scExport: "Esporta conversazioni", scSend: "Invia messaggio", scNewLine: "Nuova riga", scImage: "Modalità immagine", scClose: "Chiudi finestre",
+    aboutCreator: "Creatore", aboutLink: "Vedi i miei progetti", confirmDelete: "Eliminare questa conversazione?",
+    aboutDesc: "DeepChat è un client di chat multi-provider che ti permette di chattare con diversi modelli AI (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) da un'unica interfaccia. Supporta streaming, ragionamento, generazione di immagini, rendering Markdown, evidenziazione della sintassi, allegati e molto altro. Tutti i dati sono memorizzati localmente nel tuo browser per la massima privacy.",
+    // === AJOUTS ===
+    inputHfModel: "ID modello HF",
+    settingsTitle: "Impostazioni",
+    galleryTitle: "Galleria immagini",
+    downloadImg: "Scarica",
+    enter: "Invio",
+    shiftEnter: "Shift + Invio",
+    escape: "Esc",
+    fetchModels: "🔄 Recupera modelli disponibili",
+    addModel: "+ Aggiungi un modello",
+    deleteBtn: "Elimina",
+    showMore: "Mostra di più",
+    showLess: "Mostra meno",
+    promptNotFound: "Prompt non trovato",
+    imgCount: "immagine(i)",
+    apiKeyMissingAgnes: "Chiave API Agnes mancante. Configurala nelle impostazioni.",
+    sysPromptPlaceholder: "Lascia vuoto per non inviare nulla...",
+    developedBy: "Sviluppato da",
+    presetDefault: "Predefinito",
+    presetConcise: "Conciso",
+    presetDeveloper: "Sviluppatore",
+    presetTeacher: "Pedagogo",
+    presetCreative: "Creativo",
+    dataExportDesc: "Scarica tutte le tue conversazioni in formato JSON (backup).",
+    dataImportDesc: "Ripristina le conversazioni da un file JSON.",
+    compactModeHint: "Riduce la spaziatura per mostrare più messaggi",
+    dataClearDesc: "Elimina definitivamente tutte le tue conversazioni.",
+    dataKeysDesc: "Elimina tutte le chiavi API salvate.",
+    dataResetDesc: "Ripristina le impostazioni predefinite.",
+    activateLabel: "Attiva",
+    tooltipRename: "Rinomina",
+    tooltipDelete: "Elimina",
+    tooltipAttach: "Allega un file",
+    tooltipImageMode: "Modalità immagine — genera un'immagine con Agnes (o digita /image)",
+    imgModeOn: "Modalità immagine attivata",
+    imgModeOff: "Modalità immagine disattivata"
+  },
+  tr: {
+    newChat: "Yeni sohbet", newChatTitle: "Yeni sohbet", search: "Ara...", settings: "Ayarlar", appearance: "Görünüm",
+    placeholder: "Mesajınızı yazın...", welcomeTitle: "Size nasıl yardımcı olabilirim?", 
+    welcomeText: "Soru sorun, kod isteyin, resim oluşturun... <b>\"Bana bir kedi çiz\"</b> yazmayı deneyin veya 🎨 butonuna tıklayın.",
+    card1T: "🎨 Resim oluştur", card1D: "Astronot kedi (Agnes)",
+    card2T: "SOLID İlkeleri", card2D: "JS örnekleriyle açıklamalar",
+    card3T: "Algoritma", card3D: "Python'da en uzun palindrom",
+    card4T: "Karşılaştırma", card4D: "React vs Vue vs Svelte",
+    today: "Bugün", yesterday: "Dün", last7: "Son 7 gün", older: "Daha eski",
+    emptySearch: "Sonuç yok", emptyChat: "Sohbet yok", noImages: "Bu sohbette oluşturulmuş resim yok.",
+    tabApi: "API Anahtarları", tabGen: "Oluşturma", tabApp: "Görünüm", tabChat: "Sohbet", tabData: "Veriler", tabShort: "Kısayollar", tabAbout: "Hakkında",
+    apiDesc: "Anahtarlarınız yalnızca bu tarayıcıda yerel olarak saklanır. Geçerliliğini test edin.",
+    defined: "Tanımlı", undefined: "Tanımlı değil", getKey: "Anahtar al", testBtn: "Test et",
+    customProviders: "Özel sağlayıcılar", addBtn: "+ Ekle", customDesc: "OpenAI uyumlu herhangi bir API ekleyin.", noCustom: "Özel sağlayıcı yok.",
+    genSys: "Sistem istemi (kişilik / talimatlar)", genSysHint: "Bu istem her sohbetin başına eklenir.",
+    genTemp: "Sıcaklık (yaratıcılık)", genMax: "Maksimum token",
+    appTheme: "Tema", appDark: "Koyu", appLight: "Açık", appSys: "Sistem", appAccent: "Vurgu rengi", appCustomColor: "Özel renk", appFont: "Metin boyutu", appBubble: "Balon genişliği", appCompact: "Kompakt mod",
+    chatOpts: "Görüntüleme seçenekleri", chatReason: "Akıl yürütmeyi göster", chatReasonHint: "Uyumlu modellerin iç akıl yürütmesini gösterir", chatTs: "Zaman damgasını göster", chatTsHint: "Her mesajın gönderilme saati", chatScroll: "Otomatik aşağı kaydır", chatScrollHint: "Akış sonunda otomatik olarak aşağı kaydırır", chatSound: "Ses bildirimi", chatSoundHint: "Yanıt bittiğinde küçük bir ses",
+    dataExport: "Sohbetleri dışa aktar", dataExportBtn: "📥 Dışa aktar", dataImport: "Sohbetleri içe aktar", dataImportBtn: "📤 İçe aktar", dataClear: "Tüm sohbetleri temizle", dataClearBtn: "Tümünü temizle", dataKeys: "API anahtarlarını sıfırla", dataKeysBtn: "Anahtarları sıfırla", dataReset: "Ayarları sıfırla", dataResetBtn: "Sıfırla",
+    copy: "Kopyala", regen: "Yeniden oluştur", continueBtn: "Devam et", edit: "Düzenle",
+    reasoning: "Akıl yürütme", reasoningInProgress: "devam ediyor", reasoningFinished: "tamamlandı",
+    loading: "Yükleniyor...", loadError: "Yükleme hatası", loadImagesError: "Resimler yüklenemedi. Metin mesajları erişilebilir durumda.",
+    imgModeActive: "Resim modu aktif", imgModeDesc: "bir sonraki isteğiniz bir Agnes resmi oluşturacak", ratio: "Oran", size: "Boyut", cancel: "İptal", describeImage: "🎨 Oluşturulacak resmi tanımlayın...",
+    customSettings: "Özel ayarlar", baseUrl: "Temel URL", modelsLabel: "Modeller",
+    cpName: "Ad", cpEndpoint: "Sohbet Uç Noktası", cpTestUrl: "Test URL'si", cpModels: "Modeller (virgülle ayrılmış)",
+    scToggle: "Kenar çubuğunu aç/kapat", scNew: "Yeni sohbet", scSettings: "Ayarları aç", scExport: "Sohbetleri dışa aktar", scSend: "Mesaj gönder", scNewLine: "Yeni satır", scImage: "Resim modu", scClose: "Modalları kapat",
+    aboutCreator: "Yaratıcı", aboutLink: "Projelerimi gör", confirmDelete: "Bu sohbet silinsin mi?",
+    aboutDesc: "DeepChat, farklı yapay zeka modelleri (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) ile tek bir arayüzden sohbet etmenizi sağlayan çok sağlayıcılı bir yapay zeka sohbet istemcisidir. Akış, akıl yürütme, resim oluşturma, Markdown işleme, sözdizimi vurgulama, ekler ve daha fazlasını destekler. Tüm veriler maksimum gizlilik için tarayıcınızda yerel olarak saklanır.",
+    // === AJOUTS ===
+    inputHfModel: "HF model kimliği",
+    settingsTitle: "Ayarlar",
+    galleryTitle: "Resim galerisi",
+    downloadImg: "İndir",
+    enter: "Enter",
+    shiftEnter: "Shift + Enter",
+    escape: "Esc",
+    fetchModels: "🔄 Mevcut modelleri getir",
+    addModel: "+ Model ekle",
+    deleteBtn: "Sil",
+    showMore: "Daha fazla göster",
+    showLess: "Daha az göster",
+    promptNotFound: "İstem bulunamadı",
+    imgCount: "resim",
+    apiKeyMissingAgnes: "Agnes API anahtarı eksik. Ayarlardan yapılandırın.",
+    sysPromptPlaceholder: "Hiçbir şey göndermemek için boş bırakın...",
+    developedBy: "Geliştiren",
+    presetDefault: "Varsayılan",
+    presetConcise: "Kısa",
+    presetDeveloper: "Geliştirici",
+    presetTeacher: "Eğitmen",
+    presetCreative: "Yaratıcı",
+    dataExportDesc: "Tüm sohbetlerinizi JSON formatında indirir (yedekleme).",
+    dataImportDesc: "Sohbetleri bir JSON dosyasından geri yükler.",
+    compactModeHint: "Daha fazla mesaj göstermek için boşlukları azaltır",
+    dataClearDesc: "Tüm sohbetlerinizi kalıcı olarak siler.",
+    dataKeysDesc: "Kayıtlı tüm API anahtarlarını siler.",
+    dataResetDesc: "Varsayılan ayarları geri yükler.",
+    activateLabel: "Etkinleştir",
+    tooltipRename: "Yeniden adlandır",
+    tooltipDelete: "Sil",
+    tooltipAttach: "Dosya ekle",
+    tooltipImageMode: "Resim modu — Agnes ile resim oluştur (veya /image yazın)",
+    imgModeOn: "Resim modu etkinleştirildi",
+    imgModeOff: "Resim modu devre dışı bırakıldı"
+  }
+};
+
+let currentLang = localStorage.getItem('deepchat_lang') || 'fr';
+
+function applyLanguage(lang) {
+  const t = translations[lang] || translations.fr;
+  const langSelect = $('languageSelect');
+  if (langSelect) langSelect.value = lang;
+
+  // --- SIDEBAR & CHAT ---
+  document.querySelector('#newChatBtn span').textContent = t.newChat;
+  $('searchInput').placeholder = t.search;
+  document.querySelector('#settingsBtn span').textContent = t.settings;
+  document.querySelector('#themeBtn span').textContent = t.appearance;
+  messageInput.placeholder = t.placeholder;
+
+  // --- TOPBAR & MODALES (Nouveau) ---
+  document.querySelector('.topbar-group input').placeholder = t.inputHfModel;
+  document.querySelector('#settingsModal h2').textContent = t.settingsTitle;
+  document.querySelector('#galleryModal h2').textContent = t.galleryTitle;
+  document.querySelector('#lbDownloadBtn').textContent = '⬇ ' + t.downloadImg;
+
+  // --- BANNIÈRE MODE IMAGE ---
+  const imgBanner = $('imageModeBanner');
+  if (imgBanner) {
+    imgBanner.querySelector('.mode-info span').innerHTML = `🎨 <strong>${t.imgModeActive}</strong> — ${t.imgModeDesc}`;
+    imgBanner.querySelector('label:nth-of-type(1)').childNodes[0].nodeValue = t.ratio + ' ';
+    imgBanner.querySelector('label:nth-of-type(2)').childNodes[0].nodeValue = t.size + ' ';
+    $('cancelImageModeBtn').textContent = t.cancel;
+  }
+
+  // --- BOUTONS D'ACTION DES MESSAGES ---
+  document.querySelectorAll('.action-btn').forEach(btn => {
+    if (btn.innerHTML.includes('Copier')) btn.innerHTML = btn.innerHTML.replace(/Copier/g, t.copy);
+    if (btn.innerHTML.includes('Régénérer')) btn.innerHTML = btn.innerHTML.replace(/Régénérer/g, t.regen);
+    if (btn.innerHTML.includes('Continuer')) btn.innerHTML = btn.innerHTML.replace(/Continuer/g, t.continueBtn);
+    if (btn.innerHTML.includes('Modifier')) btn.innerHTML = btn.innerHTML.replace(/Modifier/g, t.edit);
+  });
+
+  // --- MODALE PARAMETRES (Onglets) ---
+  const tabs = { 'api': t.tabApi, 'generation': t.tabGen, 'appearance': t.tabApp, 'chat': t.tabChat, 'data': t.tabData, 'shortcuts': t.tabShort, 'about': t.tabAbout };
+  Object.keys(tabs).forEach(key => {
+    const btn = document.querySelector(`.tab-btn[data-tab="${key}"]`);
+    if (btn) btn.textContent = tabs[key];
+  });
+
+  // --- ONGLET API (Textes généraux) ---
+  const apiTab = document.querySelector('.tab-content[data-tab="api"]');
+  if (apiTab) {
+    apiTab.querySelector('p').textContent = t.apiDesc;
+    apiTab.querySelector('h3').textContent = t.customProviders;
+    $('addCustomProviderBtn').textContent = t.addBtn;
+    apiTab.querySelectorAll('p')[1].textContent = t.customDesc;
+    
+    const cpForm = $('customProviderForm');
+    if (cpForm) {
+      cpForm.querySelector('#cpLabel').previousElementSibling.textContent = t.cpName;
+      cpForm.querySelector('#cpEndpoint').previousElementSibling.textContent = t.cpEndpoint;
+      cpForm.querySelector('#cpTestUrl').previousElementSibling.textContent = t.cpTestUrl;
+      cpForm.querySelector('#cpModels').previousElementSibling.textContent = t.cpModels;
+      $('cancelCustomProviderBtn').textContent = t.cancel;
+      $('saveCustomProviderBtn').textContent = t.addBtn;
+    }
+  }
+
+  // --- ONGLET GÉNÉRATION ---
+  const genTab = document.querySelector('.tab-content[data-tab="generation"]');
+  if (genTab) {
+    genTab.querySelectorAll('.form-label')[0].textContent = t.genSys;
+    genTab.querySelector('.form-hint').textContent = t.genSysHint;
+    genTab.querySelectorAll('.form-label')[1].textContent = t.genTemp;
+    genTab.querySelectorAll('.form-label')[5].textContent = t.genMax;
+    
+    // 👇 AJOUTS ICI 👇
+    $('systemPromptInput').placeholder = t.sysPromptPlaceholder;
+    const presets = genTab.querySelectorAll('.preset-btn');
+    if (presets.length >= 5) {
+      presets[0].textContent = t.presetDefault;
+      presets[1].textContent = t.presetConcise;
+      presets[2].textContent = t.presetDeveloper;
+      presets[3].textContent = t.presetTeacher;
+      presets[4].textContent = t.presetCreative;
+    }
+  }
+
+  // --- ONGLET APPARENCE ---
+  const appTab = document.querySelector('.tab-content[data-tab="appearance"]');
+  if (appTab) {
+    appTab.querySelectorAll('.form-label')[0].textContent = t.appTheme;
+    appTab.querySelector('.theme-option[data-theme="dark"] span').textContent = t.appDark;
+    appTab.querySelector('.theme-option[data-theme="light"] span').textContent = t.appLight;
+    appTab.querySelector('.theme-option[data-theme="system"] span').textContent = t.appSys;
+    appTab.querySelectorAll('.form-label')[1].textContent = t.appAccent;
+    appTab.querySelector('div[style*="display:flex"] span').textContent = t.appCustomColor;
+    appTab.querySelectorAll('.form-label')[2].textContent = t.appFont;
+    appTab.querySelectorAll('.form-label')[3].textContent = t.appBubble;
+    appTab.querySelectorAll('.form-label')[4].textContent = t.appCompact;
+    
+    const compactToggleLabel = appTab.querySelector('.toggle-label');
+    if (compactToggleLabel) {
+      compactToggleLabel.innerHTML = `${t.activateLabel}<small>${t.compactModeHint}</small>`;
+    }
+  }
+
+  // --- ONGLET CHAT ---
+  const chatTab = document.querySelector('.tab-content[data-tab="chat"]');
+  if (chatTab) {
+    chatTab.querySelector('.form-label').textContent = t.chatOpts;
+    const toggles = chatTab.querySelectorAll('.toggle-label');
+    toggles[0].innerHTML = `${t.chatReason}<small>${t.chatReasonHint}</small>`;
+    toggles[1].innerHTML = `${t.chatTs}<small>${t.chatTsHint}</small>`;
+    toggles[2].innerHTML = `${t.chatScroll}<small>${t.chatScrollHint}</small>`;
+    toggles[3].innerHTML = `${t.chatSound}<small>${t.chatSoundHint}</small>`;
+  }
+
+  // --- ONGLET DONNÉES ---
+  const dataTab = document.querySelector('.tab-content[data-tab="data"]');
+  if (dataTab) {
+    const zones = dataTab.querySelectorAll('.danger-zone');
+    
+    zones[0].querySelector('h4').textContent = t.dataExport;
+    zones[0].querySelector('p').textContent = t.dataExportDesc;
+    zones[0].querySelector('button').textContent = t.dataExportBtn;
+    
+    zones[1].querySelector('h4').textContent = t.dataImport;
+    zones[1].querySelector('p').textContent = t.dataImportDesc;
+    zones[1].querySelector('button').textContent = t.dataImportBtn;
+
+    zones[2].querySelector('h4').textContent = t.dataClear;
+    zones[2].querySelector('p').textContent = t.dataClearDesc; 
+    zones[2].querySelector('button').textContent = t.dataClearBtn;
+
+    zones[3].querySelector('h4').textContent = t.dataKeys;
+    zones[3].querySelector('p').textContent = t.dataKeysDesc; 
+    zones[3].querySelector('button').textContent = t.dataKeysBtn;
+
+    zones[4].querySelector('h4').textContent = t.dataReset;
+    zones[4].querySelector('p').textContent = t.dataResetDesc; 
+    zones[4].querySelector('button').textContent = t.dataResetBtn;
+  }
+
+  // --- ONGLET RACCOURCIS ---
+  const scList = document.querySelectorAll('.shortcut-list li span');
+  if (scList.length >= 8) {
+    scList[0].textContent = t.scToggle; scList[1].textContent = t.scNew; scList[2].textContent = t.scSettings;
+    scList[3].textContent = t.scExport; scList[4].textContent = t.scSend; scList[5].textContent = t.scNewLine;
+    scList[6].textContent = t.scImage; scList[7].textContent = t.scClose;
+  }
+  const kbdList = document.querySelectorAll('.shortcut-list kbd');
+  if (kbdList.length >= 14) {
+    kbdList[8].textContent  = t.enter;
+    kbdList[9].textContent  = t.shiftEnter.split(' + ')[0];
+    kbdList[10].textContent = t.enter;
+    kbdList[13].textContent = t.escape;
+  }
+
+  // --- ONGLET À PROPOS ---
+  const aboutTab = document.querySelector('.tab-content[data-tab="about"]');
+  if (aboutTab) {
+    aboutTab.querySelectorAll('p')[0].textContent = t.aboutDesc;
+    aboutTab.querySelectorAll('h3')[1].textContent = t.aboutCreator;
+    aboutTab.querySelector('a').textContent = t.aboutLink;
+    
+    // 👇 AJOUTS ICI 👇
+    const devP = aboutTab.querySelectorAll('p')[1];
+    if (devP) {
+      devP.innerHTML = `${t.developedBy} <strong>Bstudio136</strong>.<br><a href="https://bstudio136.github.io/mylink/" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:underline;">${t.aboutLink}</a>`;
+    }
+  }
+
+  // 👇 NOUVEAU : INFOBULLES (TOOLTIPS) 👇
+  $('uploadBtn').title = t.tooltipAttach;
+  $('imageBtn').title = t.tooltipImageMode;
+  // 👆 FIN NOUVEAU 👆
+
+  // --- RAFRAÎCHISSEMENTS DYNAMIQUES ---
+  renderConversations();
+  if (!conversations[currentConvId] || conversations[currentConvId].messages.length === 0) {
+    messagesInner.innerHTML = '';
+    renderWelcome();
+  }
+
+  if (settingsModal.classList.contains('open')) {
+    renderProviderKeys();
+    renderCustomProviders();
+  }
+}
+
+// Écouter le changement du select
+document.addEventListener('DOMContentLoaded', () => {
+  const langSelect = $('languageSelect');
+  if (langSelect) {
+    langSelect.value = currentLang;
+    langSelect.addEventListener('change', (e) => {
+      currentLang = e.target.value;
+      localStorage.setItem('deepchat_lang', currentLang);
+      applyLanguage(currentLang);
+    });
+  }
+});
+
 (function init() {
   checkMobile();
   if (localStorage.getItem('deepchat_sidebar') === '1') document.body.classList.add('sidebar-collapsed');
+  applyLanguage(currentLang); 
   applyAllAppearance();
   initProviderSelect();
   updateImageModeUI();
@@ -5519,7 +6010,7 @@ window.addEventListener('beforeunload', () => {
       await hydrateConversations();
     } catch (e) {
       console.error('[init] hydrate failed:', e);
-      showToast('Impossible de charger les images. Les messages texte restent accessibles.', 'error');
+      showToast((translations[currentLang] || translations.fr).loadImagesError, 'error');
     }
     isHydrating = false;
 
