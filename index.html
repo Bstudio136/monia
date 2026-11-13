@@ -458,9 +458,10 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   position: relative;
   margin: 12px 0;
   border-radius: 8px;
-  overflow: hidden;
   background: var(--code-bg);
   border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
 }
 .bubble pre {
   background: var(--code-bg) !important;
@@ -504,12 +505,23 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
 [data-theme="light"] .hljs-built_in, [data-theme="light"] .hljs-title.class_, [data-theme="light"] .hljs-class .hljs-title { color: #c18401; }
 
 .code-block-wrapper .code-actions {
-  position: absolute;
-  top: 8px; right: 8px;
+  position: sticky;
+  top: 8px;
+  align-self: flex-end;
   display: flex; gap: 4px;
   opacity: 0;
   transition: opacity 0.2s;
   z-index: 5;
+  margin-top: 8px;
+  margin-right: 8px;
+  margin-bottom: -34px;
+  padding: 2px;
+  background: rgba(26, 29, 35, 0.7);
+  backdrop-filter: blur(4px);
+  border-radius: 6px;
+}
+[data-theme="light"] .code-block-wrapper .code-actions {
+  background: rgba(246, 248, 250, 0.7);
 }
 .code-block-wrapper:hover .code-actions { opacity: 1; }
 .code-action-btn {
@@ -1636,6 +1648,205 @@ body.compact .reasoning-content { max-height: 250px; }
   .welcome-card { padding: 8px 10px; }
   .input-wrapper textarea { max-height: 80px; }
   .modal { height: 100dvh; }
+}
+/* ============================================================
+   AMÉLIORATIONS RESPONSIVE MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* --- Tables dans les messages : scroll horizontal --- */
+  .bubble table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+  .bubble th, .bubble td {
+    padding: 5px 8px;
+    white-space: nowrap;
+  }
+
+  /* --- Typographie messages --- */
+  .bubble h1 { font-size: 16px; margin: 10px 0 5px; }
+  .bubble h2 { font-size: 15px; margin: 10px 0 5px; }
+  .bubble h3 { font-size: 14px; margin: 8px 0 4px; }
+  .bubble ul, .bubble ol { margin: 6px 0 6px 16px; }
+  .bubble blockquote { padding-left: 8px; margin: 6px 0; }
+
+  /* --- Code blocks : scroll horizontal propre --- */
+  .bubble pre {
+    font-size: 12px;
+    padding: 10px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .code-block-wrapper { margin: 8px 0; }
+  .code-action-btn { padding: 4px 7px; font-size: 10.5px; }
+  .code-action-btn svg { width: 11px; height: 11px; }
+
+  /* --- Actions de messages : cibles tactiles --- */
+  .message-actions {
+    flex-wrap: wrap;
+    gap: 2px;
+    padding: 0 2px;
+  }
+  .action-btn {
+    min-height: 32px;
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .action-btn svg { width: 14px; height: 14px; }
+
+  /* --- Contenu utilisateur long --- */
+  .msg-content-wrap { max-height: 120px; }
+  .msg-toggle-btn {
+    font-size: 12px;
+    padding: 5px 14px;
+    min-height: 28px;
+  }
+
+  /* --- Multi-images utilisateur : ne déborde plus --- */
+  .user-image-preview {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .user-image-preview img { margin: 0; }
+
+  /* --- Sidebar : items tactiles --- */
+  .conv-item { min-height: 40px; }
+  .conv-item-delete, .conv-item-edit {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+  }
+  .footer-btn { min-height: 42px; }
+
+  /* --- Boutons topbar : plus gros --- */
+  .topbar-right .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .topbar-right .icon-btn svg { width: 18px; height: 18px; }
+
+  /* --- Input area --- */
+  .upload-btn, .send-btn {
+    min-width: 36px;
+    min-height: 36px;
+  }
+  .input-wrapper { padding: 5px 6px; }
+  .input-wrapper textarea { padding: 6px 0; line-height: 1.45; }
+
+  /* --- Compteur tokens discret --- */
+  .context-bar-wrap { max-width: 70px; }
+
+  /* --- Image générée --- */
+  .generated-image-container {
+    max-width: 100%;
+    border-radius: 10px;
+  }
+
+  /* --- Welcome : pas de transform hover sur tactile --- */
+  .welcome-card:hover { transform: none; }
+  .welcome-card:active { border-color: var(--accent); }
+
+  /* --- Tabs modaux : momentum iOS --- */
+  .modal-tabs {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  /* --- Scroll-bottom-btn repositionné --- */
+  .scroll-bottom-btn {
+    bottom: 12px;
+    right: 12px;
+    width: 42px;
+    height: 42px;
+  }
+}
+
+/* --- Très petits écrans (< 360px) --- */
+@media (max-width: 360px) {
+  .bubble { font-size: 14px; padding: 9px 11px; }
+  .avatar { width: 24px; height: 24px; font-size: 10px; }
+  .message-body { max-width: calc(100% - 32px); }
+  .welcome h1 { font-size: 17px; }
+  .welcome-icon { width: 46px; height: 46px; font-size: 20px; }
+  .welcome-card { padding: 10px; font-size: 12px; }
+  .welcome-card strong { font-size: 12.5px; }
+  .file-chip.image-chip { width: 44px; height: 44px; }
+  .upload-btn, .send-btn {
+    min-width: 34px;
+    min-height: 34px;
+  }
+  .action-btn { padding: 5px 8px; font-size: 11.5px; }
+}
+
+/* --- Tablettes / grand mobile en paysage --- */
+@media (min-width: 481px) and (max-width: 768px) {
+  .welcome-grid { grid-template-columns: repeat(2, 1fr); }
+  .topbar-group select { max-width: 200px; }
+}
+/* --- APERÇU PLEIN ÉCRAN --- */
+.code-preview-container {
+  display: none;
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+}
+
+.code-preview-container.active {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 99999; /* Passe au-dessus de tout */
+}
+
+.code-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.code-preview-header span {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.code-preview-close {
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.code-preview-close:hover {
+  opacity: 0.8;
+}
+
+.code-preview-container iframe {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: white;
 }
 </style>
 </head>
@@ -2848,7 +3059,11 @@ function setTheme(t) {
 }
 
 function renderMarkdown(el, text, skipHighlight=false) {
-  const rawHTML = marked.parse(text);
+  let cleanText = text.replace(/```([a-zA-Z0-9]+)\s+/g, '```$1\n');
+  cleanText = cleanText.replace(/([^\n])```/g, '$1\n```');
+
+  const rawHTML = marked.parse(cleanText);
+  
   if (window.DOMPurify) {
     el.innerHTML = DOMPurify.sanitize(rawHTML);
   } else {
@@ -2856,7 +3071,9 @@ function renderMarkdown(el, text, skipHighlight=false) {
     el.textContent = text;
     return;
   }
+  
   if (skipHighlight) return;
+  
   if (window.hljs) {
     el.querySelectorAll('pre code').forEach(codeEl => {
       try {
@@ -2877,15 +3094,23 @@ function renderMarkdown(el, text, skipHighlight=false) {
         codeEl.classList.add('hljs');
       } catch (err) { console.warn('[DeepChat] Highlight error:', err); }
     });
-  } else { console.warn('[DeepChat] hljs not loaded — check CDN'); }
+  } else { 
+    console.warn('[DeepChat] hljs not loaded — check CDN'); 
+  }
 
   el.querySelectorAll('pre').forEach(pre => {
+    const codeEl = pre.querySelector('code');
+    if (!codeEl) return;
+    const codeText = codeEl.textContent || '';
+
     const wrapper = document.createElement('div');
     wrapper.className = 'code-block-wrapper';
     pre.parentNode.insertBefore(wrapper, pre);
-    wrapper.appendChild(pre);
+    
     const toolbar = document.createElement('div');
     toolbar.className = 'code-actions';
+
+    // 1. Bouton Retour à la ligne
     const wrapBtn = document.createElement('button');
     wrapBtn.className = 'code-action-btn';
     wrapBtn.title = 'Retour à la ligne';
@@ -2895,13 +3120,13 @@ function renderMarkdown(el, text, skipHighlight=false) {
       wrapBtn.classList.toggle('active', on);
     };
     toolbar.appendChild(wrapBtn);
+
+    // 2. Bouton Télécharger
     const dlBtn = document.createElement('button');
     dlBtn.className = 'code-action-btn';
     dlBtn.title = 'Télécharger';
     dlBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
     dlBtn.onclick = () => {
-      const codeEl = pre.querySelector('code');
-      const codeText = codeEl.textContent;
       let ext = 'txt';
       const m = (codeEl.className || '').match(/language-(\w+)/);
       if (m) ext = m[1];
@@ -2914,12 +3139,69 @@ function renderMarkdown(el, text, skipHighlight=false) {
       URL.revokeObjectURL(url);
     };
     toolbar.appendChild(dlBtn);
+
+    // 3. Bouton Aperçu (HTML uniquement)
+    const langMatch = (codeEl.className || '').match(/language-([\w-]+)/);
+    const currentLang = langMatch ? langMatch[1].toLowerCase() : '';
+    
+    if (['html', 'htm', 'svg', 'xml'].includes(currentLang)) {
+      const previewBtn = document.createElement('button');
+      previewBtn.className = 'code-action-btn';
+      previewBtn.title = 'Voir le rendu en plein écran';
+      previewBtn.innerHTML = '👁️ Aperçu';
+      
+      const previewContainer = document.createElement('div');
+      previewContainer.className = 'code-preview-container';
+      
+      const previewHeader = document.createElement('div');
+      previewHeader.className = 'code-preview-header';
+      previewHeader.innerHTML = `<span>👁️ Aperçu du site</span>
+        <button class="code-preview-close">Fermer l'aperçu</button>`;
+      
+      const iframe = document.createElement('iframe');
+      iframe.sandbox = 'allow-scripts allow-same-origin allow-modals allow-forms allow-popups';
+      
+      previewContainer.appendChild(previewHeader);
+      previewContainer.appendChild(iframe);
+      
+      previewBtn.onclick = (e) => {
+        e.stopPropagation();
+        const isActive = previewContainer.classList.contains('active');
+        
+        if (isActive) {
+          previewContainer.classList.remove('active');
+          wrapper.appendChild(previewContainer); // On remet l'aperçu à sa place d'origine
+          previewBtn.classList.remove('active');
+          previewBtn.innerHTML = '👁️ Aperçu';
+          iframe.srcdoc = ''; // On vide l'iframe
+        } else {
+          previewContainer.classList.add('active');
+          document.body.appendChild(previewContainer); // ✨ L'ASTUCE : On le déplace tout en haut de la page
+          iframe.srcdoc = codeText; 
+          previewBtn.classList.add('active');
+          previewBtn.innerHTML = '👁️ Masquer';
+        }
+      };
+      
+      previewHeader.querySelector('.code-preview-close').onclick = (e) => {
+        e.stopPropagation();
+        previewContainer.classList.remove('active');
+        wrapper.appendChild(previewContainer); // On remet l'aperçu à sa place d'origine
+        previewBtn.classList.remove('active');
+        previewBtn.innerHTML = '👁️ Aperçu';
+        iframe.srcdoc = ''; 
+      };
+      
+      toolbar.appendChild(previewBtn);
+      wrapper.appendChild(previewContainer);
+    }
+
+    // 4. Bouton Copier
     const copyBtn = document.createElement('button');
     copyBtn.className = 'code-action-btn';
     copyBtn.title = 'Copier';
     copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copier';
     copyBtn.onclick = () => {
-      const codeText = pre.querySelector('code').textContent;
       const doCopy = () => {
         copyBtn.innerHTML = '✅ Copié !';
         copyBtn.classList.add('copied');
@@ -2949,7 +3231,10 @@ function renderMarkdown(el, text, skipHighlight=false) {
       }
     };
     toolbar.appendChild(copyBtn);
+
+    // L'ORDRE EST IMPORTANT ICI
     wrapper.appendChild(toolbar);
+    wrapper.appendChild(pre);
   });
 
   el.querySelectorAll('img').forEach(img => {
@@ -4887,6 +5172,33 @@ $('collapseBtn').addEventListener('click', () => {
 $('openSidebarBtn').addEventListener('click', () => document.body.classList.add('sidebar-mobile-open'));
 backdrop.addEventListener('click', () => document.body.classList.remove('sidebar-mobile-open'));
 
+// ===== SWIPE POUR FERMER LE SIDEBAR (mobile) =====
+let touchStartX = 0;
+let touchCurrentX = 0;
+const sidebarEl = $('sidebar');
+
+sidebarEl.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchCurrentX = touchStartX;
+  sidebarEl.style.transition = 'none';
+}, { passive: true });
+
+sidebarEl.addEventListener('touchmove', e => {
+  if (!document.body.classList.contains('sidebar-mobile-open')) return;
+  touchCurrentX = e.touches[0].clientX;
+  const dx = touchCurrentX - touchStartX;
+  if (dx < 0) {
+    sidebarEl.style.transform = `translateX(${dx}px)`;
+  }
+}, { passive: true });
+
+sidebarEl.addEventListener('touchend', () => {
+  const dx = touchCurrentX - touchStartX;
+  sidebarEl.style.transition = '';
+  sidebarEl.style.transform = '';
+  if (dx < -60) document.body.classList.remove('sidebar-mobile-open');
+}, { passive: true });
+
 searchInput.addEventListener('input', renderConversations);
 $('settingsBtn').addEventListener('click', openSettings);
 $('themeBtn').addEventListener('click', () => { openSettings(); document.querySelector('.tab-btn[data-tab="appearance"]').click(); });
@@ -4960,7 +5272,18 @@ document.addEventListener('keydown', (e) => {
   if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); newConversation(); }
   if (mod && e.key === ',') { e.preventDefault(); openSettings(); }
   if (mod && e.key.toLowerCase() === 'e') { e.preventDefault(); exportConversations(); }
-  if (e.key === 'Escape') { closeSettings(); document.body.classList.remove('sidebar-mobile-open'); $('galleryModal').classList.remove('open'); }
+  if (e.key === 'Escape') { 
+    closeSettings(); 
+    document.body.classList.remove('sidebar-mobile-open'); 
+    $('galleryModal').classList.remove('open'); 
+    
+    // Ferme l'aperçu de code si ouvert
+    const activePreview = document.querySelector('.code-preview-container.active');
+    if (activePreview) {
+      const btnClose = activePreview.querySelector('.code-preview-close');
+      if (btnClose) btnClose.click();
+    }
+  }
 });
 
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
