@@ -2310,16 +2310,6 @@ const DEFAULT_PROVIDERS = {
     apiKeyUrl: 'https://aistudio.google.com/apikey'
   },
 
-  huggingface: {
-    label: 'Hugging Face',
-    endpoint: 'https://router.huggingface.co/v1/chat/completions',
-    models: [],
-    format: 'openai',
-    testUrl: 'https://huggingface.co/api/whoami-v2',
-    testType: 'bearer',
-    apiKeyUrl: 'https://huggingface.co/settings/tokens'
-  },
-
   openrouter: {
     label: 'OpenRouter',
     endpoint: 'https://openrouter.ai/api/v1/chat/completions',
@@ -2346,40 +2336,6 @@ const DEFAULT_PROVIDERS = {
     apiKeyUrl: 'https://tokenharbor.ai/dashboard'
   },
 
-  minimax: {
-    label: 'MiniMax',
-    endpoint: 'https://api.minimax.io/v1/chat/completions',
-    models: ['MiniMax-M2.7', 'MiniMax-M2.5'],
-    format: 'openai',
-    testUrl: 'https://api.minimax.io/v1/models',
-    testType: 'bearer',
-    apiKeyUrl: 'https://platform.minimax.io'
-  },
-
-  replicate: {
-    label: 'Replicate',
-    endpoint: 'https://openai-compat.replicate.com/v1/chat/completions',
-    models: [
-      'meta/meta-llama-3.1-405b-instruct',
-      'meta/meta-llama-3.1-70b-instruct',
-      'mistralai/mixtral-8x7b-instruct-v0.1',
-      'deepseek-ai/deepseek-r1'
-    ],
-    format: 'openai',
-    testUrl: 'https://openai-compat.replicate.com/v1/models',
-    testType: 'bearer',
-    apiKeyUrl: 'https://replicate.com/account/api-tokens'
-  },
-
-  elevenlabs: {
-    label: 'ElevenLabs',
-    endpoint: 'https://api.elevenlabs.io/v1/chat/completions',
-    models: ['eleven_multilingual_v2', 'eleven_v4', 'eleven_v3', 'eleven_flash_v2_5'],
-    format: 'openai',
-    testUrl: 'https://api.elevenlabs.io/v1/models',
-    testType: 'bearer',
-    apiKeyUrl: 'https://elevenlabs.io/app/settings/api-keys'
-  }
 };
 
 let customProviders = JSON.parse(localStorage.getItem('deepchat_custom_providers') || '[]');
