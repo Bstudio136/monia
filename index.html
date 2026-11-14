@@ -3691,6 +3691,7 @@ const MODEL_DESCRIPTIONS = {
   // Groq
   'openai/gpt-oss-120b': 'Modèle open-source massif de 120B. Excellent pour le code et le raisonnement complexe.',
   'openai/gpt-oss-20b': 'Version plus légère et ultra-rapide du modèle GPT-OSS.',
+  'openai/gpt-oss-safeguard-20b': 'Modèle GPT-OSS 20B spécialisé dans la sécurité et la modération (safeguard).',
   'qwen/qwen3.8-27b': 'Modèle Qwen 3.8B. Très efficace pour le code et les mathématiques.',
   'llama-3.3-70b-versatile': 'Le célèbre Llama 3.3 70B. Polyvalent, intelligent et très rapide sur Groq.',
   'llama-3.1-8b-instant': 'Modèle Llama 3.1 8B. Ultra rapide, idéal pour les conversations simples.',
@@ -4136,7 +4137,7 @@ async function generateImage(prompt, ratio, size, signal) {
     }
     const cleanPrompt = prompt
         .replace(IMAGE_SLASH_REGEX, '')
-        .replace(/^(dessine|génére une image|montre moi|image de)\s*/gi, '')
+        .replace(/^(dessine|génère une image|montre moi|image de)\s*/gi, '')
         .trim() || prompt;
     const finalRatio = ratio || imageRatio || '1:1';
     const finalSize = size || imageSize || '1024x1024';
@@ -6364,6 +6365,7 @@ const translations = {
       'agnes-video-2.5-flash': 'Spécialisé dans la génération de vidéos.',
       'openai/gpt-oss-120b': 'Modèle open-source massif de 120B. Excellent pour le code et le raisonnement complexe.',
       'openai/gpt-oss-20b': 'Version plus légère et ultra-rapide du modèle GPT-OSS.',
+      'openai/gpt-oss-safeguard-20b': 'Modèle GPT-OSS 20B spécialisé dans la sécurité et la modération (safeguard).',
       'qwen/qwen3.8-27b': 'Modèle Qwen 3.8B. Très efficace pour le code et les mathématiques.',
       'llama-3.3-70b-versatile': 'Le célèbre Llama 3.3 70B. Polyvalent, intelligent et très rapide sur Groq.',
       'llama-3.1-8b-instant': 'Modèle Llama 3.1 8B. Ultra rapide, idéal pour les conversations simples.',
@@ -6455,6 +6457,7 @@ const translations = {
       'agnes-video-2.5-flash': 'Specialized in video generation.',
       'openai/gpt-oss-120b': 'Massive 120B open-source model. Excellent for code and complex reasoning.',
       'openai/gpt-oss-20b': 'Lighter and ultra-fast version of the GPT-OSS model.',
+      'openai/gpt-oss-safeguard-20b': 'GPT-OSS 20B model specialized in safety and content moderation (safeguard).',
       'qwen/qwen3.8-27b': 'Qwen 3.8B model. Very effective for code and math.',
       'llama-3.3-70b-versatile': 'The famous Llama 3.3 70B. Versatile, smart, and very fast on Groq.',
       'llama-3.1-8b-instant': 'Llama 3.1 8B model. Ultra-fast, ideal for simple conversations.',
@@ -6546,6 +6549,7 @@ const translations = {
       'agnes-video-2.5-flash': 'Specializzato nella generazione di video.',
       'openai/gpt-oss-120b': 'Modello open-source massiccio da 120B. Eccellente per codice e ragionamento complesso.',
       'openai/gpt-oss-20b': 'Versione più leggera e ultra-veloce del modello GPT-OSS.',
+      'openai/gpt-oss-safeguard-20b': 'Modello GPT-OSS 20B specializzato in sicurezza e moderazione (safeguard).',
       'qwen/qwen3.8-27b': 'Modello Qwen 3.8B. Molto efficace per codice e matematica.',
       'llama-3.3-70b-versatile': 'Il famoso Llama 3.3 70B. Versatile, intelligente e molto veloce su Groq.',
       'llama-3.1-8b-instant': 'Modello Llama 3.1 8B. Ultra-veloce, ideale per conversazioni semplici.',
@@ -6637,6 +6641,7 @@ const translations = {
       'agnes-video-2.5-flash': 'Video oluşturma konusunda uzmanlaşmıştır.',
       'openai/gpt-oss-120b': 'Devasa 120B açık kaynak modeli. Kod ve karmaşık akıl yürütme için mükemmel.',
       'openai/gpt-oss-20b': 'GPT-OSS modelinin daha hafif ve ultra hızlı sürümü.',
+      'openai/gpt-oss-safeguard-20b': 'Güvenlik ve içerik moderasyonu (safeguard) konusunda uzmanlaşmış GPT-OSS 20B modeli.',
       'qwen/qwen3.8-27b': 'Qwen 3.8B modeli. Kod ve matematik için çok etkili.',
       'llama-3.3-70b-versatile': 'Ünlü Llama 3.3 70B. Groq üzerinde çok yönlü, akıllı ve çok hızlı.',
       'llama-3.1-8b-instant': 'Llama 3.1 8B modeli. Ultra hızlı, basit sohbetler için ideal.',
