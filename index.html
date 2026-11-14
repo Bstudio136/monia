@@ -6430,6 +6430,9 @@ const translations = {
     dataClearDesc: "Supprime définitivement toutes vos conversations.",
     dataKeysDesc: "Supprime toutes les clés API enregistrées.",
     dataResetDesc: "Restaure les paramètres par défaut.",
+    storageOptions: "Options de stockage",
+    idbLabel: "Stockage étendu (IndexedDB)",
+    idbHint: "Permet de stocker plusieurs Go de conversations et d'images (recommandé)",
     activateLabel: "Activer",
     tooltipRename: "Renommer",
     tooltipDelete: "Supprimer",
@@ -6521,6 +6524,9 @@ const translations = {
     dataClearDesc: "Permanently deletes all your conversations.",
     dataKeysDesc: "Deletes all saved API keys.",
     dataResetDesc: "Restores default settings.",
+    storageOptions: "Storage options",
+    idbLabel: "Extended storage (IndexedDB)",
+    idbHint: "Allows storing several GB of conversations and images (recommended)",
     activateLabel: "Enable",
     tooltipRename: "Rename",
     tooltipDelete: "Delete",
@@ -6612,6 +6618,9 @@ const translations = {
     dataClearDesc: "Elimina definitivamente tutte le tue conversazioni.",
     dataKeysDesc: "Elimina tutte le chiavi API salvate.",
     dataResetDesc: "Ripristina le impostazioni predefinite.",
+    storageOptions: "Opzioni di archiviazione",
+    idbLabel: "Archiviazione estesa (IndexedDB)",
+    idbHint: "Consente di memorizzare diversi GB di conversazioni e immagini (consigliato)",
     activateLabel: "Attiva",
     tooltipRename: "Rinomina",
     tooltipDelete: "Elimina",
@@ -6703,6 +6712,9 @@ const translations = {
     dataClearDesc: "Tüm sohbetlerinizi kalıcı olarak siler.",
     dataKeysDesc: "Kayıtlı tüm API anahtarlarını siler.",
     dataResetDesc: "Varsayılan ayarları geri yükler.",
+    storageOptions: "Depolama seçenekleri",
+    idbLabel: "Genişletilmiş depolama (IndexedDB)",
+    idbHint: "Birkaç GB konuşma ve resim depolamaya olanak tanır (önerilir)",
     activateLabel: "Etkinleştir",
     tooltipRename: "Yeniden adlandır",
     tooltipDelete: "Sil",
@@ -6852,31 +6864,43 @@ function applyLanguage(lang) {
     toggles[3].innerHTML = `${t.chatSound}<small>${t.chatSoundHint}</small>`;
   }
 
-  // --- ONGLET DONNÉES ---
-  const dataTab = document.querySelector('.tab-content[data-tab="data"]');
-  if (dataTab) {
-    const zones = dataTab.querySelectorAll('.danger-zone');
-    
-    zones[0].querySelector('h4').textContent = t.dataExport;
-    zones[0].querySelector('p').textContent = t.dataExportDesc;
-    zones[0].querySelector('button').textContent = t.dataExportBtn;
-    
-    zones[1].querySelector('h4').textContent = t.dataImport;
-    zones[1].querySelector('p').textContent = t.dataImportDesc;
-    zones[1].querySelector('button').textContent = t.dataImportBtn;
+// --- ONGLET DONNÉES ---
+const dataTab = document.querySelector('.tab-content[data-tab="data"]');
+if (dataTab) {
+  // 👇 NOUVEAU : Section "Options de stockage" (form-group au-dessus des danger-zones)
+  const storageFormGroup = dataTab.querySelector('.form-group');
+  if (storageFormGroup) {
+    const storageLabel = storageFormGroup.querySelector('.form-label');
+    if (storageLabel) storageLabel.textContent = t.storageOptions;
 
-    zones[2].querySelector('h4').textContent = t.dataClear;
-    zones[2].querySelector('p').textContent = t.dataClearDesc; 
-    zones[2].querySelector('button').textContent = t.dataClearBtn;
-
-    zones[3].querySelector('h4').textContent = t.dataKeys;
-    zones[3].querySelector('p').textContent = t.dataKeysDesc; 
-    zones[3].querySelector('button').textContent = t.dataKeysBtn;
-
-    zones[4].querySelector('h4').textContent = t.dataReset;
-    zones[4].querySelector('p').textContent = t.dataResetDesc; 
-    zones[4].querySelector('button').textContent = t.dataResetBtn;
+    const idbToggleLabel = storageFormGroup.querySelector('.toggle-label');
+    if (idbToggleLabel) {
+      idbToggleLabel.innerHTML = `${t.idbLabel}<small>${t.idbHint}</small>`;
+    }
   }
+
+  const zones = dataTab.querySelectorAll('.danger-zone');
+  
+  zones[0].querySelector('h4').textContent = t.dataExport;
+  zones[0].querySelector('p').textContent = t.dataExportDesc;
+  zones[0].querySelector('button').textContent = t.dataExportBtn;
+  
+  zones[1].querySelector('h4').textContent = t.dataImport;
+  zones[1].querySelector('p').textContent = t.dataImportDesc;
+  zones[1].querySelector('button').textContent = t.dataImportBtn;
+
+  zones[2].querySelector('h4').textContent = t.dataClear;
+  zones[2].querySelector('p').textContent = t.dataClearDesc; 
+  zones[2].querySelector('button').textContent = t.dataClearBtn;
+
+  zones[3].querySelector('h4').textContent = t.dataKeys;
+  zones[3].querySelector('p').textContent = t.dataKeysDesc; 
+  zones[3].querySelector('button').textContent = t.dataKeysBtn;
+
+  zones[4].querySelector('h4').textContent = t.dataReset;
+  zones[4].querySelector('p').textContent = t.dataResetDesc; 
+  zones[4].querySelector('button').textContent = t.dataResetBtn;
+}
 
   // --- ONGLET RACCOURCIS ---
   const scList = document.querySelectorAll('.shortcut-list li span');
