@@ -8,9 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<!-- ✨ NOUVEAU : Bibliothèques pour les fournisseurs sans clé ✨ -->
+<!-- ✨ NOUVEAU : Bibliothèque pour Puter ✨ -->
 <script src="https://js.puter.com/v2/"></script>
-<script src="https://unpkg.com/jsllm7@latest/jsllm7.js"></script>
 <style>
 :root {
   --bg-app: #121212;
@@ -2908,36 +2907,19 @@ const DEFAULT_PROVIDERS = {
     apiKeyUrl: 'https://tokenharbor.ai/dashboard'
   },
 
-puter: {
+  puter: {
     label: 'Puter (Gratuit, sans clé)',
     endpoint: 'https://api.puter.com/v1/chat/completions',
     models: [
-        'puter/llama-3.3-70b-instruct', // ✅ ID corrigé pour Llama
-        'anthropic/claude-sonnet-4',                   // ✅ ID corrigé pour Claude
-        'deepseek/deepseek-v4-pro',          // Autre exemple valide
-        'openai/gpt-5.5'                    // Exemple de modèle OpenAI
+        'puter/llama-3.3-70b-instruct',
+        'deepseek/deepseek-v4-pro',
+        'openai/gpt-5.5'
     ],
     format: 'openai',
     testUrl: null,
     testType: 'bearer',
     apiKeyUrl: null
-},
-
-  // ✨ NOUVEAU : Fournisseur jsllm7 (gratuit, sans clé) ✨
-  jsllm7: {
-    label: 'jsllm7 (Gratuit, sans clé)',
-    endpoint: null, // Pas d'endpoint REST, on utilise la fonction jsllm7()
-    models: [
-      'gpt-4.1-mini-2025-04-14', // Modèle par défaut
-      'ministral-8b-2410',
-      // La liste peut être complétée dynamiquement via jsllm7.listModels()
-    ],
-    format: 'jsllm7',
-    testUrl: null,
-    testType: null,
-    apiKeyUrl: null
   },
-
 };
 
 let customProviders = JSON.parse(localStorage.getItem('deepchat_custom_providers') || '[]');
@@ -3754,13 +3736,7 @@ const MODEL_DESCRIPTIONS = {
   // Puter
   'deepseek-r1': 'Le célèbre modèle de raisonnement de DeepSeek, accessible gratuitement via Puter.js.',
   'gpt-4o-mini': 'Modèle rapide et économique d\'OpenAI, via Puter.js.',
-  'claude-3-5-sonnet': 'Le modèle équilibré d\'Anthropic, via Puter.js.',
   'llama-3.3-70b': 'Le modèle polyvalent de Meta, via Puter.js.',
-
-  // jsllm7
-  'gpt-4.1-mini-2025-04-14': 'Modèle par défaut de jsllm7. Rapide et gratuit.',
-  'ministral-8b-2410': 'Modèle Mistral 8B accessible via jsllm7.',
-
 };
 
 function updateModelDescription() {
@@ -4536,47 +4512,6 @@ async function streamChatWithPuter(history, callbacks) {
     }
 }
 
-// ✨ NOUVELLE FONCTION : Streaming avec jsllm7 ✨
-// Note: jsllm7 ne supporte pas le streaming natif. On simule un effet de stream
-// en découpant la réponse finale, pour que l'interface reste cohérente.
-async function streamChatWithJsllm7(history, callbacks) {
-    const onDelta = callbacks.onDelta;
-    
-    const apiMessages = buildApiMessages(history);
-    const model = getCurrentModel();
-    
-    // jsllm7 attend un prompt unique. On reconstitue l'historique.
-    let prompt = "";
-    for (const msg of apiMessages) {
-        const role = msg.role === 'assistant' ? 'Assistant' : 'Utilisateur';
-        const content = typeof msg.content === 'string' ? msg.content : '[Message complexe]';
-        prompt += `${role}: ${content}\n`;
-    }
-    
-    const systemPromptText = systemPrompt || 'You are a helpful assistant';
-
-    try {
-        const fullText = await jsllm7(prompt, systemPromptText, model);
-        
-        // Simulation d'un stream (effet "typewriter")
-        let displayedText = '';
-        const chars = fullText.split('');
-        const chunkSize = Math.max(1, Math.floor(chars.length / 100)); // ~100 mises à jour max
-        
-        for (let i = 0; i < chars.length; i += chunkSize) {
-            displayedText += chars.slice(i, i + chunkSize).join('');
-            onDelta(displayedText);
-            await new Promise(resolve => setTimeout(resolve, 10)); // Petit délai
-        }
-        
-        return { content: fullText, reasoning: '' };
-    } catch (err) {
-        console.error("Erreur jsllm7:", err);
-        throw new Error(`Erreur avec jsllm7 : ${err.message}`);
-    }
-}
-
-
 async function streamChat(history, callbacks, signal) {
   const onDelta = callbacks.onDelta;
   const onReasoning = callbacks.onReasoning;
@@ -4585,8 +4520,8 @@ async function streamChat(history, callbacks, signal) {
   const apiKey = apiKeys[providerKey];
   const model = getCurrentModel();
 
-  // Autoriser l'absence de clé pour OllamaFree, Puter et jsllm7
-  if (!apiKey && providerKey !== 'puter' && providerKey !== 'jsllm7') {
+  // Autoriser l'absence de clé pour Puter
+  if (!apiKey && providerKey !== 'puter') {
       throw new Error(`Clé API manquante pour ${provider.label}. Ouvrez les paramètres.`);
   }
   if (!model) throw new Error('Veuillez sélectionner un modèle.');
@@ -5097,15 +5032,6 @@ async function runCompletion() {
             onReasoning: (fullReasoning) => { /* Puter ne gère pas le reasoning pour l'instant */ },
             onDelta: (partial) => {
                 if (!reasoningEndTime && reasoningContent && reasoningStartTime) reasoningEndTime = Date.now();
-                streamingText = partial;
-                scheduleStreamRender(contentEl, partial);
-                scrollToBottom();
-            }
-        });
-    } else if (providerSelect.value === 'jsllm7') {
-        result = await streamChatWithJsllm7(conv.messages, {
-            onReasoning: (fullReasoning) => { /* jsllm7 ne gère pas le reasoning */ },
-            onDelta: (partial) => {
                 streamingText = partial;
                 scheduleStreamRender(contentEl, partial);
                 scrollToBottom();
