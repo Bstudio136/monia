@@ -237,7 +237,34 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
 .topbar-group input::placeholder { color: var(--text-muted); }
 .topbar-divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
 .topbar-right { margin-left: auto; display: flex; gap: 6px; }
-
+/* ============ DESCRIPTION MODÈLE ============ */
+.model-description {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  padding: 6px 20px;
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border);
+  min-height: 26px;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.2s;
+  line-height: 1.3;
+}
+.model-description.empty {
+  opacity: 0;
+  pointer-events: none;
+}
+.model-description span {
+  background: rgba(251, 191, 36, 0.1);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-right: 8px;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
 /* ============ CHAT ============ */
 .chat-container { flex: 1; position: relative; overflow: hidden; }
 .chat-messages {
@@ -980,9 +1007,9 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   animation: modalIn 0.2s;
 }
 @keyframes modalIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
-.modal-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
 .modal-header h2 { font-size: 17px; font-weight: 600; }
-.modal-tabs { display: flex; gap: 4px; padding: 10px 22px 0; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+.modal-tabs { display: flex; gap: 4px; padding: 10px 22px 0; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
 .modal-tabs::-webkit-scrollbar { display: none; }
 .tab-btn {
   padding: 8px 14px;
@@ -995,14 +1022,14 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
 }
 .tab-btn:hover { color: var(--text-primary); }
 .tab-btn.active { color: var(--accent); border-bottom: 2px solid var(--accent); }
-.modal-body { padding: 20px 22px; overflow-y: auto; flex: 1; }
+.modal-body { padding: 20px 22px; overflow-y: auto; flex: 1; min-height: 0; /* FIX RESPONSIVE */ }
 .tab-content { display: none; }
 .tab-content.active { display: block; animation: fadeIn 0.2s; }
 .form-group { margin-bottom: 18px; }
 .form-label { display: block; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
 .form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
-.form-row { display: flex; gap: 8px; align-items: center; }
-.form-row input { flex: 1; }
+.form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.form-row input { flex: 1; min-width: 150px; }
 .provider-key-row { 
   border: 1px solid var(--border); 
   border-radius: 8px; 
@@ -1193,30 +1220,126 @@ kbd {
   color: var(--text-primary);
 }
 
+/* ============ MODALE DE SÉLECTION DES MODÈLES ============ */
+.models-selection-modal .modal {
+  max-width: 600px;
+  height: 80vh;
+}
+.model-selection-controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.model-selection-controls button {
+  font-size: 11.5px;
+  padding: 6px 10px;
+}
+.model-selection-search {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  outline: none;
+}
+.model-selection-search:focus {
+  border-color: var(--accent);
+}
+.model-selection-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  background: var(--bg-main);
+}
+.model-select-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.model-select-item:hover {
+  background: var(--bg-hover);
+}
+.model-select-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.model-select-name {
+  font-size: 13px;
+  font-family: monospace;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+.modal-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
 /* ============ TOAST ============ */
 .toast-container {
   position: fixed;
-  bottom: 24px; left: 50%;
+  top: 20px;
+  left: 50%;
   transform: translateX(-50%);
-  display: flex; flex-direction: column; gap: 8px;
-  z-index: 300;
-  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 999999; /* Passe par-dessus la barre du haut et la zone de chat */
+  pointer-events: none; /* Permet de cliquer à travers le conteneur */
+  width: max-content;
+  max-width: 90vw;
 }
 .toast {
-  padding: 10px 18px;
-  background: var(--bg-sidebar);
+  padding: 14px 20px;
+  background: var(--bg-sidebar); /* Fond totalement opaque */
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: var(--shadow);
-  font-size: 13.5px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* Ombre plus marquée pour bien décoller du chat */
+  font-size: 14px;
+  line-height: 1.55;
   color: var(--text-primary);
   animation: toastIn 0.25s;
-  pointer-events: auto;
   transition: opacity 0.3s;
+  max-width: 100%;
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: auto;
+  backdrop-filter: blur(10px); /* Optionnel : lisse le fond */
 }
-.toast.success { border-color: var(--success); }
-.toast.error { border-color: var(--danger); }
-.toast.warning { border-color: var(--warning); }
+
+/* Bordures colorées avec un fond solide et lisible */
+.toast.error { 
+  border-color: var(--danger); 
+  border-left: 4px solid var(--danger);
+  background: var(--bg-sidebar); 
+}
+.toast.success { 
+  border-color: var(--success); 
+  border-left: 4px solid var(--success);
+  background: var(--bg-sidebar); 
+}
+.toast.warning { 
+  border-color: var(--warning); 
+  border-left: 4px solid var(--warning);
+  background: var(--bg-sidebar); 
+}
 @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 45; }
@@ -1334,6 +1457,55 @@ kbd {
   display: inline-flex; align-items: center; gap: 4px;
 }
 .btn-add-model:hover { background: var(--bg-hover); }
+
+/* ============ UI LIMITES PERSONNALISÉES ============ */
+.model-limits-editor {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0 6px 24px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  border-top: 1px dashed var(--border);
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.model-limits-editor label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 100px;
+}
+.model-limits-editor input {
+  width: 100%;
+  max-width: 80px;
+  padding: 4px 6px;
+  background: var(--bg-main);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.model-limits-editor input:focus {
+  border-color: var(--accent);
+}
+.btn-edit-limits {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, transform 0.15s;
+}
+.btn-edit-limits:hover {
+  color: var(--accent);
+  transform: rotate(15deg);
+}
 
 body.compact .bubble { padding: 8px 12px; }
 body.compact .messages-inner { gap: 12px; }
@@ -1569,7 +1741,8 @@ body.compact .reasoning-content { max-height: 250px; }
   .form-input,
   .form-textarea,
   .provider-key-row input,
-  .provider-key-row input[type="password"] { font-size: 16px; }
+  .provider-key-row input[type="password"],
+  .model-selection-search { font-size: 16px; }
 
   /* Formulaire : les inputs wrap proprement */
   .form-row { flex-wrap: wrap; }
@@ -1589,15 +1762,18 @@ body.compact .reasoning-content { max-height: 250px; }
   .theme-option { padding: 12px 8px; font-size: 12px; }
   .theme-option-icon { width: 32px; height: 32px; font-size: 15px; }
 
-  /* Toasts pleine largeur */
   .toast-container {
-    bottom: 12px;
-    left: 12px;
-    right: 12px;
-    transform: none;
-    align-items: stretch;
+    top: 60px; /* Se place juste sous la barre du haut sur mobile */
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    align-items: center;
   }
-  .toast { max-width: 100%; font-size: 13px; text-align: center; }
+  .toast {
+    max-width: 100%;
+    font-size: 14px;
+    text-align: center;
+  }
 
   #customProviderForm { padding: 12px; }
   .danger-zone { padding: 12px; }
@@ -1848,6 +2024,65 @@ body.compact .reasoning-content { max-height: 250px; }
   display: block;
   background: white;
 }
+/* ===== AFFICHAGE CLAIR DES ERREURS ===== */
+.error-block {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.35);
+  border-left: 4px solid var(--danger);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin: 8px 0;
+  font-size: calc(var(--base-font-size) * 1.05);
+  line-height: 1.65;
+}
+.error-title {
+  color: var(--danger);
+  font-weight: 600;
+  font-size: calc(var(--base-font-size) * 1.15);
+  margin-bottom: 10px;
+}
+.error-detail {
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.7;
+}
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(239,68,68,0.2);
+}
+.error-action-btn {
+  font-size: 13px !important;
+  padding: 8px 14px !important;
+  border-radius: 6px !important;
+}
+.error-raw { margin-top: 12px; font-size: 11.5px; }
+.error-raw summary {
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 0;
+  font-weight: 500;
+}
+.error-raw pre {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 6px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 240px;
+  overflow-y: auto;
+}
+[data-theme="light"] .error-raw pre { background: rgba(0,0,0,0.05); }
 </style>
 </head>
 <body>
@@ -1939,6 +2174,9 @@ body.compact .reasoning-content { max-height: 250px; }
       </button>
     </div>
   </header>
+
+  <!-- ✨ NOUVEAU : Description du modèle sélectionné -->
+  <div class="model-description empty" id="modelDescription"></div>
 
   <div class="chat-container">
     <div class="chat-messages" id="chatMessages">
@@ -2218,6 +2456,13 @@ body.compact .reasoning-content { max-height: 250px; }
       </div>
 
       <div class="tab-content" data-tab="data">
+                <div class="form-group">
+          <label class="form-label">Options de stockage</label>
+          <div class="toggle-row">
+            <div class="toggle-label">Stockage étendu (IndexedDB)<small>Permet de stocker plusieurs Go de conversations et d'images (recommandé)</small></div>
+            <div class="toggle-switch" id="idbToggle"></div>
+          </div>
+        </div>
         <div class="danger-zone" style="border-color: var(--accent);">
           <h4>Exporter les conversations</h4><p>Télécharge toutes vos conversations au format JSON (sauvegarde).</p>
           <button class="btn btn-secondary" id="exportBtn">📥 Exporter</button>
@@ -2278,6 +2523,38 @@ body.compact .reasoning-content { max-height: 250px; }
   </div>
 </div>
 
+<!-- MODALE DE SÉLECTION DES MODÈLES -->
+<div class="modal-overlay models-selection-modal" id="modelsSelectionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modelsSelectionTitle">Sélectionner les modèles</h2>
+      <button class="icon-btn" id="closeModelsSelectionBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body" style="display:flex; flex-direction:column; overflow:hidden;">
+      <div class="model-selection-controls">
+        <button class="btn btn-secondary" id="selectAllModelsBtn">Tout cocher</button>
+        <button class="btn btn-secondary" id="unselectAllModelsBtn">Tout décocher</button>
+        <span id="selectedModelsCount" style="margin-left:auto; font-size:12px; color:var(--text-muted); align-self:center;">0 sélectionné(s)</span>
+      </div>
+      
+      <input type="text" class="model-selection-search" id="modelSearchInput" placeholder="Rechercher un modèle...">
+      
+      <div class="model-selection-list" id="modelsSelectionList">
+        <!-- Les modèles seront injectés ici -->
+      </div>
+
+      <div class="modal-footer-actions">
+        <button class="btn btn-secondary" id="cancelModelsSelectionBtn">Annuler</button>
+        <button class="btn btn-primary" id="validateModelsSelectionBtn">Valider la sélection</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
@@ -2291,10 +2568,12 @@ let forceImageMode = false;
 let imageRatio = localStorage.getItem('deepchat_image_ratio') || '1:1';
 let imageSize = localStorage.getItem('deepchat_image_size') || '1024x1024';
 
-// ==== INDEXEDDB (persistance des images) ====
+// ==== INDEXEDDB (persistance images + conversations + brouillons) ====
 const IDB_NAME = 'deepchat_db';
-const IDB_VERSION = 1;
+const IDB_VERSION = 2; // ⬅️ passé de 1 à 2
 const IDB_STORE = 'images';
+const IDB_CONVS_STORE = 'conversations';
+const IDB_DRAFTS_STORE = 'drafts';
 let idbPromise = null;
 
 function openIDB() {
@@ -2307,6 +2586,12 @@ function openIDB() {
       if (!db.objectStoreNames.contains(IDB_STORE)) {
         db.createObjectStore(IDB_STORE, { keyPath: 'id' });
       }
+      if (!db.objectStoreNames.contains(IDB_CONVS_STORE)) {
+        db.createObjectStore(IDB_CONVS_STORE, { keyPath: 'key' });
+      }
+      if (!db.objectStoreNames.contains(IDB_DRAFTS_STORE)) {
+        db.createObjectStore(IDB_DRAFTS_STORE, { keyPath: 'key' });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -2314,6 +2599,7 @@ function openIDB() {
   return idbPromise;
 }
 
+// --- IMAGES ---
 async function idbPutImage(id, blob, mime) {
   const db = await openIDB();
   return new Promise((resolve, reject) => {
@@ -2323,7 +2609,6 @@ async function idbPutImage(id, blob, mime) {
     tx.onerror = () => reject(tx.error);
   });
 }
-
 async function idbGetImage(id) {
   const db = await openIDB();
   return new Promise((resolve, reject) => {
@@ -2333,7 +2618,6 @@ async function idbGetImage(id) {
     req.onerror = () => reject(req.error);
   });
 }
-
 async function idbDeleteImage(id) {
   if (!id) return;
   try {
@@ -2344,21 +2628,69 @@ async function idbDeleteImage(id) {
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
-  } catch (e) { /* silencieux */ }
+  } catch (e) {}
 }
-
 async function idbClearAll() {
   try {
     const db = await openIDB();
     return new Promise((resolve, reject) => {
-      const tx = db.transaction(IDB_STORE, 'readwrite');
+      const tx = db.transaction([IDB_STORE, IDB_CONVS_STORE, IDB_DRAFTS_STORE], 'readwrite');
       tx.objectStore(IDB_STORE).clear();
+      tx.objectStore(IDB_CONVS_STORE).clear();
+      tx.objectStore(IDB_DRAFTS_STORE).clear();
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
     });
-  } catch (e) { /* silencieux */ }
+  } catch (e) {}
 }
 
+// --- CONVERSATIONS ---
+async function idbSaveConversations(data) {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_CONVS_STORE, 'readwrite');
+    tx.objectStore(IDB_CONVS_STORE).put({ key: 'main', data, updatedAt: Date.now() });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbLoadConversations() {
+  try {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_CONVS_STORE, 'readonly');
+      const req = tx.objectStore(IDB_CONVS_STORE).get('main');
+      req.onsuccess = () => resolve(req.result ? req.result.data : null);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) { return null; }
+}
+
+// --- BROUILLONS ---
+async function idbSaveDrafts(draftsObj) {
+  try {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_DRAFTS_STORE, 'readwrite');
+      tx.objectStore(IDB_DRAFTS_STORE).put({ key: 'main', data: draftsObj, updatedAt: Date.now() });
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (e) {}
+}
+async function idbLoadDrafts() {
+  try {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_DRAFTS_STORE, 'readonly');
+      const req = tx.objectStore(IDB_DRAFTS_STORE).get('main');
+      req.onsuccess = () => resolve(req.result ? req.result.data : {});
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) { return {}; }
+}
+
+// --- Utilitaires blob ---
 function dataUrlToBlob(dataUrl) {
   const [meta, b64] = dataUrl.split(',');
   const mime = (meta.match(/:(.*?);/) || [null, 'image/png'])[1];
@@ -2367,7 +2699,6 @@ function dataUrlToBlob(dataUrl) {
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
   return new Blob([arr], { type: mime });
 }
-
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
@@ -2376,22 +2707,15 @@ function blobToDataUrl(blob) {
     r.readAsDataURL(blob);
   });
 }
-
 function blobToBase64(blob) {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => {
-      const d = r.result;
-      resolve(d.includes(',') ? d.split(',')[1] : '');
-    };
+    r.onload = () => { const d = r.result; resolve(d.includes(',') ? d.split(',')[1] : ''); };
     r.onerror = reject;
     r.readAsDataURL(blob);
   });
 }
-
-function generateImageId() {
-  return 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-}
+function generateImageId() { return 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10); }
 
 // ==== LIMITES DE CONTEXTE (cache + découverte API) ====
 const TOKEN_LIMITS = {
@@ -2429,6 +2753,12 @@ const MAX_OUTPUT_LIMITS = {
 
 let modelLimitsCache = {};
 try { modelLimitsCache = JSON.parse(localStorage.getItem('deepchat_model_limits') || '{}'); } catch(e) {}
+
+let customModelLimits = JSON.parse(localStorage.getItem('deepchat_custom_model_limits') || '{}');
+function saveCustomModelLimits() {
+  try { localStorage.setItem('deepchat_custom_model_limits', JSON.stringify(customModelLimits)); } catch(e) {}
+}
+
 const modelLimitsFetching = {};
 
 function saveModelLimitsCache() {
@@ -2437,11 +2767,21 @@ function saveModelLimitsCache() {
 
 function getModelLimits(model) {
   if (!model) return null;
+  
+  // 1. Limites personnalisées (priorité absolue)
+  if (customModelLimits[model] && (customModelLimits[model].context || customModelLimits[model].output)) {
+    return { ...customModelLimits[model], source: 'custom' };
+  }
+  
+  // 2. Limites de l'API en cache
   const cacheKey = `${providerSelect.value}:${model}`;
   if (modelLimitsCache[cacheKey]) return modelLimitsCache[cacheKey];
+  
+  // 3. Limites intégrées par défaut
   const ctx = TOKEN_LIMITS[model];
   const out = MAX_OUTPUT_LIMITS[model];
   if (ctx || out) return { context: ctx || null, output: out || null, source: 'builtin' };
+  
   return null;
 }
 
@@ -2507,6 +2847,7 @@ const DEFAULT_PROVIDERS = {
     models: [
       'openai/gpt-oss-120b',
       'openai/gpt-oss-20b',
+      'openai/gpt-oss-safeguard-20b',
       'qwen/qwen3.8-27b'
     ],
     format: 'openai',
@@ -2539,7 +2880,9 @@ const DEFAULT_PROVIDERS = {
     label: 'OpenRouter',
     endpoint: 'https://openrouter.ai/api/v1/chat/completions',
     models: [
-      'openrouter/free' // ✅ Le seul modèle 100% fiable qui trouve toujours un modèle gratuit (dont DeepSeek)
+      'openrouter/free', // ✅ Le seul modèle 100% fiable qui trouve toujours un modèle gratuit (dont DeepSeek)
+      'nividia/nemotron-3.5-super-vl:free',
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'
     ],
     format: 'openai',
     testUrl: 'https://openrouter.ai/api/v1/models',
@@ -2570,10 +2913,6 @@ customProviders.forEach(cp => {
 });
 
 let conversations = {};
-try {
-  const _raw = localStorage.getItem('deepchat_convs');
-  if (_raw) conversations = JSON.parse(_raw);
-} catch(e) { console.warn('[DeepChat] load convs:', e.message); conversations = {}; }
 let isHydrating = true;
 let currentConvId = null;
 let apiKeys = JSON.parse(localStorage.getItem('deepchat_keys') || '{}');
@@ -2589,6 +2928,7 @@ let customAccent = localStorage.getItem('deepchat_accent') || 'default';
 let currentFontSize = parseInt(localStorage.getItem('deepchat_fontsize') || '14');
 let currentBubbleWidth = parseInt(localStorage.getItem('deepchat_bubblewidth') || '100');
 let compactMode = localStorage.getItem('deepchat_compact') === '1';
+let useIDB = localStorage.getItem('deepchat_use_idb') !== '0';
 let showTimestamps = localStorage.getItem('deepchat_timestamps') === '1';
 let showReasoning = localStorage.getItem('deepchat_show_reasoning') !== '0';
 let soundEnabled = localStorage.getItem('deepchat_sound') === '1';
@@ -2597,8 +2937,10 @@ let isStreaming = false;
 let abortController = null;
 let userScrolledDuringStream = false;
 let editingMessage = null;
-let drafts = JSON.parse(localStorage.getItem('deepchat_drafts') || '{}');
+let drafts = {};
 let saveDraftTimer = null;
+let currentFetchProviderKey = null;
+let currentFetchedModelsList = [];
 
 const $ = id => document.getElementById(id);
 const providerSelect = $('providerSelect');
@@ -2931,13 +3273,13 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-function showToast(msg, type='info') {
+function showToast(msg, type = 'info', duration = 4000) {
   const t = document.createElement('div');
   t.className = 'toast ' + type;
   t.textContent = msg;
   $('toastContainer').appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; }, 3500);
-  setTimeout(() => t.remove(), 3900);
+  setTimeout(() => { t.style.opacity = '0'; }, duration);
+  setTimeout(() => t.remove(), duration + 400);
 }
 
 let scrollScheduled = false;
@@ -3339,6 +3681,61 @@ function updateImageButtonVisibility() {
     }
   }
 }
+const MODEL_DESCRIPTIONS = {
+  // Agnes
+  'agnes-3.0-flash': 'Le modèle phare d\'Agnes : rapide, polyvalent, contexte de 512k tokens.',
+  'agnes-2.5-flash': 'Version allégée pour les tâches rapides et courantes.',
+  'agnes-image-2.5-flash': 'Spécialisé dans la génération d\'images à partir de texte.',
+  'agnes-video-2.5-flash': 'Spécialisé dans la génération de vidéos.',
+  
+  // Groq
+  'openai/gpt-oss-120b': 'Modèle open-source massif de 120B. Excellent pour le code et le raisonnement complexe.',
+  'openai/gpt-oss-20b': 'Version plus légère et ultra-rapide du modèle GPT-OSS.',
+  'qwen/qwen3.8-27b': 'Modèle Qwen 3.8B. Très efficace pour le code et les mathématiques.',
+  'llama-3.3-70b-versatile': 'Le célèbre Llama 3.3 70B. Polyvalent, intelligent et très rapide sur Groq.',
+  'llama-3.1-8b-instant': 'Modèle Llama 3.1 8B. Ultra rapide, idéal pour les conversations simples.',
+  
+  // Mistral
+  'codestral-latest': 'Modèle de Mistral spécialisé dans la génération de code. Idéal pour les développeurs.',
+  'mistral-medium-latest': 'Bon équilibre entre puissance, rapidité et coût.',
+  'mistral-small-latest': 'Modèle léger et rapide pour les tâches basiques.',
+  'magistral-medium-latest': 'Modèle orienté raisonnement (Chain of Thought) de Mistral.',
+  
+  // Gemini
+  'gemini-3.5-flash': 'Le plus rapide de Google. Contexte gigantesque de 1 million de tokens. Parfait pour de longs documents.',
+  'gemini-3.5-flash-lite': 'Version encore plus rapide et légère de Gemini.',
+  
+  // OpenRouter
+  'openrouter/free': 'Sélectionne automatiquement un modèle gratuit disponible sur OpenRouter.',
+  'nividia/nemotron-3.5-super-vl:free': 'Modèle NVIDIA gratuit orienté Vision-Langage (analyse d\'images).',
+  'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Petit modèle NVIDIA gratuit spécialisé dans le raisonnement.',
+  
+  // TokenHarbor
+  'deepseek-v4-flash:free': 'Modèle DeepSeek ultra-rapide et gratuit via TokenHarbor.',
+  'deepseek-v4.1-flash:free': 'Version améliorée de DeepSeek Flash, gratuit.',
+  'mimo-v2.5:free': 'Modèle léger et gratuit via TokenHarbor.'
+};
+
+function updateModelDescription() {
+  const descEl = $('modelDescription');
+  if (!descEl) return;
+  
+  const t = translations[currentLang] || translations.fr;
+  const tDesc = t.modelDesc || translations.fr.modelDesc;
+  
+  const currentModel = getCurrentModel();
+  const desc = tDesc[currentModel];
+  
+  if (desc) {
+    descEl.innerHTML = `<span>${tDesc.infoLabel}</span> ${desc}`;
+    descEl.classList.remove('empty');
+  } else if (currentModel) {
+    descEl.innerHTML = `<span>${tDesc.customLabel}</span> ${tDesc.custom}`;
+    descEl.classList.remove('empty');
+  } else {
+    descEl.classList.add('empty');
+  }
+}
 
 function updateModelList() {
   const p = PROVIDERS[providerSelect.value];
@@ -3367,6 +3764,8 @@ function updateModelList() {
   
   const m = getCurrentModel();
   if (m) fetchModelLimits(providerSelect.value, m);
+  
+  updateModelDescription(); // 👈 Ajout de cette ligne
 }
 
 function getCurrentModel() {
@@ -3380,13 +3779,21 @@ function getCurrentModel() {
   return v;
 }
 
+function saveDraftsToStorage() {
+  if (useIDB) {
+    idbSaveDrafts(drafts).catch(() => {
+      try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch (e) {}
+    });
+  } else {
+    try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch (e) {}
+  }
+}
+
 function saveDraft() {
   if (currentConvId) {
     drafts[currentConvId] = messageInput.value;
     clearTimeout(saveDraftTimer);
-    saveDraftTimer = setTimeout(() => {
-      try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch(e) {}
-    }, 400);
+    saveDraftTimer = setTimeout(saveDraftsToStorage, 400);
   }
 }
 function newConversation() {
@@ -3394,7 +3801,7 @@ function newConversation() {
   if (curr && curr.messages.length === 0) { messageInput.focus(); return; }
   if (currentConvId) {
     drafts[currentConvId] = messageInput.value;
-    try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch(e) {}
+    idbSaveDrafts(drafts).catch(() => {});
   }
   const t = translations[currentLang] || translations.fr;
   const id = 'conv_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
@@ -3442,7 +3849,7 @@ async function deleteConversation(id) {
 
   delete conversations[id];
   delete drafts[id];
-  try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch(e) {}
+idbSaveDrafts(drafts).catch(() => {});
 
   if (currentConvId === id) {
     currentConvId = null;
@@ -3499,18 +3906,36 @@ async function serializeConversationsForStorage() {
 async function doSaveConversations() {
   try {
     const serialized = await serializeConversationsForStorage();
+
+    if (useIDB) {
+      try {
+        await idbSaveConversations(serialized);
+        try { localStorage.removeItem('deepchat_convs'); } catch (e) {}
+        return;
+      } catch (idbErr) {
+        console.warn('[IDB] save convs failed, fallback localStorage:', idbErr);
+      }
+    }
+
+    // Fallback ou mode standard
     try {
       localStorage.setItem('deepchat_convs', JSON.stringify(serialized));
     } catch (e) {
       if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
-        showToast('⚠️ Quota localStorage dépassé — exportez vos conversations ou videz la galerie.', 'error');
+        const totalMB = (JSON.stringify(serialized).length / 1024 / 1024).toFixed(2);
+        const count = Object.keys(serialized).length;
+        showToast(
+          `⚠️ Stockage saturé (${totalMB} Mo, ${count} conversations).\n` +
+          `💡 Activez le "Stockage étendu" dans les paramètres ou exportez vos données.`,
+          'error', 10000
+        );
       } else {
         throw e;
       }
     }
   } catch (e) {
     console.error('[DeepChat] saveConversations:', e);
-    showToast('Erreur de sauvegarde : ' + e.message, 'error');
+    showToast('❌ Erreur de sauvegarde : ' + e.message, 'error');
   }
 }
 
@@ -4093,6 +4518,140 @@ async function readSSE(res, extract, onDelta, onReasoning) {
   return { content: full, reasoning: fullReasoning };
 }
 
+// ===== CLASSIFICATION DES ERREURS =====
+function classifyError(msg, ctx = {}) {
+  const lower = (msg || '').toLowerCase();
+  const provider = ctx.provider || providerSelect.value;
+  const providerLabel = (PROVIDERS[provider] || {}).label || provider;
+
+  // Fenêtre de contexte dépassée
+  if (lower.includes('contextwindowexceeded') || lower.includes('context length')
+      || lower.includes('too many tokens') || (lower.includes('input') && lower.includes('longer than'))) {
+    const limit = getContextLimit();
+    const m = msg.match(/input \((\d+) tokens\)/i);
+    const actual = m ? parseInt(m[1]) : null;
+    return {
+      title: 'Conversation trop longue pour ce modèle',
+      detail:
+        `Le modèle "${ctx.model || getCurrentModel()}" ne peut pas traiter un historique aussi long.\n\n` +
+        (actual && limit
+          ? `📊 Votre conversation : ~${formatTokens(actual)} tokens\n📏 Limite du modèle : ${formatTokens(limit)} tokens\n\n`
+          : '') +
+        `💡 Solutions :\n` +
+        `• Démarrez une nouvelle conversation (Ctrl+K)\n` +
+        `• Supprimez des messages anciens de cette conversation\n` +
+        `• Changez pour un modèle avec un contexte plus grand (ex. Gemini : 1M tokens)`,
+      actions: [
+        { id: 'newchat', label: '🆕 Nouvelle conversation' },
+        { id: 'settings', label: '⚙️ Changer de modèle' }
+      ]
+    };
+  }
+
+  // Clé API
+  if (lower.includes('401') || lower.includes('unauthorized')
+      || lower.includes('invalid_api_key') || lower.includes('incorrect api key')
+      || lower.includes('clé api') || lower.includes('missing api key')) {
+    return {
+      title: 'Clé API invalide ou manquante',
+      detail: `La clé API de ${providerLabel} est invalide, expirée ou absente.\nAllez dans les paramètres pour la vérifier ou la renouveler.`,
+      actions: [{ id: 'settings', label: '⚙️ Ouvrir les paramètres' }]
+    };
+  }
+
+  // Rate limit / quota
+  if (lower.includes('429') || lower.includes('rate_limit') || lower.includes('rate limit')
+      || lower.includes('quota') || lower.includes('too many requests')) {
+    return {
+      title: 'Limite de requêtes atteinte',
+      detail: `Vous avez atteint la limite imposée par ${providerLabel}.\nAttendez quelques minutes avant de réessayer.`,
+      actions: [{ id: 'retry', label: '🔄 Réessayer' }]
+    };
+  }
+
+  // Contenu refusé
+  if (lower.includes('content_policy') || lower.includes('safety')
+      || lower.includes('blocked') || lower.includes('moderation')) {
+    return {
+      title: 'Contenu refusé par les filtres',
+      detail: `Votre message a été bloqué par les filtres de sécurité de ${providerLabel}.\nReformulez votre demande autrement.`
+    };
+  }
+
+  // Serveur surchargé / indisponible
+  if (lower.includes('500') || lower.includes('502') || lower.includes('503')
+      || lower.includes('overloaded') || lower.includes('surchargé')) {
+    return {
+      title: `Serveur ${providerLabel} indisponible`,
+      detail: `Le service rencontre des difficultés temporaires.\nRéessayez dans quelques instants.`,
+      actions: [{ id: 'retry', label: '🔄 Réessayer' }]
+    };
+  }
+
+  // Réseau / CORS
+  if (lower.includes('failed to fetch') || lower.includes('networkerror')
+      || lower.includes('network') || lower.includes('cors')
+      || lower.includes('connection')) {
+    return {
+      title: 'Erreur réseau',
+      detail:
+        `Impossible de contacter ${providerLabel}.\n` +
+        `Vérifiez votre connexion internet et que le service n'est pas bloqué par un pare-feu/proxy.`,
+      actions: [{ id: 'retry', label: '🔄 Réessayer' }]
+    };
+  }
+
+  // Timeout
+  if (lower.includes('timeout') || lower.includes('timed out')) {
+    return {
+      title: 'Délai dépassé',
+      detail: `La requête a pris trop de temps à répondre.\nRéessayez ou essayez avec un message plus court.`,
+      actions: [{ id: 'retry', label: '🔄 Réessayer' }]
+    };
+  }
+
+  // Image
+  if (ctx.isImage) {
+    return {
+      title: 'Erreur de génération d\'image',
+      detail: (msg.length > 400 ? msg.substring(0, 400) + '…' : msg),
+      actions: [{ id: 'settings', label: '⚙️ Vérifier la clé API' }]
+    };
+  }
+
+  // Générique
+  return {
+    title: 'Erreur inattendue',
+    detail: msg.length > 400 ? msg.substring(0, 400) + '…' : msg
+  };
+}
+
+// ===== AFFICHAGE D'UNE ERREUR DANS LA BULLE =====
+function renderErrorInBubble(container, err, ctx = {}) {
+  const info = classifyError(err.message || String(err), ctx);
+  container.innerHTML = `
+    <div class="error-block">
+      <div class="error-title">❌ ${escapeHtml(info.title)}</div>
+      <div class="error-detail">${escapeHtml(info.detail)}</div>
+      ${info.actions ? `<div class="error-actions">${
+        info.actions.map(a => `<button class="btn btn-secondary error-action-btn" data-action="${a.id}">${escapeHtml(a.label)}</button>`).join('')
+      }</div>` : ''}
+      <details class="error-raw">
+        <summary>▸ Détails techniques</summary>
+        <pre>${escapeHtml(err.message || String(err))}</pre>
+      </details>
+    </div>
+  `;
+  container.querySelectorAll('.error-action-btn').forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.action;
+      if (id === 'settings') openSettings();
+      else if (id === 'newchat') newConversation();
+      else if (id === 'retry') regenerate();
+    };
+  });
+}
+
 async function sendMessage() {
   const rawText = messageInput.value.trim();
     if (isHydrating) { showToast('Chargement en cours… réessayez dans un instant.', 'warning'); return; }
@@ -4172,7 +4731,7 @@ async function sendMessage() {
   renderConversations();
   messageInput.value = '';
   delete drafts[currentConvId];
-  try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch(e) {}
+  idbSaveDrafts(drafts).catch(() => {});
   currentAttachedFiles = [];
   renderFilePreviews();
   autoResize();
@@ -4265,8 +4824,8 @@ async function runImageGeneration(prompt, ratio, size) {
             contentEl.innerHTML = '<em style="color:var(--text-muted)">[génération annulée]</em>';
             msg.remove();
         } else {
-            contentEl.innerHTML = `<span style="color:var(--danger)">❌ Erreur : ${escapeHtml(err.message)}</span>`;
-            if (err.message.includes("Clé API") || err.message.includes("configurer")) {
+            renderErrorInBubble(contentEl, err, { provider: 'agnes', model: AGNES_IMAGE_MODEL, isImage: true });
+            if (false) {
                 const btn = document.createElement('button');
                 btn.className = 'btn btn-primary';
                 btn.style.marginTop = '10px';
@@ -4425,8 +4984,8 @@ async function runCompletion() {
       }
     } else {
       cursorEl.remove();
-      contentEl.innerHTML = `<span style="color:var(--danger)">❌ Erreur : ${escapeHtml(err.message)}</span>`;
-      if (err.message.includes('Clé API')) {
+      renderErrorInBubble(contentEl, err, { provider: providerSelect.value, model: getCurrentModel() });
+      if (false) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
         btn.style.marginTop = '10px';
@@ -4703,6 +5262,22 @@ function initSettingsControls() {
   const sToggle = $('soundToggle');
   sToggle.classList.toggle('on', soundEnabled);
   sToggle.onclick = () => { soundEnabled = !soundEnabled; sToggle.classList.toggle('on', soundEnabled); localStorage.setItem('deepchat_sound', soundEnabled ? '1' : '0'); if (soundEnabled) playNotification(); };
+  
+  const idbToggle = $('idbToggle');
+  if (idbToggle) {
+    idbToggle.classList.toggle('on', useIDB);
+    idbToggle.onclick = () => {
+      useIDB = !useIDB;
+      idbToggle.classList.toggle('on', useIDB);
+      localStorage.setItem('deepchat_use_idb', useIDB ? '1' : '0');
+      
+      // Sauvegarde immédiate pour basculer les données actuelles
+      saveConversations();
+      saveDraftsToStorage();
+      
+      showToast(useIDB ? '🚀 Stockage étendu (IndexedDB) activé' : '📦 Stockage local standard activé', 'success');
+    };
+  }
 }
 
 // Nouvelle fonction pour rafraichir uniquement l'UI de la liste des modèles
@@ -4717,31 +5292,76 @@ function updateProviderModelUI(providerKey) {
   p.models.forEach((model, index) => {
     const item = document.createElement('div');
     item.className = 'model-item';
-    item.innerHTML = `
+    item.style.flexDirection = 'column';
+    item.style.alignItems = 'stretch';
+    
+    // Ligne du haut (Input + Boutons)
+    const topRow = document.createElement('div');
+    topRow.style.display = 'flex';
+    topRow.style.alignItems = 'center';
+    topRow.style.gap = '8px';
+    topRow.style.width = '100%';
+    
+    topRow.innerHTML = `
       <span class="drag-handle">⋮⋮</span>
       <input type="text" class="model-id" value="${escapeHtml(model)}" placeholder="ID">
+      <button class="btn-edit-limits" title="Configurer les limites manuellement">⚙️</button>
       <button class="btn-del-model" title="Supprimer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
       </button>
     `;
     
-    // Permettre la modification directe
-    const input = item.querySelector('.model-id');
+    // Éditeur de limites (caché par défaut)
+    const limitsEditor = document.createElement('div');
+    limitsEditor.className = 'model-limits-editor';
+    limitsEditor.style.display = 'none';
+    
+    // On récupère les limites par défaut actuelles
+    const defaultLimits = getModelLimits(model) || {};
+    const currentLimits = customModelLimits[model] || {};
+    
+    // Valeur à afficher : personnalisée si elle existe, sinon la valeur par défaut
+    const displayCtx = currentLimits.context !== undefined ? currentLimits.context : (defaultLimits.context || '');
+    const displayOut = currentLimits.output !== undefined ? currentLimits.output : (defaultLimits.output || '');
+    
+    limitsEditor.innerHTML = `
+      <label>Ctx <input type="number" class="ctx-input" placeholder="Auto${defaultLimits.context ? ' ('+defaultLimits.context+')' : ''}" value="${displayCtx}"></label>
+      <label>Out <input type="number" class="out-input" placeholder="Auto${defaultLimits.output ? ' ('+defaultLimits.output+')' : ''}" value="${displayOut}"></label>
+    `;
+    
+    item.appendChild(topRow);
+    item.appendChild(limitsEditor);
+    
+    // Gestion de la modification du nom du modèle
+    const input = topRow.querySelector('.model-id');
     input.addEventListener('change', (e) => {
       const newVal = e.target.value.trim();
-      if (newVal) {
+      if (newVal && newVal !== model) {
+        const oldModel = model;
         p.models[index] = newVal;
+        
+        // Transférer les limites si le nom change
+        if (customModelLimits[oldModel]) {
+          customModelLimits[newVal] = customModelLimits[oldModel];
+          delete customModelLimits[oldModel];
+          saveCustomModelLimits();
+        }
+        
         if (p.isCustom) {
           const cp = customProviders.find(c => c.id === providerKey);
           if (cp) { cp.models = p.models; localStorage.setItem('deepchat_custom_providers', JSON.stringify(customProviders)); }
         }
         updateModelList();
+        updateProviderModelUI(providerKey);
       }
     });
 
     // Bouton supprimer
-    item.querySelector('.btn-del-model').onclick = () => {
+    topRow.querySelector('.btn-del-model').onclick = () => {
+      const modelToDelete = p.models[index];
       p.models.splice(index, 1);
+      delete customModelLimits[modelToDelete];
+      saveCustomModelLimits();
       updateProviderModelUI(providerKey);
       updateModelList();
       if (p.isCustom) {
@@ -4749,10 +5369,154 @@ function updateProviderModelUI(providerKey) {
         if (cp) { cp.models = p.models; localStorage.setItem('deepchat_custom_providers', JSON.stringify(customProviders)); }
       }
     };
+
+    // Bouton ⚙️ pour afficher/masquer l'éditeur
+    topRow.querySelector('.btn-edit-limits').onclick = (e) => {
+      e.preventDefault();
+      limitsEditor.style.display = limitsEditor.style.display === 'none' ? 'flex' : 'none';
+    };
+    
+    // Sauvegarde des limites
+    const saveLimits = () => {
+      const ctxVal = parseInt(limitsEditor.querySelector('.ctx-input').value);
+      const outVal = parseInt(limitsEditor.querySelector('.out-input').value);
+      
+      // Si l'utilisateur vide le champ, on supprime la limite personnalisée
+      // Sinon, on la sauvegarde
+      if ((!isNaN(ctxVal) && ctxVal > 0) || (!isNaN(outVal) && outVal > 0)) {
+        customModelLimits[model] = {};
+        if (!isNaN(ctxVal) && ctxVal > 0) customModelLimits[model].context = ctxVal;
+        if (!isNaN(outVal) && outVal > 0) customModelLimits[model].output = outVal;
+      } else {
+        delete customModelLimits[model]; // Si vide, on repasse en mode auto
+      }
+      
+      saveCustomModelLimits();
+      updateTokenCounter(); // Met à jour la jauge d'utilisation instantanément
+      
+      // Petit feedback visuel
+      const btn = topRow.querySelector('.btn-edit-limits');
+      const oldText = btn.innerHTML;
+      btn.innerHTML = '✅';
+      setTimeout(() => btn.innerHTML = oldText, 1000);
+    };
+    
+    limitsEditor.querySelector('.ctx-input').addEventListener('change', saveLimits);
+    limitsEditor.querySelector('.out-input').addEventListener('change', saveLimits);
     
     container.appendChild(item);
   });
 }
+
+// Variables pour la modale de sélection
+function openModelsSelectionModal(providerKey, models) {
+  currentFetchProviderKey = providerKey;
+  currentFetchedModelsList = models;
+  
+  const modal = $('modelsSelectionModal');
+  const title = $('modelsSelectionTitle');
+  const listContainer = $('modelsSelectionList');
+  const searchInput = $('modelSearchInput');
+  
+  title.textContent = `Modèles disponibles (${PROVIDERS[providerKey].label})`;
+  searchInput.value = '';
+  
+  renderModelsList(models, searchInput.value);
+  modal.classList.add('open');
+}
+
+function renderModelsList(models, filterText = '') {
+  const listContainer = $('modelsSelectionList');
+  const filter = filterText.toLowerCase().trim();
+  
+  listContainer.innerHTML = models.map((m, index) => {
+    if (filter && !m.toLowerCase().includes(filter)) return '';
+    return `
+      <label class="model-select-item">
+        <input type="checkbox" value="${index}" class="model-checkbox">
+        <span class="model-select-name">${escapeHtml(m)}</span>
+      </label>
+    `;
+  }).join('');
+
+  // Mettre à jour le compteur
+  updateSelectedModelsCount();
+  
+  // Ajouter les écouteurs sur les checkboxes
+  listContainer.querySelectorAll('.model-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedModelsCount);
+  });
+}
+
+function updateSelectedModelsCount() {
+  const checked = document.querySelectorAll('.model-checkbox:checked').length;
+  $('selectedModelsCount').textContent = `${checked} sélectionné(s)`;
+}
+
+// Gestion des boutons de la modale (à exécuter au chargement de la page)
+document.addEventListener('DOMContentLoaded', () => {
+  // Recherche
+  const searchInput = $('modelSearchInput');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      renderModelsList(currentFetchedModelsList, e.target.value);
+    });
+  }
+
+  // Tout cocher
+  const selectAllBtn = $('selectAllModelsBtn');
+  if (selectAllBtn) {
+    selectAllBtn.onclick = () => {
+      document.querySelectorAll('.model-checkbox').forEach(cb => cb.checked = true);
+      updateSelectedModelsCount();
+    };
+  }
+
+  // Tout décocher
+  const unselectAllBtn = $('unselectAllModelsBtn');
+  if (unselectAllBtn) {
+    unselectAllBtn.onclick = () => {
+      document.querySelectorAll('.model-checkbox').forEach(cb => cb.checked = false);
+      updateSelectedModelsCount();
+    };
+  }
+
+  // Fermer
+  const closeModal = () => $('modelsSelectionModal').classList.remove('open');
+  $('closeModelsSelectionBtn').onclick = closeModal;
+  $('cancelModelsSelectionBtn').onclick = closeModal;
+  $('modelsSelectionModal').addEventListener('click', (e) => {
+    if (e.target === $('modelsSelectionModal')) closeModal();
+  });
+
+  // Valider
+  $('validateModelsSelectionBtn').onclick = () => {
+    const checkedBoxes = document.querySelectorAll('.model-checkbox:checked');
+    const selectedModels = Array.from(checkedBoxes).map(cb => currentFetchedModelsList[parseInt(cb.value)]);
+    
+    if (selectedModels.length === 0) {
+      showToast('Veuillez sélectionner au moins un modèle.', 'warning');
+      return;
+    }
+
+    const k = currentFetchProviderKey;
+    PROVIDERS[k].models = selectedModels;
+
+    // Sauvegarder si c'est un fournisseur personnalisé
+    if (PROVIDERS[k].isCustom) {
+      const cp = customProviders.find(c => c.id === k);
+      if (cp) {
+        cp.models = selectedModels;
+        localStorage.setItem('deepchat_custom_providers', JSON.stringify(customProviders));
+      }
+    }
+
+    updateProviderModelUI(k);
+    updateModelList();
+    closeModal();
+    showToast(`✅ ${selectedModels.length} modèle(s) sélectionné(s)`, 'success');
+  };
+});
 
 function renderProviderKeys() {
   const container = $('providerKeysContainer');
@@ -5002,22 +5766,18 @@ function renderProviderKeys() {
         if (freeModels.length === 0) freeModels = allModels;
 
         const modelIds = freeModels.map(m => m.id || m.name);
-        PROVIDERS[k].models = modelIds;
         
         if (customUrlInput) PROVIDERS[k].endpoint = customUrlInput.value;
-        
         if (PROVIDERS[k].isCustom) {
             const cpIndex = customProviders.findIndex(cp => cp.id === k);
             if (cpIndex > -1) {
-                customProviders[cpIndex].models = modelIds;
                 customProviders[cpIndex].endpoint = PROVIDERS[k].endpoint;
                 localStorage.setItem('deepchat_custom_providers', JSON.stringify(customProviders));
             }
         }
-        
-        updateProviderModelUI(k); 
-        updateModelList(); 
-        showToast(`✅ ${modelIds.length} modèles (gratuits) récupérés !`, "success");
+
+        // OUVERTURE DE LA MODALE AU LIEU DE REMPLACER DIRECTEMENT
+        openModelsSelectionModal(k, modelIds);
         
       } catch (err) {
         showToast("❌ Impossible de récupérer les modèles : " + err.message, "error");
@@ -5178,6 +5938,8 @@ function autoResize() {
 }
 
 providerSelect.addEventListener('change', updateModelList);
+modelSelect.addEventListener('change', updateModelDescription);
+hfModelInput.addEventListener('input', updateModelDescription);
 hfModelInput.addEventListener('change', () => localStorage.setItem('deepchat_hfmodel', hfModelInput.value));
 sendBtn.addEventListener('click', () => { if (isStreaming) stopStreaming(); else sendMessage(); });
 messageInput.addEventListener('keydown', (e) => {
@@ -5309,6 +6071,12 @@ document.addEventListener('keydown', (e) => {
     if (activePreview) {
       const btnClose = activePreview.querySelector('.code-preview-close');
       if (btnClose) btnClose.click();
+    }
+    
+    // Ferme la modale de sélection de modèles si ouverte
+    const modelsModal = $('modelsSelectionModal');
+    if (modelsModal && modelsModal.classList.contains('open')) {
+      modelsModal.classList.remove('open');
     }
   }
 });
@@ -5518,7 +6286,7 @@ if (dropZone) {
 window.addEventListener('beforeunload', () => {
   if (currentConvId) {
     drafts[currentConvId] = messageInput.value;
-    try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch(e) {}
+    idbSaveDrafts(drafts).catch(() => {});
   }
   saveConversations();
 });
@@ -5588,7 +6356,33 @@ const translations = {
     tooltipAttach: "Joindre un fichier",
     tooltipImageMode: "Mode image — générer une image avec Agnes (ou tapez /image)",
     imgModeOn: "Mode image activé",
-    imgModeOff: "Mode image désactivé"
+    imgModeOff: "Mode image désactivé",
+    modelDesc: {
+      'agnes-3.0-flash': 'Le modèle phare d\'Agnes : rapide, polyvalent, contexte de 512k tokens.',
+      'agnes-2.5-flash': 'Version allégée pour les tâches rapides et courantes.',
+      'agnes-image-2.5-flash': 'Spécialisé dans la génération d\'images à partir de texte.',
+      'agnes-video-2.5-flash': 'Spécialisé dans la génération de vidéos.',
+      'openai/gpt-oss-120b': 'Modèle open-source massif de 120B. Excellent pour le code et le raisonnement complexe.',
+      'openai/gpt-oss-20b': 'Version plus légère et ultra-rapide du modèle GPT-OSS.',
+      'qwen/qwen3.8-27b': 'Modèle Qwen 3.8B. Très efficace pour le code et les mathématiques.',
+      'llama-3.3-70b-versatile': 'Le célèbre Llama 3.3 70B. Polyvalent, intelligent et très rapide sur Groq.',
+      'llama-3.1-8b-instant': 'Modèle Llama 3.1 8B. Ultra rapide, idéal pour les conversations simples.',
+      'codestral-latest': 'Modèle de Mistral spécialisé dans la génération de code. Idéal pour les développeurs.',
+      'mistral-medium-latest': 'Bon équilibre entre puissance, rapidité et coût.',
+      'mistral-small-latest': 'Modèle léger et rapide pour les tâches basiques.',
+      'magistral-medium-latest': 'Modèle orienté raisonnement (Chain of Thought) de Mistral.',
+      'gemini-3.5-flash': 'Le plus rapide de Google. Contexte gigantesque de 1 million de tokens. Parfait pour de longs documents.',
+      'gemini-3.5-flash-lite': 'Version encore plus rapide et légère de Gemini.',
+      'openrouter/free': 'Sélectionne automatiquement un modèle gratuit disponible sur OpenRouter.',
+      'nividia/nemotron-3.5-super-vl:free': 'Modèle NVIDIA gratuit orienté Vision-Langage (analyse d\'images).',
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Petit modèle NVIDIA gratuit spécialisé dans le raisonnement.',
+      'deepseek-v4-flash:free': 'Modèle DeepSeek ultra-rapide et gratuit via TokenHarbor.',
+      'deepseek-v4.1-flash:free': 'Version améliorée de DeepSeek Flash, gratuit.',
+      'mimo-v2.5:free': 'Modèle léger et gratuit via TokenHarbor.',
+      custom: 'Modèle personnalisé ou non répertorié. Vérifiez sa compatibilité.',
+      infoLabel: 'Info',
+      customLabel: 'Perso'
+    },
   },
   en: {
     newChat: "New chat", newChatTitle: "New chat", search: "Search...", settings: "Settings", appearance: "Appearance",
@@ -5653,7 +6447,33 @@ const translations = {
     tooltipAttach: "Attach a file",
     tooltipImageMode: "Image mode — generate an image with Agnes (or type /image)",
     imgModeOn: "Image mode enabled",
-    imgModeOff: "Image mode disabled"
+    imgModeOff: "Image mode disabled",
+    modelDesc: {
+      'agnes-3.0-flash': 'Agnes\' flagship model: fast, versatile, 512k token context.',
+      'agnes-2.5-flash': 'Lighter version for fast and common tasks.',
+      'agnes-image-2.5-flash': 'Specialized in text-to-image generation.',
+      'agnes-video-2.5-flash': 'Specialized in video generation.',
+      'openai/gpt-oss-120b': 'Massive 120B open-source model. Excellent for code and complex reasoning.',
+      'openai/gpt-oss-20b': 'Lighter and ultra-fast version of the GPT-OSS model.',
+      'qwen/qwen3.8-27b': 'Qwen 3.8B model. Very effective for code and math.',
+      'llama-3.3-70b-versatile': 'The famous Llama 3.3 70B. Versatile, smart, and very fast on Groq.',
+      'llama-3.1-8b-instant': 'Llama 3.1 8B model. Ultra-fast, ideal for simple conversations.',
+      'codestral-latest': 'Mistral\'s code-specialized model. Ideal for developers.',
+      'mistral-medium-latest': 'Good balance between power, speed, and cost.',
+      'mistral-small-latest': 'Light and fast model for basic tasks.',
+      'magistral-medium-latest': 'Reasoning-focused (Chain of Thought) model from Mistral.',
+      'gemini-3.5-flash': 'Google\'s fastest. Huge 1M token context. Perfect for long documents.',
+      'gemini-3.5-flash-lite': 'Even faster and lighter version of Gemini.',
+      'openrouter/free': 'Automatically selects an available free model on OpenRouter.',
+      'nividia/nemotron-3.5-super-vl:free': 'Free NVIDIA model focused on Vision-Language (image analysis).',
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Small free NVIDIA model specialized in reasoning.',
+      'deepseek-v4-flash:free': 'Ultra-fast and free DeepSeek model via TokenHarbor.',
+      'deepseek-v4.1-flash:free': 'Improved version of DeepSeek Flash, free.',
+      'mimo-v2.5:free': 'Light and free model via TokenHarbor.',
+      custom: 'Custom or unlisted model. Check its compatibility.',
+      infoLabel: 'Info',
+      customLabel: 'Custom'
+    },
   },
   it: {
     newChat: "Nuova chat", newChatTitle: "Nuova chat", search: "Cerca...", settings: "Impostazioni", appearance: "Aspetto",
@@ -5718,7 +6538,33 @@ const translations = {
     tooltipAttach: "Allega un file",
     tooltipImageMode: "Modalità immagine — genera un'immagine con Agnes (o digita /image)",
     imgModeOn: "Modalità immagine attivata",
-    imgModeOff: "Modalità immagine disattivata"
+    imgModeOff: "Modalità immagine disattivata",
+    modelDesc: {
+      'agnes-3.0-flash': 'Il modello di punta di Agnes: veloce, versatile, contesto di 512k token.',
+      'agnes-2.5-flash': 'Versione più leggera per attività rapide e comuni.',
+      'agnes-image-2.5-flash': 'Specializzato nella generazione di immagini da testo.',
+      'agnes-video-2.5-flash': 'Specializzato nella generazione di video.',
+      'openai/gpt-oss-120b': 'Modello open-source massiccio da 120B. Eccellente per codice e ragionamento complesso.',
+      'openai/gpt-oss-20b': 'Versione più leggera e ultra-veloce del modello GPT-OSS.',
+      'qwen/qwen3.8-27b': 'Modello Qwen 3.8B. Molto efficace per codice e matematica.',
+      'llama-3.3-70b-versatile': 'Il famoso Llama 3.3 70B. Versatile, intelligente e molto veloce su Groq.',
+      'llama-3.1-8b-instant': 'Modello Llama 3.1 8B. Ultra-veloce, ideale per conversazioni semplici.',
+      'codestral-latest': 'Modello di Mistral specializzato nel codice. Ideale per sviluppatori.',
+      'mistral-medium-latest': 'Buon equilibrio tra potenza, velocità e costo.',
+      'mistral-small-latest': 'Modello leggero e veloce per attività di base.',
+      'magistral-medium-latest': 'Modello orientato al ragionamento (Chain of Thought) di Mistral.',
+      'gemini-3.5-flash': 'Il più veloce di Google. Contesto gigantesco di 1 milione di token. Perfetto per documenti lunghi.',
+      'gemini-3.5-flash-lite': 'Versione ancora più veloce e leggera di Gemini.',
+      'openrouter/free': 'Seleziona automaticamente un modello gratuito disponibile su OpenRouter.',
+      'nividia/nemotron-3.5-super-vl:free': 'Modello NVIDIA gratuito orientato a Visione-Linguaggio (analisi immagini).',
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Piccolo modello NVIDIA gratuito specializzato nel ragionamento.',
+      'deepseek-v4-flash:free': 'Modello DeepSeek ultra-veloce e gratuito tramite TokenHarbor.',
+      'deepseek-v4.1-flash:free': 'Versione migliorata di DeepSeek Flash, gratuita.',
+      'mimo-v2.5:free': 'Modello leggero e gratuito tramite TokenHarbor.',
+      custom: 'Modello personalizzato o non elencato. Verifica la sua compatibilità.',
+      infoLabel: 'Info',
+      customLabel: 'Perso'
+    },
   },
   tr: {
     newChat: "Yeni sohbet", newChatTitle: "Yeni sohbet", search: "Ara...", settings: "Ayarlar", appearance: "Görünüm",
@@ -5783,7 +6629,33 @@ const translations = {
     tooltipAttach: "Dosya ekle",
     tooltipImageMode: "Resim modu — Agnes ile resim oluştur (veya /image yazın)",
     imgModeOn: "Resim modu etkinleştirildi",
-    imgModeOff: "Resim modu devre dışı bırakıldı"
+    imgModeOff: "Resim modu devre dışı bırakıldı",
+    modelDesc: {
+      'agnes-3.0-flash': 'Agnes\'in amiral gemisi modeli: hızlı, çok yönlü, 512k token bağlamı.',
+      'agnes-2.5-flash': 'Hızlı ve rutin görevler için daha hafif sürüm.',
+      'agnes-image-2.5-flash': 'Metinden görsel oluşturma konusunda uzmanlaşmıştır.',
+      'agnes-video-2.5-flash': 'Video oluşturma konusunda uzmanlaşmıştır.',
+      'openai/gpt-oss-120b': 'Devasa 120B açık kaynak modeli. Kod ve karmaşık akıl yürütme için mükemmel.',
+      'openai/gpt-oss-20b': 'GPT-OSS modelinin daha hafif ve ultra hızlı sürümü.',
+      'qwen/qwen3.8-27b': 'Qwen 3.8B modeli. Kod ve matematik için çok etkili.',
+      'llama-3.3-70b-versatile': 'Ünlü Llama 3.3 70B. Groq üzerinde çok yönlü, akıllı ve çok hızlı.',
+      'llama-3.1-8b-instant': 'Llama 3.1 8B modeli. Ultra hızlı, basit sohbetler için ideal.',
+      'codestral-latest': 'Mistral\'in koda özel modeli. Geliştiriciler için ideal.',
+      'mistral-medium-latest': 'Güç, hız ve maliyet arasında iyi denge.',
+      'mistral-small-latest': 'Temel görevler için hafif ve hızlı model.',
+      'magistral-medium-latest': 'Mistral\'in akıl yürütme odaklı (Chain of Thought) modeli.',
+      'gemini-3.5-flash': 'Google\'ın en hızlısı. 1 milyon token\'lık devasa bağlam. Uzun belgeler için mükemmel.',
+      'gemini-3.5-flash-lite': 'Gemini\'nin daha da hızlı ve hafif sürümü.',
+      'openrouter/free': 'OpenRouter\'da mevcut olan ücretsiz bir modeli otomatik olarak seçer.',
+      'nividia/nemotron-3.5-super-vl:free': 'Görsel-Dil (görsel analizi) odaklı ücretsiz NVIDIA modeli.',
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Akıl yürütme konusunda uzmanlaşmış küçük ücretsiz NVIDIA modeli.',
+      'deepseek-v4-flash:free': 'TokenHarbor aracılığıyla ultra hızlı ve ücretsiz DeepSeek modeli.',
+      'deepseek-v4.1-flash:free': 'DeepSeek Flash\'ın geliştirilmiş ücretsiz sürümü.',
+      'mimo-v2.5:free': 'TokenHarbor aracılığıyla hafif ve ücretsiz model.',
+      custom: 'Özel veya listelenmemiş model. Uyumluluğunu kontrol edin.',
+      infoLabel: 'Bilgi',
+      customLabel: 'Özel'
+    },
   }
 };
 
@@ -5971,6 +6843,8 @@ function applyLanguage(lang) {
     renderProviderKeys();
     renderCustomProviders();
   }
+    // Mettre à jour la description du modèle lors du changement de langue
+  updateModelDescription();
 }
 
 // Écouter le changement du select
@@ -6006,13 +6880,58 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('[DeepChat] highlight.js NOT loaded — colors will fallback to plain text');
   }
   (async () => {
+    // 1. Charge les conversations
     try {
-      await hydrateConversations();
+      if (useIDB) {
+        const idbData = await idbLoadConversations();
+        if (idbData && Object.keys(idbData).length > 0) {
+          conversations = idbData;
+        } else {
+          const legacy = localStorage.getItem('deepchat_convs');
+          if (legacy) {
+            conversations = JSON.parse(legacy);
+            if (Object.keys(conversations).length > 0) {
+              await doSaveConversations();
+              try { localStorage.removeItem('deepchat_convs'); } catch (e) {}
+            }
+          }
+        }
+      } else {
+        const legacy = localStorage.getItem('deepchat_convs');
+        if (legacy) conversations = JSON.parse(legacy);
+      }
     } catch (e) {
-      console.error('[init] hydrate failed:', e);
-      showToast((translations[currentLang] || translations.fr).loadImagesError, 'error');
+      conversations = {};
     }
-    isHydrating = false;
+
+    // 2. Charge les brouillons
+    try {
+      if (useIDB) {
+        const idbDrafts = await idbLoadDrafts();
+        if (idbDrafts && Object.keys(idbDrafts).length > 0) {
+          drafts = idbDrafts;
+        } else {
+          const legacyDrafts = localStorage.getItem('deepchat_drafts');
+          if (legacyDrafts) {
+            drafts = JSON.parse(legacyDrafts);
+            await idbSaveDrafts(drafts);
+            try { localStorage.removeItem('deepchat_drafts'); } catch (e) {}
+          }
+        }
+      } else {
+        const legacyDrafts = localStorage.getItem('deepchat_drafts');
+        if (legacyDrafts) drafts = JSON.parse(legacyDrafts);
+      }
+    } catch (e) { drafts = {}; }
+
+// 3. Hydrate les images
+try {
+  await hydrateConversations();
+} catch (e) {
+  console.error('[init] hydrate failed:', e);
+  showToast((translations[currentLang] || translations.fr).loadImagesError, 'error');
+}
+isHydrating = false;
 
     const ids = Object.keys(conversations).sort((a,b) => (conversations[b].updated || conversations[b].upd || conversations[b].created||0) - (conversations[a].upd || conversations[a].created||0));
     if (ids.length > 0) loadConversation(ids[0]);
