@@ -8,7 +8,7 @@
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<!-- ✨ NOUVEAU : Bibliothèque pour Puter ✨ -->
+<!-- ✨ Bibliothèque pour Puter ✨ -->
 <script src="https://js.puter.com/v2/"></script>
 <style>
 :root {
@@ -3733,9 +3733,8 @@ const MODEL_DESCRIPTIONS = {
   'mimo-v2.6-flash:free': 'Version rapide et gratuite du modèle Mimo via TokenHarbor.',
 
   // Puter
-  'deepseek-r1': 'Le célèbre modèle de raisonnement de DeepSeek, accessible gratuitement via Puter.js.',
-  'gpt-4o-mini': 'Modèle rapide et économique d\'OpenAI, via Puter.js.',
-  'llama-3.3-70b': 'Le modèle polyvalent de Meta, via Puter.js.',
+  'deepseek/deepseek-v4-pro': 'Modèle DeepSeek accessible gratuitement et sans clé via Puter.js.',
+  'openai/gpt-5.5': 'Modèle OpenAI accessible gratuitement et sans clé via Puter.js.',
 };
 
 function updateModelDescription() {
@@ -4482,7 +4481,7 @@ function buildApiMessages(history) {
   return msgs;
 }
 
-// ✨ NOUVELLE FONCTION : Streaming avec Puter.js ✨
+// ✨ FONCTION : Streaming avec Puter.js ✨
 async function streamChatWithPuter(history, callbacks) {
     const onDelta = callbacks.onDelta;
     // Puter ne gère pas le "reasoning" nativement dans cet appel, on l'ignore.
@@ -5025,7 +5024,7 @@ async function runCompletion() {
   try {
     let result;
 
-    // ✨ NOUVEAU : Aiguillage vers la bonne fonction de streaming ✨
+    // ✨ Aiguillage vers la bonne fonction de streaming ✨
     if (providerSelect.value === 'puter') {
         result = await streamChatWithPuter(conv.messages, {
             onReasoning: (fullReasoning) => { /* Puter ne gère pas le reasoning pour l'instant */ },
@@ -6531,6 +6530,8 @@ const translations = {
       'deepseek-v4.1-flash:free': 'Version améliorée de DeepSeek Flash, gratuit.',
       'mimo-v2.5:free': 'Modèle léger et gratuit via TokenHarbor.',
       'mimo-v2.6-flash:free': 'Version rapide et gratuite du modèle Mimo via TokenHarbor.',
+      'deepseek/deepseek-v4-pro': 'Modèle DeepSeek accessible gratuitement et sans clé via Puter.js.',
+      'openai/gpt-5.5': 'Modèle OpenAI accessible gratuitement et sans clé via Puter.js.',
       infoLabel: 'Info'
     },
   },
@@ -6625,6 +6626,8 @@ const translations = {
       'deepseek-v4.1-flash:free': 'Improved version of DeepSeek Flash, free.',
       'mimo-v2.5:free': 'Light and free model via TokenHarbor.',
       'mimo-v2.6-flash:free': 'Fast and free version of the Mimo model via TokenHarbor.',
+      'deepseek/deepseek-v4-pro': 'DeepSeek model available for free without a key via Puter.js.',
+      'openai/gpt-5.5': 'OpenAI model available for free without a key via Puter.js.',
       infoLabel: 'Info'
     },
   },
@@ -6719,6 +6722,8 @@ const translations = {
       'deepseek-v4.1-flash:free': 'Versione migliorata di DeepSeek Flash, gratuita.',
       'mimo-v2.5:free': 'Modello leggero e gratuito tramite TokenHarbor.',
       'mimo-v2.6-flash:free': 'Versione veloce e gratuita del modello Mimo tramite TokenHarbor.',
+      'deepseek/deepseek-v4-pro': 'Modello DeepSeek disponibile gratuitamente e senza chiave tramite Puter.js.',
+      'openai/gpt-5.5': 'Modello OpenAI disponibile gratuitamente e senza chiave tramite Puter.js.',
       infoLabel: 'Info'
     },
   },
@@ -6813,6 +6818,8 @@ const translations = {
       'deepseek-v4.1-flash:free': 'DeepSeek Flash\'ın geliştirilmiş ücretsiz sürümü.',
       'mimo-v2.5:free': 'TokenHarbor aracılığıyla hafif ve ücretsiz model.',
       'mimo-v2.6-flash:free': 'TokenHarbor üzerinden Mimo modelinin hızlı ve ücretsiz sürümü.',
+      'deepseek/deepseek-v4-pro': 'Puter.js aracılığıyla ücretsiz ve anahtar gerektirmeden kullanılabilen DeepSeek modeli.',
+      'openai/gpt-5.5': 'Puter.js aracılığıyla ücretsiz ve anahtar gerektirmeden kullanılabilen OpenAI modeli.',
       infoLabel: 'Bilgi'
     },
   }
