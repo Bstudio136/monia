@@ -2912,7 +2912,15 @@ const DEFAULT_PROVIDERS = {
     endpoint: 'https://api.puter.com/v1/chat/completions',
     models: [
         'deepseek/deepseek-v4-pro',
-        'openai/gpt-5.5'
+        'openai/gpt-5.5',
+        'baidu/ernie-5.5-flash-preview:free',
+        'recursive/flint-v1.0:free',
+        'fireworks/ember-1',
+        'prism-ml/ternary-bonsai-27b',
+        'cohere/north-mini-code:free',
+        'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+        'google/gemma-4-31b-it',
+        'google/gemma-4-26b-a4b-it'
     ],
     format: 'openai',
     testUrl: null,
@@ -3735,6 +3743,13 @@ const MODEL_DESCRIPTIONS = {
   // Puter
   'deepseek/deepseek-v4-pro': 'Modèle DeepSeek accessible gratuitement et sans clé via Puter.js.',
   'openai/gpt-5.5': 'Modèle OpenAI accessible gratuitement et sans clé via Puter.js.',
+  'baidu/ernie-5.5-flash-preview:free': 'Modèle Baidu ERNIE 5.5 Flash (preview) gratuit via Puter. Rapide et polyvalent pour les conversations courantes.',
+  'recursive/flint-v1.0:free': 'Modèle Recursive Flint v1.0, accessible gratuitement et sans clé via Puter.',
+  'fireworks/ember-1': 'Modèle Fireworks Ember 1, optimisé pour la génération rapide via Puter.',
+  'prism-ml/ternary-bonsai-27b': 'Modèle Prism ML Ternary Bonsai 27B, orienté raisonnement, disponible via Puter.',
+  'cohere/north-mini-code:free': 'Modèle Cohere North Mini Code, spécialisé dans le code, gratuit via Puter.',
+  'google/gemma-4-31b-it': 'Google Gemma 4 31B (instruction-tuned), modèle open-weight polyvalent via Puter.',
+  'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B actifs) instruction-tuned, efficace et rapide via Puter.',
 };
 
 function updateModelDescription() {
@@ -6532,6 +6547,13 @@ const translations = {
       'mimo-v2.6-flash:free': 'Version rapide et gratuite du modèle Mimo via TokenHarbor.',
       'deepseek/deepseek-v4-pro': 'Modèle DeepSeek accessible gratuitement et sans clé via Puter.js.',
       'openai/gpt-5.5': 'Modèle OpenAI accessible gratuitement et sans clé via Puter.js.',
+      'baidu/ernie-5.5-flash-preview:free': 'Modèle Baidu ERNIE 5.5 Flash (preview) gratuit via Puter. Rapide et polyvalent pour les conversations courantes.',
+      'recursive/flint-v1.0:free': 'Modèle Recursive Flint v1.0, accessible gratuitement et sans clé via Puter.',
+      'fireworks/ember-1': 'Modèle Fireworks Ember 1, optimisé pour la génération rapide via Puter.',
+      'prism-ml/ternary-bonsai-27b': 'Modèle Prism ML Ternary Bonsai 27B, orienté raisonnement, disponible via Puter.',
+      'cohere/north-mini-code:free': 'Modèle Cohere North Mini Code, spécialisé dans le code, gratuit via Puter.',
+      'google/gemma-4-31b-it': 'Google Gemma 4 31B (instruction-tuned), modèle open-weight polyvalent via Puter.',
+      'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B actifs) instruction-tuned, efficace et rapide via Puter.',
       infoLabel: 'Info'
     },
   },
@@ -6628,6 +6650,13 @@ const translations = {
       'mimo-v2.6-flash:free': 'Fast and free version of the Mimo model via TokenHarbor.',
       'deepseek/deepseek-v4-pro': 'DeepSeek model available for free without a key via Puter.js.',
       'openai/gpt-5.5': 'OpenAI model available for free without a key via Puter.js.',
+      'baidu/ernie-5.5-flash-preview:free': 'Baidu ERNIE 5.5 Flash (preview) model, free via Puter. Fast and versatile for everyday conversations.',
+      'recursive/flint-v1.0:free': 'Recursive Flint v1.0 model, available for free without a key via Puter.',
+      'fireworks/ember-1': 'Fireworks Ember 1 model, optimized for fast generation via Puter.',
+      'prism-ml/ternary-bonsai-27b': 'Prism ML Ternary Bonsai 27B model, reasoning-focused, available via Puter.',
+      'cohere/north-mini-code:free': 'Cohere North Mini Code model, code-specialized, free via Puter.',
+      'google/gemma-4-31b-it': 'Google Gemma 4 31B (instruction-tuned), versatile open-weight model via Puter.',
+      'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B active) instruction-tuned, efficient and fast via Puter.',
       infoLabel: 'Info'
     },
   },
@@ -6724,6 +6753,13 @@ const translations = {
       'mimo-v2.6-flash:free': 'Versione veloce e gratuita del modello Mimo tramite TokenHarbor.',
       'deepseek/deepseek-v4-pro': 'Modello DeepSeek disponibile gratuitamente e senza chiave tramite Puter.js.',
       'openai/gpt-5.5': 'Modello OpenAI disponibile gratuitamente e senza chiave tramite Puter.js.',
+      'baidu/ernie-5.5-flash-preview:free': 'Modello Baidu ERNIE 5.5 Flash (preview) gratuito tramite Puter. Veloce e versatile per conversazioni quotidiane.',
+      'recursive/flint-v1.0:free': 'Modello Recursive Flint v1.0, disponibile gratuitamente e senza chiave tramite Puter.',
+      'fireworks/ember-1': 'Modello Fireworks Ember 1, ottimizzato per la generazione rapida tramite Puter.',
+      'prism-ml/ternary-bonsai-27b': 'Modello Prism ML Ternary Bonsai 27B, orientato al ragionamento, disponibile tramite Puter.',
+      'cohere/north-mini-code:free': 'Modello Cohere North Mini Code, specializzato nel codice, gratuito tramite Puter.',
+      'google/gemma-4-31b-it': 'Google Gemma 4 31B (instruction-tuned), modello open-weight versatile tramite Puter.',
+      'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B attivi) instruction-tuned, efficiente e veloce tramite Puter.',
       infoLabel: 'Info'
     },
   },
@@ -6820,6 +6856,13 @@ const translations = {
       'mimo-v2.6-flash:free': 'TokenHarbor üzerinden Mimo modelinin hızlı ve ücretsiz sürümü.',
       'deepseek/deepseek-v4-pro': 'Puter.js aracılığıyla ücretsiz ve anahtar gerektirmeden kullanılabilen DeepSeek modeli.',
       'openai/gpt-5.5': 'Puter.js aracılığıyla ücretsiz ve anahtar gerektirmeden kullanılabilen OpenAI modeli.',
+      'baidu/ernie-5.5-flash-preview:free': 'Baidu ERNIE 5.5 Flash (önizleme) modeli, Puter aracılığıyla ücretsiz. Günlük sohbetler için hızlı ve çok yönlü.',
+      'recursive/flint-v1.0:free': 'Recursive Flint v1.0 modeli, Puter aracılığıyla ücretsiz ve anahtar gerektirmeden kullanılabilir.',
+      'fireworks/ember-1': 'Fireworks Ember 1 modeli, Puter aracılığıyla hızlı üretim için optimize edilmiştir.',
+      'prism-ml/ternary-bonsai-27b': 'Prism ML Ternary Bonsai 27B modeli, akıl yürütme odaklı, Puter aracılığıyla kullanılabilir.',
+      'cohere/north-mini-code:free': 'Cohere North Mini Code modeli, koda özel, Puter aracılığıyla ücretsiz.',
+      'google/gemma-4-31b-it': 'Google Gemma 4 31B (talimat ayarlı), Puter aracılığıyla çok yönlü açık ağırlıklı model.',
+      'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B aktif) talimat ayarlı, Puter aracılığıyla verimli ve hızlı.',
       infoLabel: 'Bilgi'
     },
   }
