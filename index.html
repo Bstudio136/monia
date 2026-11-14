@@ -2896,7 +2896,8 @@ const DEFAULT_PROVIDERS = {
     models: [
       'deepseek-v4-flash:free',
       'deepseek-v4.1-flash:free',
-      'mimo-v2.5:free'
+      'mimo-v2.5:free',
+      'mimo-v2.6-flash:free'
     ],
     format: 'openai',
     testUrl: 'https://tokenharbor.ai/v1/models',
@@ -5430,11 +5431,18 @@ function renderModelsList(models, filterText = '') {
   const listContainer = $('modelsSelectionList');
   const filter = filterText.toLowerCase().trim();
   
+  // ✨ NOUVEAU : On récupère la liste des modèles déjà installés pour ce fournisseur
+  const installedModels = PROVIDERS[currentFetchProviderKey]?.models || [];
+
   listContainer.innerHTML = models.map((m, index) => {
     if (filter && !m.toLowerCase().includes(filter)) return '';
+    
+    // ✨ NOUVEAU : On vérifie si le modèle est déjà installé
+    const isChecked = installedModels.includes(m) ? 'checked' : '';
+
     return `
       <label class="model-select-item">
-        <input type="checkbox" value="${index}" class="model-checkbox">
+        <input type="checkbox" value="${index}" class="model-checkbox" ${isChecked}>
         <span class="model-select-name">${escapeHtml(m)}</span>
       </label>
     `;
