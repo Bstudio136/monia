@@ -3715,7 +3715,8 @@ const MODEL_DESCRIPTIONS = {
   // TokenHarbor
   'deepseek-v4-flash:free': 'Modèle DeepSeek ultra-rapide et gratuit via TokenHarbor.',
   'deepseek-v4.1-flash:free': 'Version améliorée de DeepSeek Flash, gratuit.',
-  'mimo-v2.5:free': 'Modèle léger et gratuit via TokenHarbor.'
+  'mimo-v2.5:free': 'Modèle léger et gratuit via TokenHarbor.',
+  'mimo-v2.6-flash:free': 'Version rapide et gratuite du modèle Mimo via TokenHarbor.'
 };
 
 function updateModelDescription() {
@@ -3729,14 +3730,84 @@ function updateModelDescription() {
   const desc = tDesc[currentModel];
   
   if (desc) {
+    // ✅ Le modèle a une description dans la base → on l'affiche
     descEl.innerHTML = `<span>${tDesc.infoLabel}</span> ${desc}`;
     descEl.classList.remove('empty');
-  } else if (currentModel) {
-    descEl.innerHTML = `<span>${tDesc.customLabel}</span> ${tDesc.custom}`;
-    descEl.classList.remove('empty');
-  } else {
-    descEl.classList.add('empty');
+    return;
   }
+  
+  // 🔍 Fallback intelligent : on déduit une description pour les modèles dynamiques
+  if (currentModel) {
+    const lower = currentModel.toLowerCase();
+    let fallback = null;
+    
+    const fallbacks = {
+      // Multimodal / Vision
+      vision: {
+        fr: 'Modèle multimodal (vision + texte).',
+        en: 'Multimodal model (vision + text).',
+        it: 'Modello multimodale (visione + testo).',
+        tr: 'Çok modlu model (görsel + metin).'
+      },
+      // Raisonnement
+      reasoning: {
+        fr: 'Modèle orienté raisonnement.',
+        en: 'Reasoning-focused model.',
+        it: 'Modello orientato al ragionamento.',
+        tr: 'Akıl yürütme odaklı model.'
+      },
+      // Code
+      code: {
+        fr: 'Modèle spécialisé dans le code.',
+        en: 'Code-specialized model.',
+        it: 'Modello specializzato nel codice.',
+        tr: 'Koda özel model.'
+      },
+      // Image
+      image: {
+        fr: 'Modèle de génération d\'images.',
+        en: 'Image generation model.',
+        it: 'Modello di generazione immagini.',
+        tr: 'Görsel oluşturma modeli.'
+      },
+      // Vidéo
+      video: {
+        fr: 'Modèle de génération de vidéos.',
+        en: 'Video generation model.',
+        it: 'Modello di generazione video.',
+        tr: 'Video oluşturma modeli.'
+      },
+      // Grand contexte (token)
+      large: {
+        fr: 'Modèle à grand contexte (longues conversations).',
+        en: 'Large-context model (long conversations).',
+        it: 'Modello a grande contesto (lunghe conversazioni).',
+        tr: 'Geniş bağlam modeli (uzun sohbetler).'
+      }
+    };
+    
+    if (lower.includes('vision') || lower.includes('-vl') || lower.includes('multimodal')) {
+      fallback = fallbacks.vision[currentLang] || fallbacks.vision.fr;
+    } else if (lower.includes('reasoning') || lower.includes('think') || lower.includes('r1')) {
+      fallback = fallbacks.reasoning[currentLang] || fallbacks.reasoning.fr;
+    } else if (lower.includes('code') || lower.includes('coder')) {
+      fallback = fallbacks.code[currentLang] || fallbacks.code.fr;
+    } else if (lower.includes('image') || lower.includes('dall-e') || lower.includes('flux') || lower.includes('sdxl')) {
+      fallback = fallbacks.image[currentLang] || fallbacks.image.fr;
+    } else if (lower.includes('video') || lower.includes('sora') || lower.includes('kling')) {
+      fallback = fallbacks.video[currentLang] || fallbacks.video.fr;
+    }
+    
+    if (fallback) {
+      descEl.innerHTML = `<span>${tDesc.infoLabel}</span> ${fallback}`;
+      descEl.classList.remove('empty');
+      return;
+    }
+  }
+  
+  // ❌ Aucune description trouvée → on cache la barre
+  descEl.innerHTML = '';
+  descEl.classList.add('empty');
 }
 
 function updateModelList() {
@@ -6389,9 +6460,8 @@ const translations = {
       'deepseek-v4-flash:free': 'Modèle DeepSeek ultra-rapide et gratuit via TokenHarbor.',
       'deepseek-v4.1-flash:free': 'Version améliorée de DeepSeek Flash, gratuit.',
       'mimo-v2.5:free': 'Modèle léger et gratuit via TokenHarbor.',
-      custom: 'Modèle personnalisé ou non répertorié. Vérifiez sa compatibilité.',
-      infoLabel: 'Info',
-      customLabel: 'Perso'
+      'mimo-v2.6-flash:free': 'Version rapide et gratuite du modèle Mimo via TokenHarbor.',
+      infoLabel: 'Info'
     },
   },
   en: {
@@ -6481,9 +6551,8 @@ const translations = {
       'deepseek-v4-flash:free': 'Ultra-fast and free DeepSeek model via TokenHarbor.',
       'deepseek-v4.1-flash:free': 'Improved version of DeepSeek Flash, free.',
       'mimo-v2.5:free': 'Light and free model via TokenHarbor.',
-      custom: 'Custom or unlisted model. Check its compatibility.',
-      infoLabel: 'Info',
-      customLabel: 'Custom'
+      'mimo-v2.6-flash:free': 'Fast and free version of the Mimo model via TokenHarbor.',
+      infoLabel: 'Info'
     },
   },
   it: {
@@ -6573,9 +6642,8 @@ const translations = {
       'deepseek-v4-flash:free': 'Modello DeepSeek ultra-veloce e gratuito tramite TokenHarbor.',
       'deepseek-v4.1-flash:free': 'Versione migliorata di DeepSeek Flash, gratuita.',
       'mimo-v2.5:free': 'Modello leggero e gratuito tramite TokenHarbor.',
-      custom: 'Modello personalizzato o non elencato. Verifica la sua compatibilità.',
-      infoLabel: 'Info',
-      customLabel: 'Perso'
+      'mimo-v2.6-flash:free': 'Versione veloce e gratuita del modello Mimo tramite TokenHarbor.',
+      infoLabel: 'Info'
     },
   },
   tr: {
@@ -6665,9 +6733,8 @@ const translations = {
       'deepseek-v4-flash:free': 'TokenHarbor aracılığıyla ultra hızlı ve ücretsiz DeepSeek modeli.',
       'deepseek-v4.1-flash:free': 'DeepSeek Flash\'ın geliştirilmiş ücretsiz sürümü.',
       'mimo-v2.5:free': 'TokenHarbor aracılığıyla hafif ve ücretsiz model.',
-      custom: 'Özel veya listelenmemiş model. Uyumluluğunu kontrol edin.',
-      infoLabel: 'Bilgi',
-      customLabel: 'Özel'
+      'mimo-v2.6-flash:free': 'TokenHarbor üzerinden Mimo modelinin hızlı ve ücretsiz sürümü.',
+      infoLabel: 'Bilgi'
     },
   }
 };
