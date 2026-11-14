@@ -2908,21 +2908,20 @@ const DEFAULT_PROVIDERS = {
     apiKeyUrl: 'https://tokenharbor.ai/dashboard'
   },
 
-  // ✨ NOUVEAU : Fournisseur Puter.js (gratuit, sans clé) ✨
-  puter: {
+puter: {
     label: 'Puter (Gratuit, sans clé)',
-    endpoint: 'https://api.puter.com/v1/chat/completions', // Endpoint public de Puter
+    endpoint: 'https://api.puter.com/v1/chat/completions',
     models: [
-      'deepseek-r1',        // Le modèle qui vous intéresse
-      'gpt-4o-mini',
-      'claude-3-5-sonnet',
-      'llama-3.3-70b'
+        'meta-llama/llama-3.3-70b-instruct', // ✅ ID corrigé pour Llama
+        'claude-sonnet-4',                   // ✅ ID corrigé pour Claude
+        'deepseek/deepseek-v4-pro',          // Autre exemple valide
+        'openai/gpt-5.5'                     // Exemple de modèle OpenAI
     ],
     format: 'openai',
     testUrl: null,
     testType: 'bearer',
     apiKeyUrl: null
-  },
+},
 
   // ✨ NOUVEAU : Fournisseur jsllm7 (gratuit, sans clé) ✨
   jsllm7: {
