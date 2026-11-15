@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon Claude — Mistral</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #1e1e2e; color: #cdd6f4; height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .container { width: 100%; max-width: 900px; height: 100vh; display: flex; flex-direction: column; padding: 1rem; }
+  h1 { font-size: 1.15rem; font-weight: 600; text-align: center; padding: 0.75rem 0; border-bottom: 1px solid #313244; color: #cba6f7; }
+  .config { display: flex; gap: 0.5rem; padding: 0.75rem 0; flex-wrap: wrap; }
+  .config input, .config select {
+    background: #313244; border: 1px solid #45475a; border-radius: 8px;
+    padding: 0.6rem 0.8rem; color: #cdd6f4; font-size: 0.85rem; outline: none;
+  }
+  .config input:focus, .config select:focus { border-color: #cba6f7; }
+  .config input { flex: 1; min-width: 200px; }
+  .config select { cursor: pointer; }
+  #chat { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; padding: 0.5rem 0; scroll-behavior: smooth; }
+  #chat::-webkit-scrollbar { width: 6px; }
+  #chat::-webkit-scrollbar-thumb { background: #45475a; border-radius: 3px; }
+  .message { display: flex; gap: 0.6rem; max-width: 85%; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .message.user { align-self: flex-end; flex-direction: row-reverse; }
+  .message.assistant { align-self: flex-start; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0; }
+  .message.user .avatar { background: #cba6f7; color: #1e1e2e; }
+  .message.assistant .avatar { background: #89b4fa; color: #1e1e2e; }
+  .bubble { padding: 0.7rem 1rem; border-radius: 14px; font-size: 0.92rem; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .message.user .bubble { background: #cba6f7; color: #1e1e2e; border-top-right-radius: 4px; }
+  .message.assistant .bubble { background: #313244; color: #cdd6f4; border-top-left-radius: 4px; }
+  .message.assistant .bubble.streaming::after { content: '▍'; animation: blink 0.8s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .bubble .attachment-badge {
+    display: inline-block; font-size: 0.75rem; padding: 0.15rem 0.5rem;
+    background: rgba(0,0,0,0.2); border-radius: 6px; margin: 0.15rem 0.3rem 0.15rem 0;
+  }
+  #fileTray { display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.4rem 0; }
+  .file-chip {
+    display: flex; align-items: center; gap: 0.4rem;
+    background: #45475a; border-radius: 8px; padding: 0.35rem 0.6rem;
+    font-size: 0.8rem; max-width: 240px;
+  }
+  .file-chip .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-chip .remove { cursor: pointer; color: #f38ba8; font-weight: bold; padding: 0 0.2rem; }
+  .file-chip .remove:hover { color: #eba0ac; }
+  .file-chip.loading { opacity: 0.6; }
+  .input-area { display: flex; gap: 0.5rem; padding: 0.75rem 0; border-top: 1px solid #313244; align-items: flex-end; }
+  #userInput {
+    flex: 1; background: #313244; border: 1px solid #45475a; border-radius: 12px;
+    padding: 0.8rem 1rem; color: #cdd6f4; font-size: 0.95rem; font-family: inherit;
+    resize: none; outline: none; min-height: 48px; max-height: 140px;
+  }
+  #userInput:focus { border-color: #cba6f7; }
+  #attachBtn {
+    background: #45475a; color: #cdd6f4; border: none; border-radius: 12px;
+    padding: 0 0.9rem; font-size: 1.1rem; cursor: pointer; height: 48px; transition: background 0.15s;
+  }
+  #attachBtn:hover { background: #585b70; }
+  #sendBtn {
+    background: #cba6f7; color: #1e1e2e; border: none; border-radius: 12px;
+    padding: 0 1.2rem; font-weight: 600; font-size: 0.9rem; cursor: pointer;
+    transition: background 0.15s; min-width: 70px; height: 48px;
+  }
+  #sendBtn:hover:not(:disabled) { background: #b4befe; }
+  #sendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .error { color: #f38ba8; font-size: 0.85rem; padding: 0.5rem; text-align: center; }
+  .hint { font-size: 0.72rem; color: #6c7086; text-align: center; padding: 0.25rem 0; }
+  #dropOverlay {
+    position: fixed; inset: 0; background: rgba(203,166,247,0.15);
+    border: 3px dashed #cba6f7; display: none; align-items: center; justify-content: center;
+    font-size: 1.5rem; font-weight: bold; color: #cba6f7; z-index: 100; pointer-events: none;
+  }
+  #dropOverlay.active { display: flex; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🤖 Mon Claude — Mistral</h1>
+
+  <div class="config">
+    <input type="password" id="apiKey" placeholder="Clé API Mistral (sk-...)" />
+    <select id="modelSelect">
+      <option value="mistral-small-latest" selected>Mistral Small (rapide, vision)</option>
+      <option value="mistral-medium-latest">Mistral Medium</option>
+      <option value="mistral-large-latest">Mistral Large</option>
+      <option value="pixtral-large-latest">Pixtral Large (vision avancée)</option>
+    </select>
+  </div>
+
+  <div id="chat"></div>
+  <div id="fileTray"></div>
+
+  <div class="input-area">
+    <button id="attachBtn" title="Joindre un fichier">📎</button>
+    <input type="file" id="fileInput" multiple style="display:none" accept="image/*,application/pdf,.txt,.md,.json,.csv,.js,.ts,.py,.html,.css,.xml,.yaml,.yml,.log,.tsv,.sql,.sh"/>
+    <textarea id="userInput" rows="1" placeholder="Posez votre question, joignez un fichier..."></textarea>
+    <button id="sendBtn" disabled>Envoyer</button>
+  </div>
+  <div class="hint">Entrée = envoyer · Maj+Entrée = nouvelle ligne · Glissez-déposez des fichiers</div>
+  <div id="errorMsg" class="error"></div>
+</div>
+<div id="dropOverlay">Déposez pour joindre</div>
+
+<script>
+// ==========================================================================
+// CONFIG
+// ==========================================================================
+const API_URL = 'https://api.mistral.ai/v1/chat/completions';
+const SYSTEM_PROMPT = `Tu es un assistant personnel francophone, inspiré de Claude.
+Tu es utile, précis et concis. Tu poses des questions de clarification si nécessaire.
+Tu ne prétends pas être humain. Tu réponds toujours en français.
+Lorsqu'un fichier t'est fourni, analyse-le et réponds en te basant sur son contenu.`;
+
+const MAX_TEXT_CHARS = 200000;    // ~50k tokens pour les fichiers texte
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 Mo pour une image
+
+// PDF.js worker
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ==========================================================================
+// ÉTAT
+// ==========================================================================
+let messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+let isStreaming = false;
+// Chaque entrée : { id, name, content: {type, ...}, loading, error }
+let attachments = [];
+let nextId = 1;
+
+// ==========================================================================
+// DOM
+// ==========================================================================
+const chatEl     = document.getElementById('chat');
+const inputEl    = document.getElementById('userInput');
+const sendBtn    = document.getElementById('sendBtn');
+const apiKeyEl   = document.getElementById('apiKey');
+const modelEl    = document.getElementById('modelSelect');
+const errorEl    = document.getElementById('errorMsg');
+const fileInput  = document.getElementById('fileInput');
+const attachBtn  = document.getElementById('attachBtn');
+const fileTray   = document.getElementById('fileTray');
+const dropOverlay= document.getElementById('dropOverlay');
+
+// Restauration clé API (session seulement)
+apiKeyEl.value = sessionStorage.getItem('mistral_key') || '';
+apiKeyEl.addEventListener('input', () => sessionStorage.setItem('mistral_key', apiKeyEl.value));
+
+// ==========================================================================
+// UI CHAT
+// ==========================================================================
+function appendMessage(role, text, streaming = false, badges = []) {
+  const wrap = document.createElement('div');
+  wrap.className = `message ${role}`;
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = role === 'user' ? '👤' : '🤖';
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble' + (streaming ? ' streaming' : '');
+  if (badges.length) {
+    const row = document.createElement('div');
+    badges.forEach(b => {
+      const s = document.createElement('span');
+      s.className = 'attachment-badge';
+      s.textContent = '📎 ' + b;
+      row.appendChild(s);
+    });
+    bubble.appendChild(row);
+    const txt = document.createElement('div');
+    txt.textContent = text;
+    bubble.appendChild(txt);
+    wrap._txtEl = txt;
+  } else {
+    bubble.textContent = text;
+  }
+  wrap.appendChild(avatar); wrap.appendChild(bubble);
+  chatEl.appendChild(wrap);
+  scrollToBottom();
+  return bubble;
+}
+function scrollToBottom() { chatEl.scrollTop = chatEl.scrollHeight; }
+function showError(m) {
+  errorEl.textContent = m;
+  clearTimeout(showError._t);
+  showError._t = setTimeout(() => { if (errorEl.textContent === m) errorEl.textContent = ''; }, 8000);
+}
+
+// ==========================================================================
+// PIÈCES JOINTES
+// ==========================================================================
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = () => rej(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
+async function extractPdfText(file) {
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let out = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    out += tc.items.map(it => it.str).join(' ') + '\n';
+    if (out.length > MAX_TEXT_CHARS) {
+      out += `\n[...tronqué à ${MAX_TEXT_CHARS} caractères — ${pdf.numPages} pages au total]`;
+      break;
+    }
+  }
+  return out;
+}
+
+async function buildContentForFile(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+
+  if (file.type.startsWith('image/')) {
+    if (file.size > MAX_IMAGE_BYTES) throw new Error(`Image trop lourde (${(file.size/1024/1024).toFixed(1)} Mo > 8 Mo)`);
+    const dataUrl = await fileToDataUrl(file);
+    return { type: 'image_url', image_url: dataUrl };
+  }
+
+  if (ext === 'pdf') {
+    if (!window.pdfjsLib) throw new Error('PDF.js non chargé (vérifiez votre connexion)');
+    const text = await extractPdfText(file);
+    return { type: 'text', text: `\n\n[Contenu du PDF "${file.name}"]\n${text}` };
+  }
+
+  // Texte générique
+  let text = await file.text();
+  if (text.length > MAX_TEXT_CHARS) text = text.slice(0, MAX_TEXT_CHARS) + `\n[...tronqué à ${MAX_TEXT_CHARS} caractères]`;
+  return { type: 'text', text: `\n\n[Contenu du fichier "${file.name}"]\n${text}` };
+}
+
+function renderTray() {
+  fileTray.innerHTML = '';
+  attachments.forEach(a => {
+    const chip = document.createElement('div');
+    chip.className = 'file-chip' + (a.loading ? ' loading' : '');
+    const name = document.createElement('span');
+    name.className = 'name';
+    name.textContent = (a.loading ? '⏳ ' : (a.error ? '❌ ' : '📄 ')) + a.name;
+    chip.appendChild(name);
+    if (!a.loading) {
+      const rm = document.createElement('span');
+      rm.className = 'remove';
+      rm.textContent = '✕';
+      rm.onclick = () => { attachments = attachments.filter(x => x.id !== a.id); renderTray(); refreshSendState(); };
+      chip.appendChild(rm);
+    }
+    fileTray.appendChild(chip);
+  });
+}
+
+async function addFiles(files) {
+  for (const file of files) {
+    const id = nextId++;
+    const entry = { id, name: file.name, loading: true, error: null, content: null };
+    attachments.push(entry);
+    renderTray();
+    try {
+      entry.content = await buildContentForFile(file);
+    } catch (e) {
+      entry.error = e.message;
+      showError(`Impossible de traiter ${file.name} : ${e.message}`);
+    } finally {
+      entry.loading = false;
+      renderTray();
+      refreshSendState();
+    }
+  }
+}
+
+function refreshSendState() {
+  const busy = attachments.some(a => a.loading);
+  const has = inputEl.value.trim() || attachments.some(a => a.content);
+  sendBtn.disabled = isStreaming || busy || !has;
+}
+
+// ==========================================================================
+// CONSTRUCTION DU MESSAGE
+// ==========================================================================
+function buildUserContent(text) {
+  const parts = [];
+  if (text) parts.push({ type: 'text', text });
+  for (const a of attachments) if (a.content) parts.push(a.content);
+
+  // S'il n'y a qu'un seul bloc texte, on garde une string (plus simple côté API)
+  if (parts.length === 1 && parts[0].type === 'text') return parts[0].text;
+  return parts;
+}
+
+function userDisplayText(text) {
+  return text || '(fichiers joints)';
+}
+function userDisplayBadges() {
+  return attachments.map(a => a.name);
+}
+
+// ==========================================================================
+// ENVOI + STREAMING
+// ==========================================================================
+async function sendMessage() {
+  const text = inputEl.value.trim();
+  const filesReady = attachments.filter(a => a.content);
+  if ((!text && !filesReady.length) || isStreaming) return;
+
+  const apiKey = apiKeyEl.value.trim();
+  if (!apiKey) { showError('Clé API Mistral manquante.'); return; }
+  if (!apiKey.startsWith('sk-')) { showError('La clé API Mistral commence normalement par "sk-".'); }
+
+  // Capture des pièces jointes AVANT reset
+  const sentBadges = userDisplayBadges();
+  const sentText   = userDisplayText(text);
+  const userContent = buildUserContent(text);
+
+  // Reset input
+  inputEl.value = ''; inputEl.style.height = 'auto';
+  attachments = []; renderTray();
+
+  // Ajout historique
+  messages.push({ role: 'user', content: userContent });
+  appendMessage('user', sentText, false, sentBadges);
+
+  // Bubble assistant vide (streaming)
+  const bubble = appendMessage('assistant', '', true);
+
+  isStreaming = true;
+  sendBtn.disabled = true;
+  errorEl.textContent = '';
+
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: modelEl.value,
+        messages,
+        stream: true,
+        temperature: 0.7
+      })
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`HTTP ${res.status} — ${body.slice(0, 300)}`);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let full = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t.startsWith('data:')) continue;
+        const payload = t.slice(5).trim();
+        if (!payload || payload === '[DONE]') continue;
+        try {
+          const json = JSON.parse(payload);
+          const delta = json.choices?.[0]?.delta?.content;
+          if (delta) {
+            full += delta;
+            bubble.textContent = full;
+            scrollToBottom();
+          }
+        } catch (_) { /* fragment JSON incomplet */ }
+      }
+    }
+
+    bubble.classList.remove('streaming');
+    messages.push({ role: 'assistant', content: full });
+
+  } catch (err) {
+    bubble.classList.remove('streaming');
+    bubble.textContent = '❌ ' + err.message;
+    showError(err.message);
+    messages.pop(); // retirer le message utilisateur fautif
+  } finally {
+    isStreaming = false;
+    refreshSendState();
+    inputEl.focus();
+  }
+}
+
+// ==========================================================================
+// ÉVÉNEMENTS
+// ==========================================================================
+sendBtn.addEventListener('click', sendMessage);
+
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (!isStreaming) sendMessage();
+  }
+});
+
+inputEl.addEventListener('input', () => {
+  inputEl.style.height = 'auto';
+  inputEl.style.height = Math.min(inputEl.scrollHeight, 140) + 'px';
+  refreshSendState();
+});
+
+attachBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) addFiles([...fileInput.files]);
+  fileInput.value = '';
+});
+
+// Drag & drop
+let dragCounter = 0;
+document.addEventListener('dragenter', e => {
+  if (e.dataTransfer?.types?.includes('Files')) {
+    dragCounter++; dropOverlay.classList.add('active');
+  }
+});
+document.addEventListener('dragleave', () => {
+  dragCounter--; if (dragCounter <= 0) { dragCounter = 0; dropOverlay.classList.remove('active'); }
+});
+document.addEventListener('dragover', e => { if (e.dataTransfer?.types?.includes('Files')) e.preventDefault(); });
+document.addEventListener('drop', e => {
+  if (e.dataTransfer?.files?.length) {
+    e.preventDefault();
+    dragCounter = 0; dropOverlay.classList.remove('active');
+    addFiles([...e.dataTransfer.files]);
+  }
+});
+
+// Coller une image depuis le presse-papiers
+inputEl.addEventListener('paste', e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  const files = [];
+  for (const it of items) if (it.kind === 'file') { const f = it.getAsFile(); if (f) files.push(f); }
+  if (files.length) { e.preventDefault(); addFiles(files); }
+});
+
+// Message d'accueil
+appendMessage('assistant',
+  'Bonjour ! Je suis votre assistant basé sur Mistral. Posez vos questions, ou joignez des fichiers (images, PDF, texte) pour que je les analyse.');
+</script>
+</body>
+</html>
