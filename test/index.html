@@ -36,6 +36,7 @@
   .message.user .bubble { background: #cba6f7; color: #1e1e2e; border-top-right-radius: 4px; }
   .message.assistant .bubble { background: #313244; color: #cdd6f4; border-top-left-radius: 4px; }
   .message.assistant .bubble.streaming::after { content: '▍'; animation: blink 0.8s step-end infinite; }
+  .message.assistant .bubble.waiting { color: #f9e2af; }
   @keyframes blink { 50% { opacity: 0; } }
   .bubble .attachment-badge {
     display: inline-block; font-size: 0.75rem; padding: 0.15rem 0.5rem;
@@ -118,10 +119,14 @@ Tu es utile, précis et concis. Tu poses des questions de clarification si néce
 Tu ne prétends pas être humain. Tu réponds toujours en français.
 Lorsqu'un fichier t'est fourni, analyse-le et réponds en te basant sur son contenu.`;
 
-const MAX_TEXT_CHARS = 200000;    // ~50k tokens pour les fichiers texte
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 Mo pour une image
+const MAX_TEXT_CHARS = 200000;
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
-// PDF.js worker
+// Retry config pour les rate limits
+const MAX_RETRIES = 3;
+const DEFAULT_RETRY_SECONDS = 5;   // si pas d'en-tête Retry-After
+const MAX_RETRY_WAIT = 60;         // plafond de sécurité
+
 if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -132,7 +137,6 @@ if (window.pdfjsLib) {
 // ==========================================================================
 let messages = [{ role: 'system', content: SYSTEM_PROMPT }];
 let isStreaming = false;
-// Chaque entrée : { id, name, content: {type, ...}, loading, error }
 let attachments = [];
 let nextId = 1;
 
@@ -150,7 +154,6 @@ const attachBtn  = document.getElementById('attachBtn');
 const fileTray   = document.getElementById('fileTray');
 const dropOverlay= document.getElementById('dropOverlay');
 
-// Restauration clé API (session seulement)
 apiKeyEl.value = sessionStorage.getItem('mistral_key') || '';
 apiKeyEl.addEventListener('input', () => sessionStorage.setItem('mistral_key', apiKeyEl.value));
 
@@ -177,7 +180,6 @@ function appendMessage(role, text, streaming = false, badges = []) {
     const txt = document.createElement('div');
     txt.textContent = text;
     bubble.appendChild(txt);
-    wrap._txtEl = txt;
   } else {
     bubble.textContent = text;
   }
@@ -192,6 +194,7 @@ function showError(m) {
   clearTimeout(showError._t);
   showError._t = setTimeout(() => { if (errorEl.textContent === m) errorEl.textContent = ''; }, 8000);
 }
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // ==========================================================================
 // PIÈCES JOINTES
@@ -236,7 +239,6 @@ async function buildContentForFile(file) {
     return { type: 'text', text: `\n\n[Contenu du PDF "${file.name}"]\n${text}` };
   }
 
-  // Texte générique
   let text = await file.text();
   if (text.length > MAX_TEXT_CHARS) text = text.slice(0, MAX_TEXT_CHARS) + `\n[...tronqué à ${MAX_TEXT_CHARS} caractères]`;
   return { type: 'text', text: `\n\n[Contenu du fichier "${file.name}"]\n${text}` };
@@ -294,22 +296,86 @@ function buildUserContent(text) {
   const parts = [];
   if (text) parts.push({ type: 'text', text });
   for (const a of attachments) if (a.content) parts.push(a.content);
-
-  // S'il n'y a qu'un seul bloc texte, on garde une string (plus simple côté API)
   if (parts.length === 1 && parts[0].type === 'text') return parts[0].text;
   return parts;
 }
 
-function userDisplayText(text) {
-  return text || '(fichiers joints)';
-}
-function userDisplayBadges() {
-  return attachments.map(a => a.name);
+// ==========================================================================
+// ENVOI AVEC RETRY SUR 429
+// ==========================================================================
+async function callMistralOnce(apiKey, payload, onDelta, bubble) {
+  // Une seule tentative : lance une erreur typée si rate limit
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.status === 429) {
+    // Lire Retry-After (secondes, ou date HTTP)
+    const ra = res.headers.get('Retry-After');
+    let waitSec = DEFAULT_RETRY_SECONDS;
+    if (ra) {
+      const n = parseInt(ra, 10);
+      if (!isNaN(n)) waitSec = n;
+      else {
+        const d = Date.parse(ra);
+        if (!isNaN(d)) waitSec = Math.max(1, Math.ceil((d - Date.now()) / 1000));
+      }
+    }
+    const err = new Error('RATE_LIMIT');
+    err.waitSec = Math.min(waitSec, MAX_RETRY_WAIT);
+    err.body = await res.text().catch(() => '');
+    throw err;
+  }
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`HTTP ${res.status} — ${body.slice(0, 300)}`);
+  }
+
+  // Lecture SSE
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let full = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t.startsWith('data:')) continue;
+      const payload = t.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      try {
+        const json = JSON.parse(payload);
+        // Mistral peut renvoyer une erreur dans le flux SSE
+        if (json.object === 'error' || json.error) {
+          const m = json.message || json.error?.message || 'Erreur API dans le flux';
+          throw new Error(m);
+        }
+        const delta = json.choices?.[0]?.delta?.content;
+        if (delta) {
+          full += delta;
+          onDelta(full);
+        }
+      } catch (e) {
+        // Erreur JSON de parsing : fragment incomplet, on ignore
+        if (e instanceof SyntaxError) continue;
+        throw e;
+      }
+    }
+  }
+  return full;
 }
 
-// ==========================================================================
-// ENVOI + STREAMING
-// ==========================================================================
 async function sendMessage() {
   const text = inputEl.value.trim();
   const filesReady = attachments.filter(a => a.content);
@@ -317,89 +383,87 @@ async function sendMessage() {
 
   const apiKey = apiKeyEl.value.trim();
   if (!apiKey) { showError('Clé API Mistral manquante.'); return; }
-  if (!apiKey.startsWith('sk-')) { showError('La clé API Mistral commence normalement par "sk-".'); }
+  if (!apiKey.startsWith('sk-')) showError('La clé API Mistral commence normalement par "sk-".');
 
-  // Capture des pièces jointes AVANT reset
-  const sentBadges = userDisplayBadges();
-  const sentText   = userDisplayText(text);
+  const sentBadges = attachments.map(a => a.name);
+  const sentText   = text || '(fichiers joints)';
   const userContent = buildUserContent(text);
 
-  // Reset input
   inputEl.value = ''; inputEl.style.height = 'auto';
   attachments = []; renderTray();
 
-  // Ajout historique
   messages.push({ role: 'user', content: userContent });
   appendMessage('user', sentText, false, sentBadges);
 
-  // Bubble assistant vide (streaming)
   const bubble = appendMessage('assistant', '', true);
 
   isStreaming = true;
   sendBtn.disabled = true;
   errorEl.textContent = '';
 
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: modelEl.value,
-        messages,
-        stream: true,
-        temperature: 0.7
-      })
-    });
+  const payload = {
+    model: modelEl.value,
+    messages,
+    stream: true,
+    temperature: 0.7
+  };
 
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`HTTP ${res.status} — ${body.slice(0, 300)}`);
-    }
+  let attempt = 0;
+  let fullContent = '';
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let full = '';
+  while (attempt < MAX_RETRIES) {
+    try {
+      bubble.classList.remove('waiting');
+      bubble.textContent = '';
+      bubble.classList.add('streaming');
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for (const line of lines) {
-        const t = line.trim();
-        if (!t.startsWith('data:')) continue;
-        const payload = t.slice(5).trim();
-        if (!payload || payload === '[DONE]') continue;
-        try {
-          const json = JSON.parse(payload);
-          const delta = json.choices?.[0]?.delta?.content;
-          if (delta) {
-            full += delta;
-            bubble.textContent = full;
-            scrollToBottom();
-          }
-        } catch (_) { /* fragment JSON incomplet */ }
+      fullContent = await callMistralOnce(apiKey, payload, (partial) => {
+        bubble.textContent = partial;
+        scrollToBottom();
+      }, bubble);
+
+      // Succès
+      bubble.classList.remove('streaming');
+      messages.push({ role: 'assistant', content: fullContent });
+      break;
+
+    } catch (err) {
+      if (err.message === 'RATE_LIMIT' && attempt < MAX_RETRIES - 1) {
+        attempt++;
+        bubble.classList.remove('streaming');
+        bubble.classList.add('waiting');
+        const wait = err.waitSec || DEFAULT_RETRY_SECONDS;
+        let remaining = wait;
+        bubble.textContent = `⏳ Limite de débit atteinte (429). Nouvelle tentative ${attempt}/${MAX_RETRIES - 1} dans ${remaining}s...`;
+        // Compte à rebours visuel
+        const iv = setInterval(() => {
+          remaining--;
+          if (remaining <= 0) { clearInterval(iv); return; }
+          bubble.textContent = `⏳ Limite de débit atteinte (429). Nouvelle tentative ${attempt}/${MAX_RETRIES - 1} dans ${remaining}s...`;
+        }, 1000);
+        await sleep(wait * 1000);
+        clearInterval(iv);
+        continue;
       }
+
+      // Erreur fatale ou plus de tentatives
+      bubble.classList.remove('streaming', 'waiting');
+      let msg = err.message;
+      if (err.message === 'RATE_LIMIT') {
+        msg = `Limite de débit (429) toujours atteinte après ${MAX_RETRIES} tentatives. ` +
+              `Attendez 1–2 minutes, ou vérifiez vos limites sur admin.mistral.ai. ` +
+              `Astuce : passez sur "Mistral Small" et/ou réduisez la taille des fichiers joints.`;
+      }
+      bubble.textContent = '❌ ' + msg;
+      showError(msg);
+      messages.pop();
+      break;
     }
-
-    bubble.classList.remove('streaming');
-    messages.push({ role: 'assistant', content: full });
-
-  } catch (err) {
-    bubble.classList.remove('streaming');
-    bubble.textContent = '❌ ' + err.message;
-    showError(err.message);
-    messages.pop(); // retirer le message utilisateur fautif
-  } finally {
-    isStreaming = false;
-    refreshSendState();
-    inputEl.focus();
   }
+
+  isStreaming = false;
+  refreshSendState();
+  inputEl.focus();
 }
 
 // ==========================================================================
@@ -445,7 +509,7 @@ document.addEventListener('drop', e => {
   }
 });
 
-// Coller une image depuis le presse-papiers
+// Coller une image
 inputEl.addEventListener('paste', e => {
   const items = e.clipboardData?.items;
   if (!items) return;
