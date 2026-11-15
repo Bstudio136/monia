@@ -2927,7 +2927,7 @@ const DEFAULT_PROVIDERS = {
     format: 'openai',
     testUrl: null,
     testType: 'bearer',
-    apiKeyUrl: null
+    noKey: true
   },
   
 kilo: {
@@ -4572,7 +4572,7 @@ async function streamChat(history, callbacks, signal) {
   const model = getCurrentModel();
 
   // Autoriser l'absence de clé pour Puter
-  if (!apiKey && providerKey !== 'puter') {
+  if (!apiKey && !provider.noKey) {
       throw new Error(`Clé API manquante pour ${provider.label}. Ouvrez les paramètres.`);
   }
   if (!model) throw new Error('Veuillez sélectionner un modèle.');
@@ -4589,12 +4589,15 @@ async function streamChat(history, callbacks, signal) {
     if (currentTopP < 1) body.top_p = currentTopP;
     if (currentFreqPenalty > 0) body.frequency_penalty = currentFreqPenalty;
     if (currentPresPenalty > 0) body.presence_penalty = currentPresPenalty;
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
     const res = await fetchWithRetry(provider.endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers,
       body: JSON.stringify(body),
       signal
     });
+
     if (!res.ok) { const t = await res.text(); throw new Error(`HTTP ${res.status}: ${t.slice(0,200)}`); }
     return await readSSE(res, d => {
       const delta = d.choices?.[0]?.delta || {};
