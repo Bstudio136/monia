@@ -14,7 +14,7 @@
   }
   .container { width: 100%; max-width: 900px; height: 100vh; display: flex; flex-direction: column; padding: 1rem; }
   h1 { font-size: 1.15rem; font-weight: 600; text-align: center; padding: 0.75rem 0; border-bottom: 1px solid #313244; color: #cba6f7; }
-  .config { display: flex; gap: 0.5rem; padding: 0.75rem 0; flex-wrap: wrap; }
+  .config { display: flex; gap: 0.5rem; padding: 0.75rem 0; flex-wrap: wrap; align-items: center; }
   .config input, .config select {
     background: #313244; border: 1px solid #45475a; border-radius: 8px;
     padding: 0.6rem 0.8rem; color: #cdd6f4; font-size: 0.85rem; outline: none;
@@ -22,6 +22,12 @@
   .config input:focus, .config select:focus { border-color: #cba6f7; }
   .config input { flex: 1; min-width: 200px; }
   .config select { cursor: pointer; }
+  #quotaInfo {
+    font-size: 0.72rem; color: #6c7086; padding: 0.25rem 0;
+    font-family: monospace; text-align: center; min-height: 1em;
+  }
+  #quotaInfo.warn { color: #f9e2af; }
+  #quotaInfo.danger { color: #f38ba8; }
   #chat { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; padding: 0.5rem 0; scroll-behavior: smooth; }
   #chat::-webkit-scrollbar { width: 6px; }
   #chat::-webkit-scrollbar-thumb { background: #45475a; border-radius: 3px; }
@@ -36,7 +42,7 @@
   .message.user .bubble { background: #cba6f7; color: #1e1e2e; border-top-right-radius: 4px; }
   .message.assistant .bubble { background: #313244; color: #cdd6f4; border-top-left-radius: 4px; }
   .message.assistant .bubble.streaming::after { content: '▍'; animation: blink 0.8s step-end infinite; }
-  .message.assistant .bubble.waiting { color: #f9e2af; }
+  .message.assistant .bubble.waiting { color: #f9e2af; font-style: italic; }
   @keyframes blink { 50% { opacity: 0; } }
   .bubble .attachment-badge {
     display: inline-block; font-size: 0.75rem; padding: 0.15rem 0.5rem;
@@ -94,6 +100,7 @@
       <option value="pixtral-large-latest">Pixtral Large (vision avancée)</option>
     </select>
   </div>
+  <div id="quotaInfo"></div>
 
   <div id="chat"></div>
   <div id="fileTray"></div>
@@ -119,13 +126,16 @@ Tu es utile, précis et concis. Tu poses des questions de clarification si néce
 Tu ne prétends pas être humain. Tu réponds toujours en français.
 Lorsqu'un fichier t'est fourni, analyse-le et réponds en te basant sur son contenu.`;
 
-const MAX_TEXT_CHARS = 200000;
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const MAX_TEXT_CHARS   = 200000;
+const MAX_IMAGE_BYTES  = 8 * 1024 * 1024;
 
-// Retry config pour les rate limits
-const MAX_RETRIES = 3;
-const DEFAULT_RETRY_SECONDS = 5;   // si pas d'en-tête Retry-After
-const MAX_RETRY_WAIT = 60;         // plafond de sécurité
+// Retry : on respecte Retry-After, sinon on attend par paliers croissants
+const MAX_RETRIES        = 3;
+const DEFAULT_WAITS      = [10, 30, 60];  // par tentative (en secondes)
+const MAX_RETRY_WAIT     = 120;
+
+// Anti-spam : délai minimum entre deux envois (mode gratuit ~2-5 req/min)
+const MIN_INTERVAL_MS    = 5000;
 
 if (window.pdfjsLib) {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -135,10 +145,13 @@ if (window.pdfjsLib) {
 // ==========================================================================
 // ÉTAT
 // ==========================================================================
-let messages = [{ role: 'system', content: SYSTEM_PROMPT }];
-let isStreaming = false;
-let attachments = [];
-let nextId = 1;
+let messages       = [{ role: 'system', content: SYSTEM_PROMPT }];
+let isStreaming    = false;
+let attachments    = [];
+let nextId         = 1;
+let lastSendTime   = 0;
+let cooldownUntil  = 0;       // timestamp : bouton bloqué jusqu'à cette date
+let quotaInfo      = null;    // dernier snapshot des en-têtes x-ratelimit-*
 
 // ==========================================================================
 // DOM
@@ -153,6 +166,7 @@ const fileInput  = document.getElementById('fileInput');
 const attachBtn  = document.getElementById('attachBtn');
 const fileTray   = document.getElementById('fileTray');
 const dropOverlay= document.getElementById('dropOverlay');
+const quotaEl    = document.getElementById('quotaInfo');
 
 apiKeyEl.value = sessionStorage.getItem('mistral_key') || '';
 apiKeyEl.addEventListener('input', () => sessionStorage.setItem('mistral_key', apiKeyEl.value));
@@ -192,9 +206,52 @@ function scrollToBottom() { chatEl.scrollTop = chatEl.scrollHeight; }
 function showError(m) {
   errorEl.textContent = m;
   clearTimeout(showError._t);
-  showError._t = setTimeout(() => { if (errorEl.textContent === m) errorEl.textContent = ''; }, 8000);
+  showError._t = setTimeout(() => { if (errorEl.textContent === m) errorEl.textContent = ''; }, 10000);
 }
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// ==========================================================================
+// QUOTA INFO (affichage des en-têtes x-ratelimit-*)
+// ==========================================================================
+function updateQuotaFromHeaders(headers) {
+  const pick = (name) => {
+    const v = headers.get(name);
+    return v !== null && v !== undefined && v !== '' ? v : undefined;
+  };
+  const info = {
+    reqLimit:     pick('x-ratelimit-limit-req-minute'),
+    reqRemaining: pick('x-ratelimit-remaining-req-minute'),
+    tokLimit:     pick('x-ratelimit-limit-tokens-minute'),
+    tokRemaining: pick('x-ratelimit-remaining-tokens-minute'),
+  };
+  quotaInfo = info;
+  renderQuota();
+}
+
+function renderQuota() {
+  if (!quotaInfo) { quotaEl.textContent = ''; quotaEl.className = ''; return; }
+  const parts = [];
+  let cls = '';
+
+  if (quotaInfo.reqLimit !== undefined) {
+    const lim = quotaInfo.reqLimit;
+    const rem = quotaInfo.reqRemaining ?? '?';
+    parts.push(`req/min : ${rem}/${lim}`);
+    if (lim === '0') cls = 'danger';
+    else if (quotaInfo.reqRemaining !== undefined && parseInt(quotaInfo.reqRemaining, 10) === 0) cls = 'danger';
+    else if (quotaInfo.reqRemaining !== undefined && parseInt(quotaInfo.reqRemaining, 10) <= 1) cls = 'warn';
+  }
+  if (quotaInfo.tokLimit !== undefined) {
+    const lim = parseInt(quotaInfo.tokLimit, 10);
+    const rem = quotaInfo.tokRemaining !== undefined ? parseInt(quotaInfo.tokRemaining, 10) : '?';
+    parts.push(`tokens/min : ${rem}/${lim}`);
+    if (lim === 0) cls = 'danger';
+    else if (!isNaN(rem) && rem < lim * 0.1) cls = cls || 'warn';
+  }
+
+  quotaEl.textContent = parts.length ? '📊 ' + parts.join(' · ') : '';
+  quotaEl.className = cls;
+}
 
 // ==========================================================================
 // PIÈCES JOINTES
@@ -228,19 +285,21 @@ async function buildContentForFile(file) {
   const ext = (file.name.split('.').pop() || '').toLowerCase();
 
   if (file.type.startsWith('image/')) {
-    if (file.size > MAX_IMAGE_BYTES) throw new Error(`Image trop lourde (${(file.size/1024/1024).toFixed(1)} Mo > 8 Mo)`);
+    if (file.size > MAX_IMAGE_BYTES)
+      throw new Error(`Image trop lourde (${(file.size/1024/1024).toFixed(1)} Mo > 8 Mo)`);
     const dataUrl = await fileToDataUrl(file);
     return { type: 'image_url', image_url: dataUrl };
   }
 
   if (ext === 'pdf') {
-    if (!window.pdfjsLib) throw new Error('PDF.js non chargé (vérifiez votre connexion)');
+    if (!window.pdfjsLib) throw new Error('PDF.js non chargé');
     const text = await extractPdfText(file);
     return { type: 'text', text: `\n\n[Contenu du PDF "${file.name}"]\n${text}` };
   }
 
   let text = await file.text();
-  if (text.length > MAX_TEXT_CHARS) text = text.slice(0, MAX_TEXT_CHARS) + `\n[...tronqué à ${MAX_TEXT_CHARS} caractères]`;
+  if (text.length > MAX_TEXT_CHARS)
+    text = text.slice(0, MAX_TEXT_CHARS) + `\n[...tronqué à ${MAX_TEXT_CHARS} caractères]`;
   return { type: 'text', text: `\n\n[Contenu du fichier "${file.name}"]\n${text}` };
 }
 
@@ -284,10 +343,24 @@ async function addFiles(files) {
 }
 
 function refreshSendState() {
-  const busy = attachments.some(a => a.loading);
-  const has = inputEl.value.trim() || attachments.some(a => a.content);
-  sendBtn.disabled = isStreaming || busy || !has;
+  const busy      = attachments.some(a => a.loading);
+  const has       = inputEl.value.trim() || attachments.some(a => a.content);
+  const cooling   = Date.now() < cooldownUntil;
+  sendBtn.disabled = isStreaming || busy || !has || cooling;
+
+  if (cooling && !isStreaming) {
+    const s = Math.ceil((cooldownUntil - Date.now()) / 1000);
+    sendBtn.textContent = `⏳ ${s}s`;
+  } else if (!isStreaming) {
+    sendBtn.textContent = 'Envoyer';
+  }
 }
+
+// Cooldown countdown global
+setInterval(() => {
+  if (Date.now() < cooldownUntil) refreshSendState();
+  else if (sendBtn.textContent !== 'Envoyer' && !isStreaming) refreshSendState();
+}, 500);
 
 // ==========================================================================
 // CONSTRUCTION DU MESSAGE
@@ -301,10 +374,9 @@ function buildUserContent(text) {
 }
 
 // ==========================================================================
-// ENVOI AVEC RETRY SUR 429
+// APPEL MISTRAL (une tentative)
 // ==========================================================================
-async function callMistralOnce(apiKey, payload, onDelta, bubble) {
-  // Une seule tentative : lance une erreur typée si rate limit
+async function callMistralOnce(apiKey, payload, onDelta) {
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -314,10 +386,12 @@ async function callMistralOnce(apiKey, payload, onDelta, bubble) {
     body: JSON.stringify(payload)
   });
 
+  // Toujours extraire les headers de quota, même en cas d'erreur
+  updateQuotaFromHeaders(res.headers);
+
   if (res.status === 429) {
-    // Lire Retry-After (secondes, ou date HTTP)
     const ra = res.headers.get('Retry-After');
-    let waitSec = DEFAULT_RETRY_SECONDS;
+    let waitSec = null;
     if (ra) {
       const n = parseInt(ra, 10);
       if (!isNaN(n)) waitSec = n;
@@ -326,9 +400,11 @@ async function callMistralOnce(apiKey, payload, onDelta, bubble) {
         if (!isNaN(d)) waitSec = Math.max(1, Math.ceil((d - Date.now()) / 1000));
       }
     }
+    const bodyText = await res.text().catch(() => '');
     const err = new Error('RATE_LIMIT');
-    err.waitSec = Math.min(waitSec, MAX_RETRY_WAIT);
-    err.body = await res.text().catch(() => '');
+    err.retryAfter = waitSec;
+    err.body = bodyText;
+    err.quotaSnapshot = quotaInfo;
     throw err;
   }
 
@@ -338,7 +414,7 @@ async function callMistralOnce(apiKey, payload, onDelta, bubble) {
   }
 
   // Lecture SSE
-  const reader = res.body.getReader();
+  const reader  = res.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
   let full = '';
@@ -352,22 +428,17 @@ async function callMistralOnce(apiKey, payload, onDelta, bubble) {
     for (const line of lines) {
       const t = line.trim();
       if (!t.startsWith('data:')) continue;
-      const payload = t.slice(5).trim();
-      if (!payload || payload === '[DONE]') continue;
+      const payloadStr = t.slice(5).trim();
+      if (!payloadStr || payloadStr === '[DONE]') continue;
       try {
-        const json = JSON.parse(payload);
-        // Mistral peut renvoyer une erreur dans le flux SSE
+        const json = JSON.parse(payloadStr);
         if (json.object === 'error' || json.error) {
           const m = json.message || json.error?.message || 'Erreur API dans le flux';
           throw new Error(m);
         }
         const delta = json.choices?.[0]?.delta?.content;
-        if (delta) {
-          full += delta;
-          onDelta(full);
-        }
+        if (delta) { full += delta; onDelta(full); }
       } catch (e) {
-        // Erreur JSON de parsing : fragment incomplet, on ignore
         if (e instanceof SyntaxError) continue;
         throw e;
       }
@@ -376,17 +447,55 @@ async function callMistralOnce(apiKey, payload, onDelta, bubble) {
   return full;
 }
 
+// ==========================================================================
+// ANALYSE D'UN 429 POUR PRODUIRE UN DIAGNOSTIC UTILE
+// ==========================================================================
+function diagnoseRateLimit(err) {
+  const q = err.quotaSnapshot || {};
+  const limReq = q.reqLimit !== undefined ? parseInt(q.reqLimit, 10) : null;
+  const limTok = q.tokLimit !== undefined ? parseInt(q.tokLimit, 10) : null;
+
+  if (limReq === 0) {
+    return `Limite de requêtes/minute = 0 pour le modèle "${modelEl.value}" sur votre plan.\n` +
+           `➡️ Changez de modèle (essayez "Mistral Small"), ou activez un plan payant sur admin.mistral.ai.`;
+  }
+  if (limTok === 0) {
+    return `Limite de tokens/minute = 0 pour le modèle "${modelEl.value}" sur votre plan.\n` +
+           `➡️ Changez de modèle ou activez un plan payant.`;
+  }
+  if (q.reqRemaining !== undefined && parseInt(q.reqRemaining, 10) === 0) {
+    return `Quota de requêtes/min épuisé (0/${q.reqLimit} restantes).\n` +
+           `➡️ Attendez ~60 secondes avant de réessayer, ou passez sur un plan payant.`;
+  }
+  if (q.tokRemaining !== undefined && parseInt(q.tokRemaining, 10) === 0) {
+    return `Quota de tokens/min épuisé (0/${q.tokLimit} restantes).\n` +
+           `➡️ Attendez ~60 secondes, ou réduisez la taille des pièces jointes (PDF/images).`;
+  }
+  return `Rate limit atteint sur le modèle "${modelEl.value}".\n` +
+         `➡️ Vérifiez vos limites précises sur https://admin.mistral.ai/plateforme/limits`;
+}
+
+// ==========================================================================
+// ENVOI AVEC RETRY
+// ==========================================================================
 async function sendMessage() {
   const text = inputEl.value.trim();
   const filesReady = attachments.filter(a => a.content);
   if ((!text && !filesReady.length) || isStreaming) return;
 
+  // Anti-spam : délai minimum entre deux envois
+  const sinceLast = Date.now() - lastSendTime;
+  if (sinceLast < MIN_INTERVAL_MS) {
+    cooldownUntil = lastSendTime + MIN_INTERVAL_MS;
+    refreshSendState();
+    return;
+  }
+
   const apiKey = apiKeyEl.value.trim();
   if (!apiKey) { showError('Clé API Mistral manquante.'); return; }
-  if (!apiKey.startsWith('sk-')) showError('La clé API Mistral commence normalement par "sk-".');
 
-  const sentBadges = attachments.map(a => a.name);
-  const sentText   = text || '(fichiers joints)';
+  const sentBadges  = attachments.map(a => a.name);
+  const sentText    = text || '(fichiers joints)';
   const userContent = buildUserContent(text);
 
   inputEl.value = ''; inputEl.style.height = 'auto';
@@ -398,7 +507,7 @@ async function sendMessage() {
   const bubble = appendMessage('assistant', '', true);
 
   isStreaming = true;
-  sendBtn.disabled = true;
+  refreshSendState();
   errorEl.textContent = '';
 
   const payload = {
@@ -409,50 +518,62 @@ async function sendMessage() {
   };
 
   let attempt = 0;
-  let fullContent = '';
+  let success = false;
 
   while (attempt < MAX_RETRIES) {
     try {
       bubble.classList.remove('waiting');
-      bubble.textContent = '';
       bubble.classList.add('streaming');
+      bubble.textContent = '';
 
-      fullContent = await callMistralOnce(apiKey, payload, (partial) => {
+      const fullContent = await callMistralOnce(apiKey, payload, (partial) => {
         bubble.textContent = partial;
         scrollToBottom();
-      }, bubble);
+      });
 
-      // Succès
-      bubble.classList.remove('streaming');
+      bubble.classList.remove('streaming', 'waiting');
       messages.push({ role: 'assistant', content: fullContent });
+      success = true;
+      lastSendTime = Date.now();
       break;
-
     } catch (err) {
       if (err.message === 'RATE_LIMIT' && attempt < MAX_RETRIES - 1) {
+        const wait = err.retryAfter != null
+          ? Math.min(err.retryAfter, MAX_RETRY_WAIT)
+          : DEFAULT_WAITS[attempt];
+
         attempt++;
         bubble.classList.remove('streaming');
         bubble.classList.add('waiting');
-        const wait = err.waitSec || DEFAULT_RETRY_SECONDS;
+
         let remaining = wait;
-        bubble.textContent = `⏳ Limite de débit atteinte (429). Nouvelle tentative ${attempt}/${MAX_RETRIES - 1} dans ${remaining}s...`;
-        // Compte à rebours visuel
+        const updateMsg = () => {
+          bubble.textContent =
+            `⏳ Rate limit (429). Tentative ${attempt}/${MAX_RETRIES - 1} dans ${remaining}s...` +
+            (quotaInfo?.reqLimit ? `\n(quota ${quotaInfo.reqRemaining}/${quotaInfo.reqLimit} req/min)` : '');
+        };
+        updateMsg();
+
         const iv = setInterval(() => {
           remaining--;
           if (remaining <= 0) { clearInterval(iv); return; }
-          bubble.textContent = `⏳ Limite de débit atteinte (429). Nouvelle tentative ${attempt}/${MAX_RETRIES - 1} dans ${remaining}s...`;
+          updateMsg();
         }, 1000);
+
         await sleep(wait * 1000);
         clearInterval(iv);
         continue;
       }
 
-      // Erreur fatale ou plus de tentatives
+      // Échec définitif
       bubble.classList.remove('streaming', 'waiting');
-      let msg = err.message;
+      let msg;
       if (err.message === 'RATE_LIMIT') {
-        msg = `Limite de débit (429) toujours atteinte après ${MAX_RETRIES} tentatives. ` +
-              `Attendez 1–2 minutes, ou vérifiez vos limites sur admin.mistral.ai. ` +
-              `Astuce : passez sur "Mistral Small" et/ou réduisez la taille des fichiers joints.`;
+        msg = diagnoseRateLimit(err);
+        // Cooldown de 60s après échec pour empêcher le spam
+        cooldownUntil = Date.now() + 60000;
+      } else {
+        msg = err.message;
       }
       bubble.textContent = '❌ ' + msg;
       showError(msg);
@@ -461,7 +582,12 @@ async function sendMessage() {
     }
   }
 
+  if (!success && attempt >= MAX_RETRIES) {
+    // Sécurité (ne devrait pas arriver, boucle sort par break)
+  }
+
   isStreaming = false;
+  if (!success) lastSendTime = Date.now();
   refreshSendState();
   inputEl.focus();
 }
@@ -493,9 +619,7 @@ fileInput.addEventListener('change', () => {
 // Drag & drop
 let dragCounter = 0;
 document.addEventListener('dragenter', e => {
-  if (e.dataTransfer?.types?.includes('Files')) {
-    dragCounter++; dropOverlay.classList.add('active');
-  }
+  if (e.dataTransfer?.types?.includes('Files')) { dragCounter++; dropOverlay.classList.add('active'); }
 });
 document.addEventListener('dragleave', () => {
   dragCounter--; if (dragCounter <= 0) { dragCounter = 0; dropOverlay.classList.remove('active'); }
@@ -520,7 +644,8 @@ inputEl.addEventListener('paste', e => {
 
 // Message d'accueil
 appendMessage('assistant',
-  'Bonjour ! Je suis votre assistant basé sur Mistral. Posez vos questions, ou joignez des fichiers (images, PDF, texte) pour que je les analyse.');
+  'Bonjour ! Je suis votre assistant basé sur Mistral. Posez vos questions, ou joignez des fichiers (images, PDF, texte) pour que je les analyse.\n\n' +
+  '💡 Le bandeau sous la clé API affiche votre quota en temps réel (dès le premier message). Si vous voyez "0/0 req/min", c\'est que votre plan n\'autorise pas ce modèle : passez sur "Mistral Small".');
 </script>
 </body>
 </html>
