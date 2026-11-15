@@ -277,10 +277,10 @@ function renderProviderKeys() {
 
   // Bouton Ajouter un modèle manuellement
   container.querySelectorAll('[data-add-model]').forEach(btn => {
-    btn.onclick = async (e) => {
+    btn.onclick = (e) => {
       e.stopPropagation();
       const k = btn.dataset.addModel;
-      const newModel = await appPrompt("Entrez l'ID du nouveau modèle :", { placeholder: 'ex : gpt-4o-mini' });
+      const newModel = prompt("Entrez l'ID du nouveau modèle :");
       if (newModel && newModel.trim()) {
         PROVIDERS[k].models.push(newModel.trim());
         updateProviderModelUI(k);
@@ -301,7 +301,7 @@ function renderProviderKeys() {
       let key = apiKeys[k];
       
       if (!key) {
-        key = await appPrompt(`Colle ta clé API pour ${PROVIDERS[k].label} afin de récupérer les modèles :`, { icon: '🔑', inputType: 'password', placeholder: 'sk-…' });
+        key = prompt(`Colle ta clé API pour ${PROVIDERS[k].label} afin de récupérer les modèles :`);
         if (!key) return;
         apiKeys[k] = key;
         localStorage.setItem('deepchat_keys', JSON.stringify(apiKeys));
@@ -416,9 +416,9 @@ function renderCustomProviders() {
   });
 
   container.querySelectorAll('[data-del-cp]').forEach(btn => {
-    btn.onclick = async () => {
+    btn.onclick = () => {
       const idx = parseInt(btn.dataset.delCp);
-      if (!(await appConfirm('Supprimer ce fournisseur personnalisé ?', { danger: true }))) return;
+      if (!confirm('Supprimer ce fournisseur personnalisé ?')) return;
       const cp = customProviders[idx];
       delete apiKeys[cp.id];
       localStorage.setItem('deepchat_keys', JSON.stringify(apiKeys));
@@ -513,8 +513,8 @@ function importConversations(file) {
   };
   reader.readAsText(file);
 }
-async function resetAllSettings() {
-  if (!(await appConfirm('Réinitialiser tous les paramètres (apparence, génération, chat) ?', { icon: '🔄' }))) return;
+function resetAllSettings() {
+  if (!confirm('Réinitialiser tous les paramètres (apparence, génération, chat) ?')) return;
   ['deepchat_theme','deepchat_accent','deepchat_fontsize','deepchat_bubblewidth','deepchat_compact','deepchat_timestamps','deepchat_sound','deepchat_autoscroll','deepchat_system_prompt','deepchat_temperature','deepchat_maxtokens','deepchat_topp','deepchat_freqpenalty','deepchat_prespenalty','deepchat_show_reasoning'].forEach(k => localStorage.removeItem(k));
   currentTheme = 'dark'; customAccent = 'default'; currentFontSize = 14; currentBubbleWidth = 100;
   compactMode = false; showTimestamps = false; showReasoning = true; soundEnabled = false; autoScrollEnabled = true;
@@ -598,7 +598,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 $('clearAllBtn').addEventListener('click', async () => {
-  if (await appConfirm('Supprimer TOUTES les conversations ? Cette action est irréversible.', { danger: true })) {
+  if (confirm('Supprimer TOUTES les conversations ? Cette action est irréversible.')) {
     conversations = {}; drafts = {};
     localStorage.removeItem('deepchat_drafts');
     await idbClearAll();
@@ -607,8 +607,8 @@ $('clearAllBtn').addEventListener('click', async () => {
     showToast('Conversations et images supprimées', 'success');
   }
 });
-$('clearKeysBtn').addEventListener('click', async () => {
-  if (await appConfirm('Supprimer toutes les clés API ?', { danger: true })) {
+$('clearKeysBtn').addEventListener('click', () => {
+  if (confirm('Supprimer toutes les clés API ?')) {
     apiKeys = {};
     localStorage.removeItem('deepchat_keys');
     renderProviderKeys();

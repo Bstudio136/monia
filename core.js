@@ -756,126 +756,6 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// ==== BOÎTES DE DIALOGUE THÉMÉES (remplacent confirm() et prompt()) ====
-function _dlgT(key) {
-  const L = {
-    fr: { ok: 'OK',    del: 'Supprimer', cancel: 'Annuler' },
-    en: { ok: 'OK',    del: 'Delete',    cancel: 'Cancel' },
-    it: { ok: 'OK',    del: 'Elimina',   cancel: 'Annulla' },
-    tr: { ok: 'Tamam', del: 'Sil',       cancel: 'İptal' }
-  };
-  return (L[currentLang] || L.fr)[key];
-}
-
-function _openDialog({ message, danger, okText, cancelText, withInput, placeholder, defaultValue, inputType, icon }) {
-  return new Promise(resolve => {
-    const prevFocus = document.activeElement;
-    const overlay = document.createElement('div');
-    overlay.className = 'dialog-overlay';
-
-    const box = document.createElement('div');
-    box.className = 'dialog-box' + (danger ? ' danger' : '');
-    box.setAttribute('role', danger ? 'alertdialog' : 'dialog');
-    box.setAttribute('aria-modal', 'true');
-
-    const head = document.createElement('div');
-    head.className = 'dialog-head';
-    const ic = document.createElement('div');
-    ic.className = 'dialog-icon';
-    ic.textContent = icon || (danger ? '⚠️' : (withInput ? '✏️' : '❓'));
-    const msg = document.createElement('div');
-    msg.className = 'dialog-message';
-    msg.textContent = message;
-    head.appendChild(ic);
-    head.appendChild(msg);
-    box.appendChild(head);
-
-    let input = null;
-    if (withInput) {
-      input = document.createElement('input');
-      input.className = 'dialog-input';
-      input.type = inputType || 'text';
-      input.placeholder = placeholder || '';
-      input.value = defaultValue || '';
-      input.autocomplete = 'off';
-      input.spellcheck = false;
-      box.appendChild(input);
-    }
-
-    const actions = document.createElement('div');
-    actions.className = 'dialog-actions';
-    const cancelBtn = document.createElement('button');
-    cancelBtn.type = 'button';
-    cancelBtn.className = 'dialog-btn secondary';
-    cancelBtn.textContent = cancelText;
-    const okBtn = document.createElement('button');
-    okBtn.type = 'button';
-    okBtn.className = 'dialog-btn ' + (danger ? 'danger' : 'primary');
-    okBtn.textContent = okText;
-    actions.appendChild(cancelBtn);
-    actions.appendChild(okBtn);
-    box.appendChild(actions);
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-
-    let done = false;
-    const close = (value) => {
-      if (done) return;
-      done = true;
-      document.removeEventListener('keydown', onKey, true);
-      overlay.classList.add('closing');
-      setTimeout(() => overlay.remove(), 150);
-      try { if (prevFocus && prevFocus.focus) prevFocus.focus(); } catch (e) {}
-      resolve(value);
-    };
-    const accept = () => close(withInput ? input.value : true);
-    const reject = () => close(withInput ? null : false);
-
-    const onKey = (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); reject(); }
-      else if (e.key === 'Enter' && document.activeElement !== cancelBtn) { e.preventDefault(); e.stopPropagation(); accept(); }
-      else if (e.key === 'Tab') {
-        const f = Array.from(box.querySelectorAll('input, button'));
-        const i = f.indexOf(document.activeElement);
-        e.preventDefault();
-        f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    okBtn.addEventListener('click', accept);
-    cancelBtn.addEventListener('click', reject);
-    overlay.addEventListener('mousedown', (e) => { if (e.target === overlay) reject(); });
-
-    // Focus : le champ pour un prompt, "Annuler" pour une action destructive, sinon "OK"
-    setTimeout(() => (input || (danger ? cancelBtn : okBtn)).focus(), 0);
-  });
-}
-
-// Remplace confirm() → await appConfirm('Message', { danger: true })  →  true / false
-function appConfirm(message, opts = {}) {
-  return _openDialog({
-    message,
-    danger: !!opts.danger,
-    icon: opts.icon,
-    okText: opts.okText || (opts.danger ? _dlgT('del') : _dlgT('ok')),
-    cancelText: _dlgT('cancel')
-  });
-}
-
-// Remplace prompt() → await appPrompt('Message', { placeholder, inputType })  →  texte ou null
-function appPrompt(message, opts = {}) {
-  return _openDialog({
-    message,
-    withInput: true,
-    icon: opts.icon,
-    placeholder: opts.placeholder,
-    defaultValue: opts.defaultValue,
-    inputType: opts.inputType,
-    okText: opts.okText || _dlgT('ok'),
-    cancelText: _dlgT('cancel')
-  });
-}
-
 function showToast(msg, type = 'info', duration = 4000) {
   const t = document.createElement('div');
   t.className = 'toast ' + type;
@@ -1522,7 +1402,7 @@ function loadConversation(id) {
 }
 async function deleteConversation(id) {
   if (!conversations[id]) return;
-  if (!(await appConfirm((translations[currentLang] || translations.fr).confirmDelete, { danger: true }))) return;
+  if (!confirm((translations[currentLang] || translations.fr).confirmDelete)) return;
 
   const conv = conversations[id];
   const toDelete = [];
