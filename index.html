@@ -2793,7 +2793,9 @@ async function fetchModelLimits(providerKey, model) {
   if (modelLimitsCache[cacheKey] || modelLimitsFetching[cacheKey]) return;
   const provider = PROVIDERS[providerKey];
   const apiKey = apiKeys[providerKey];
-  if (!provider || !provider.testUrl || !apiKey) return;
+  if (!provider || !provider.testUrl) return;
+  if (!apiKey && !provider.noKey) return;
+
   modelLimitsFetching[cacheKey] = true;
   try {
     let url = provider.testUrl;
