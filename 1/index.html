@@ -3358,7 +3358,7 @@ async function generateVideo(prompt, ratio, seconds, signal, onStatus) {
 
   const res = await fetch(AGNES_VIDEO_ENDPOINT, {
     method: 'POST', headers, signal,
-    body: JSON.stringify({ model: AGNES_VIDEO_MODEL, prompt: cleanPrompt, size: '720P', seconds: finalSeconds, aspect_ratio: finalRatio })
+    body: JSON.stringify({ model: AGNES_VIDEO_MODEL, prompt: cleanPrompt, mode: 'text', size: '720P', seconds: finalSeconds, aspect_ratio: finalRatio })
   });
   if (!res.ok) {
     const t = await res.text();
