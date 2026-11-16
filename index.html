@@ -4515,6 +4515,43 @@ function buildApiMessages(history) {
   if (systemPrompt && systemPrompt.trim()) msgs.unshift({ role: 'system', content: systemPrompt.trim() });
   return msgs;
 }
+// ✨ Version spéciale pour Puter : content = string non vide, jamais d'array
+function buildApiMessagesForPuter(history) {
+  const msgs = [];
+  history.forEach(m => {
+    let content = m.content;
+
+    // Si content n'est pas une string (array multimodal), on le résume en texte
+    if (Array.isArray(content)) {
+      const textPart = content.find(p => p.type === 'text' && p.text);
+      content = textPart ? textPart.text : '';
+    }
+    content = typeof content === 'string' ? content : String(content ?? '');
+
+    // Image générée → résumé texte
+    if (content.startsWith('![IMAGE]')) {
+      content = m.imagePrompt
+        ? `[Image générée pour : ${m.imagePrompt}]`
+        : '[Image générée]';
+    }
+
+    // Images jointes côté utilisateur → note textuelle (Puter ne voit pas les images)
+    if (m.role === 'user' && Array.isArray(m.images) && m.images.length > 0) {
+      const note = `[${m.images.length} image(s) jointe(s)]`;
+      content = content.trim() ? content + '\n\n' + note : note;
+    }
+
+    // Jamais de content vide → Puter rejette
+    if (!content.trim()) content = '(message vide)';
+
+    msgs.push({ role: m.role, content });
+  });
+
+  if (systemPrompt && systemPrompt.trim()) {
+    msgs.unshift({ role: 'system', content: systemPrompt.trim() });
+  }
+  return msgs;
+}
 
 // ✨ FONCTION : Streaming avec Puter.js ✨
 async function streamChatWithPuter(history, callbacks) {
