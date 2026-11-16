@@ -1,7 +1,7 @@
 {
   "short_name": "B-AI",
-  "name": "B-AI Chat Application",
-  "description": "Client AI multi-modèles",
+  "name": "B-AI · Multi-Provider AI",
+  "description": "Client AI multi-modèles puissant et gratuit",
   "start_url": "./index.html",
   "background_color": "#121212",
   "theme_color": "#121212",
