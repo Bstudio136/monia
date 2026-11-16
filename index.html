@@ -2800,8 +2800,8 @@ async function fetchModelLimits(providerKey, model) {
   try {
     let url = provider.testUrl;
     const headers = {};
-    if (provider.testType === 'bearer') headers['Authorization'] = `Bearer ${apiKey}`;
-    else if (provider.testType === 'query') url += `?key=${apiKey}`;
+    if (provider.testType === 'bearer' && apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
+    else if (provider.testType === 'query' && apiKey) url += `?key=${apiKey}`;
     const res = await fetch(url, { method: 'GET', headers });
     if (!res.ok) return;
     const data = await res.json();
@@ -4505,6 +4505,7 @@ function cancelEdit() {
 
 async function testApiKey(providerKey, key) {
   const provider = PROVIDERS[providerKey];
+  if (provider.noKey) return true;
   if (!provider.testUrl) return false;
   const headers = {};
   let url = provider.testUrl;
@@ -5904,9 +5905,11 @@ function renderProviderKeys() {
       e.stopPropagation();
       const k = btn.dataset.fetchModels;
       let key = apiKeys[k];
+      const provider = PROVIDERS[k];
       
-      if (!key) {
-        key = prompt(`Colle ta clé API pour ${PROVIDERS[k].label} afin de récupérer les modèles :`);
+      // Seulement demander une clé si le provider en exige une
+      if (!key && !provider.noKey) {
+        key = prompt(`Colle ta clé API pour ${provider.label} afin de récupérer les modèles :`);
         if (!key) return;
         apiKeys[k] = key;
         localStorage.setItem('deepchat_keys', JSON.stringify(apiKeys));
@@ -5932,9 +5935,11 @@ function renderProviderKeys() {
       btn.disabled = true;
 
       try {
+        const fetchHeaders = {};
+        if (key) fetchHeaders['Authorization'] = `Bearer ${key}`;
         const res = await fetch(url, {
           method: 'GET',
-          headers: { 'Authorization': `Bearer ${key}` }
+          headers: fetchHeaders
         });
 
         if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`);
