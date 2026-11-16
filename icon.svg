@@ -73,56 +73,53 @@
   <path d="M118 200 A150 150 0 0 1 210 116" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round"/>
   <path d="M118 200 A150 150 0 0 1 210 116" fill="none" stroke="#e9d5ff" stroke-opacity="0.9" stroke-width="1.2" stroke-linecap="round"/>
 
-  <!-- Ombre portée du B -->
+  <!-- Ombre portée du D -->
   <g transform="translate(6,12)" opacity="0.65">
     <g filter="url(#softShadow)">
       <g fill="none" stroke="#0a0018" stroke-width="76" stroke-linecap="round" stroke-linejoin="round">
         <path d="M200 155 V355"/>
-        <path d="M200 155 H260 C318 155 348 178 348 205 C348 232 318 255 260 255 H200"/>
-        <path d="M200 255 H268 C325 255 355 280 355 305 C355 332 325 355 268 355 H200"/>
+        <path d="M200 155 H250 C335 155 380 195 380 255 C380 315 335 355 250 355 H200"/>
       </g>
     </g>
   </g>
 
-  <!-- Contour graffiti du B -->
+  <!-- Contour graffiti du D -->
   <g fill="none" stroke="#150528" stroke-width="76" stroke-linecap="round" stroke-linejoin="round">
     <path d="M200 155 V355"/>
-    <path d="M200 155 H260 C318 155 348 178 348 205 C348 232 318 255 260 255 H200"/>
-    <path d="M200 255 H268 C325 255 355 280 355 305 C355 332 325 355 268 355 H200"/>
+    <path d="M200 155 H250 C335 155 380 195 380 255 C380 315 335 355 250 355 H200"/>
   </g>
 
-  <!-- Corps bubble du B -->
+  <!-- Corps bubble du D -->
   <g filter="url(#bGlow)">
     <g fill="none" stroke="url(#bGrad)" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
       <path d="M200 155 V355"/>
-      <path d="M200 155 H260 C318 155 348 178 348 205 C348 232 318 255 260 255 H200"/>
-      <path d="M200 255 H268 C325 255 355 280 355 305 C355 332 325 355 268 355 H200"/>
+      <path d="M200 155 H250 C335 155 380 195 380 255 C380 315 335 355 250 355 H200"/>
     </g>
   </g>
 
   <!-- Reflets bubble -->
   <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M186 175 V225" stroke-width="12" opacity="0.65"/>
-    <path d="M186 265 V320" stroke-width="10" opacity="0.45"/>
-    <path d="M218 172 H255 C295 172 320 186 328 200" stroke-width="11" opacity="0.55"/>
-    <path d="M220 272 H265 C305 272 330 288 336 300" stroke-width="10" opacity="0.45"/>
+    <path d="M186 178 V225" stroke-width="12" opacity="0.65"/>
+    <path d="M186 268 V325" stroke-width="10" opacity="0.45"/>
+    <path d="M218 172 H255 C300 172 335 190 355 220" stroke-width="11" opacity="0.55"/>
+    <path d="M220 338 H255 C300 338 335 322 355 292" stroke-width="9" opacity="0.35"/>
   </g>
 
   <!-- Points brillants -->
-  <ellipse cx="220" cy="195" rx="9" ry="13" fill="#ffffff" opacity="0.75"/>
-  <ellipse cx="224" cy="290" rx="7" ry="10" fill="#ffffff" opacity="0.55"/>
-  <ellipse cx="290" cy="190" rx="6" ry="8" fill="#ffffff" opacity="0.5"/>
+  <ellipse cx="218" cy="195" rx="9" ry="13" fill="#ffffff" opacity="0.75"/>
+  <ellipse cx="220" cy="295" rx="7" ry="10" fill="#ffffff" opacity="0.55"/>
+  <ellipse cx="300" cy="182" rx="6" ry="8" fill="#ffffff" opacity="0.5"/>
 
   <!-- Gouttes graffiti -->
   <path d="M215 380 Q212 400 210 414 Q216 418 222 412 Q220 398 224 380 Z"
         fill="url(#bGrad)" stroke="#150528" stroke-width="4" stroke-linejoin="round"/>
   <circle cx="216" cy="420" r="5" fill="url(#bGrad)" stroke="#150528" stroke-width="3"/>
 
-  <path d="M285 380 Q287 396 285 410 Q292 414 298 407 Q296 394 300 380 Z"
+  <path d="M300 380 Q302 396 300 410 Q307 414 313 407 Q311 394 315 380 Z"
         fill="url(#bGrad)" stroke="#150528" stroke-width="4" stroke-linejoin="round"/>
-  <circle cx="291" cy="416" r="4.5" fill="url(#bGrad)" stroke="#150528" stroke-width="3"/>
+  <circle cx="306" cy="416" r="4.5" fill="url(#bGrad)" stroke="#150528" stroke-width="3"/>
 
-  <path d="M240 380 Q238 390 237 398 Q242 401 246 396 Q245 388 247 380 Z"
+  <path d="M250 380 Q248 390 247 398 Q252 401 256 396 Q255 388 257 380 Z"
         fill="url(#bGrad)" stroke="#150528" stroke-width="3.5" stroke-linejoin="round"/>
 
   <rect width="512" height="512" rx="128" fill="url(#grain)"/>
