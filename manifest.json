@@ -1,0 +1,18 @@
+{
+  "short_name": "B-AI",
+  "name": "B-AI Chat Application",
+  "description": "Client AI multi-modèles",
+  "start_url": "./index.html",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
