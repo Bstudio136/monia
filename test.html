@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Gemini Voice Live</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #121212; color: white; }
+        .card { background: #1e1e1e; padding: 30px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        input { width: 90%; padding: 10px; margin: 15px 0; border-radius: 6px; border: 1px solid #333; background: #2a2a2a; color: white; }
+        button { padding: 12px 24px; font-size: 16px; font-weight: bold; border: none; border-radius: 25px; cursor: pointer; }
+        #startBtn { background: #4CAF50; color: white; }
+        #stopBtn { background: #f44336; color: white; display: none; }
+        #status { margin-top: 20px; font-weight: bold; color: #aaa; word-break: break-word; }
+        .active { color: #4CAF50 !important; }
+        .error { color: #f44336 !important; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Gemini 2.0 Live Voice</h2>
+    <input type="password" id="apiKey" placeholder="Entrez votre clé API Google Gemini">
+    <br>
+    <button id="startBtn" onclick="startSession()">Démarrer</button>
+    <button id="stopBtn" onclick="stopSession()">Arrêter</button>
+    <div id="status">Statut : Déconnecté</div>
+</div>
+
+<script>
+let ws = null;
+let audioCtx = null;
+let outputCtx = null;
+let mediaStream = null;
+let scriptNode = null;
+let nextStartTime = 0;
+let activeSources = [];
+
+async function startSession() {
+    const apiKey = document.getElementById("apiKey").value.trim();
+    if (!apiKey) return alert("Veuillez entrer une clé API !");
+
+    updateStatus("Demande d'accès au micro...", "");
+
+    // 1. D'abord demander l'accès au micro
+    try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err) {
+        updateStatus("Erreur micro : " + err.message + " (Ouvrez la page via http://localhost)", "error");
+        return;
+    }
+
+    updateStatus("Connexion à Google...", "");
+
+    // 2. Initialiser WebSockets avec l'API Gemini 2.0
+    const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${apiKey}`;
+    
+    ws = new WebSocket(url);
+
+    ws.onopen = async () => {
+        updateStatus("Connecté ! Initialisation de la voix...", "active");
+        document.getElementById("startBtn").style.display = "none";
+        document.getElementById("stopBtn").style.display = "inline-block";
+
+        // Configuration minimale requise par Google
+        const setupMessage = {
+            setup: {
+                model: "models/gemini-2.0-flash-exp",
+                generationConfig: {
+                    responseModalities: ["AUDIO"]
+                }
+            }
+        };
+        ws.send(JSON.stringify(setupMessage));
+
+        // Lancer la capture du micro
+        await startAudioProcessing();
+    };
+
+    ws.onmessage = async (event) => {
+        try {
+            let data = event.data;
+            if (data instanceof Blob) {
+                data = await data.text();
+            }
+            const response = JSON.parse(data);
+
+            // Interruption (l'utilisateur coupe la parole)
+            if (response.serverContent?.interrupted) {
+                console.log("Interruption ! L'IA s'arrête de parler.");
+                stopAudioPlayback();
+            }
+
+            // Réception de la voix de l'IA
+            if (response.serverContent?.modelTurn?.parts) {
+                for (const part of response.serverContent.modelTurn.parts) {
+                    if (part.inlineData && part.inlineData.data) {
+                        playAudioChunk(part.inlineData.data);
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Erreur décodage message:", e);
+        }
+    };
+
+    ws.onclose = (event) => {
+        console.log("WebSocket Fermé:", event);
+        updateStatus(`Déconnecté (Code: ${event.code}). Vérifiez votre clé API ou la console (F12).`, "error");
+        stopSession();
+    };
+
+    ws.onerror = (err) => {
+        console.error("Erreur WS:", err);
+        updateStatus("Erreur de connexion WebSocket.", "error");
+    };
+}
+
+async function startAudioProcessing() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    outputCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+    
+    const source = audioCtx.createMediaStreamSource(mediaStream);
+    scriptNode = audioCtx.createScriptProcessor(4096, 1, 1);
+    
+    source.connect(scriptNode);
+    scriptNode.connect(audioCtx.destination);
+
+    scriptNode.onaudioprocess = (e) => {
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        
+        const inputData = e.inputBuffer.getChannelData(0);
+        const pcm16 = convertFloat32ToInt16(inputData);
+        const base64Audio = arrayBufferToBase64(pcm16);
+
+        const audioMessage = {
+            realtimeInput: {
+                mediaChunks: [{
+                    mimeType: "audio/pcm;rate=16000",
+                    data: base64Audio
+                }]
+            }
+        };
+        ws.send(JSON.stringify(audioMessage));
+    };
+}
+
+function playAudioChunk(base64Data) {
+    const binary = atob(base64Data);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    
+    const pcm16 = new Int16Array(bytes.buffer);
+    const float32 = new Float32Array(pcm16.length);
+    for (let i = 0; i < pcm16.length; i++) float32[i] = pcm16[i] / 32768.0;
+
+    const buffer = outputCtx.createBuffer(1, float32.length, 24000);
+    buffer.getChannelData(0).set(float32);
+
+    const source = outputCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(outputCtx.destination);
+
+    const currentTime = outputCtx.currentTime;
+    if (nextStartTime < currentTime) nextStartTime = currentTime;
+    
+    source.start(nextStartTime);
+    nextStartTime += buffer.duration;
+    activeSources.push(source);
+}
+
+function stopAudioPlayback() {
+    activeSources.forEach(s => { try { s.stop(); } catch(e){} });
+    activeSources = [];
+    if (outputCtx) nextStartTime = outputCtx.currentTime;
+}
+
+function stopSession() {
+    if (ws) { ws.close(); ws = null; }
+    if (mediaStream) { mediaStream.getTracks().forEach(track => track.stop()); mediaStream = null; }
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
+    if (outputCtx) { outputCtx.close(); outputCtx = null; }
+
+    document.getElementById("startBtn").style.display = "inline-block";
+    document.getElementById("stopBtn").style.display = "none";
+}
+
+function convertFloat32ToInt16(buffer) {
+    let l = buffer.length;
+    let buf = new Int16Array(l);
+    while (l--) {
+        let s = Math.max(-1, Math.min(1, buffer[l]));
+        buf[l] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    return buf.buffer;
+}
+
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    let bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+}
+
+function updateStatus(text, className) {
+    const el = document.getElementById("status");
+    el.innerText = "Statut : " + text;
+    el.className = className;
+}
+</script>
+
+</body>
+</html>
