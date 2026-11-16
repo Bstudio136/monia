@@ -1,59 +1,129 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" stop-color="#1a1030"/>
+      <stop offset="60%" stop-color="#0d0718"/>
+      <stop offset="100%" stop-color="#050308"/>
+    </radialGradient>
+
     <linearGradient id="circleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4c1d95"/>
-      <stop offset="55%" stop-color="#2e1065"/>
-      <stop offset="100%" stop-color="#1e1b4b"/>
+      <stop offset="0%" stop-color="#6d28d9"/>
+      <stop offset="40%" stop-color="#4c1d95"/>
+      <stop offset="75%" stop-color="#2e1065"/>
+      <stop offset="100%" stop-color="#150a3a"/>
     </linearGradient>
 
-    <linearGradient id="bGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f5d0fe"/>
-      <stop offset="45%" stop-color="#d8b4fe"/>
-      <stop offset="100%" stop-color="#8b5cf6"/>
+    <linearGradient id="circleShine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
 
-    <radialGradient id="aura" cx="50%" cy="45%" r="60%">
-      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.35"/>
+    <linearGradient id="bGrad" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#f0d5ff"/>
+      <stop offset="30%" stop-color="#c99cff"/>
+      <stop offset="60%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#6b21a8"/>
+    </linearGradient>
+
+    <radialGradient id="aura" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#a855f7" stop-opacity="0"/>
+      <stop offset="85%" stop-color="#a855f7" stop-opacity="0.35"/>
       <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
     </radialGradient>
 
-    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
-      <feDropShadow dx="0" dy="10" stdDeviation="12"
-                    flood-color="#000000" flood-opacity="0.45"/>
-    </filter>
-
-    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="7" result="blur"/>
+    <filter id="outerGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
       <feMerge>
-        <feMergeNode in="blur"/>
+        <feMergeNode in="b"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
+
+    <filter id="bGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0 0 0 0 0.66  0 0 0 0 0.35  0 0 0 0 1  0 0 0 0.9 0" result="c"/>
+      <feMerge>
+        <feMergeNode in="c"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+
+    <pattern id="grain" width="3" height="3" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="0.45" fill="#ffffff" fill-opacity="0.035"/>
+    </pattern>
   </defs>
 
-  <rect width="512" height="512" rx="128" fill="#0b0712"/>
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)"/>
+  <circle cx="256" cy="256" r="240" fill="url(#aura)"/>
 
-  <circle cx="256" cy="256" r="210" fill="url(#aura)"/>
-  <circle cx="256" cy="256" r="200" fill="url(#circleGrad)"/>
-  <circle cx="256" cy="256" r="200" fill="none"
-          stroke="#ffffff" stroke-opacity="0.10" stroke-width="2"/>
+  <g filter="url(#outerGlow)">
+    <circle cx="256" cy="256" r="200" fill="url(#circleGrad)"/>
+  </g>
 
-  <path d="M126 204 A150 150 0 0 1 204 118"
-        fill="none" stroke="#ffffff" stroke-opacity="0.22"
-        stroke-width="9" stroke-linecap="round"/>
+  <path d="M80 256 A176 176 0 0 1 432 256 L432 256 A176 176 0 0 0 80 256 Z" fill="url(#circleShine)"/>
 
-  <g filter="url(#shadow)">
-    <g filter="url(#glow)"
-       fill="none"
-       stroke="url(#bGrad)"
-       stroke-width="40"
-       stroke-linecap="round"
-       stroke-linejoin="round">
-      <path d="M176 136 V376"/>
-      <path d="M176 136 H238 C300 136 330 162 330 196
-               C330 230 300 256 238 256 H176"/>
-      <path d="M176 256 H250 C312 256 342 284 342 316
-               C342 348 312 376 250 376 H176"/>
+  <circle cx="256" cy="256" r="200" fill="none" stroke="#c4a2ff" stroke-opacity="0.55" stroke-width="1.5"/>
+  <circle cx="256" cy="256" r="194" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+
+  <path d="M118 200 A150 150 0 0 1 210 116" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round"/>
+  <path d="M118 200 A150 150 0 0 1 210 116" fill="none" stroke="#e9d5ff" stroke-opacity="0.9" stroke-width="1.2" stroke-linecap="round"/>
+
+  <!-- Ombre portée du B -->
+  <g transform="translate(6,12)" opacity="0.65">
+    <g filter="url(#softShadow)">
+      <g fill="none" stroke="#0a0018" stroke-width="76" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M200 155 V355"/>
+        <path d="M200 155 H260 C318 155 348 178 348 205 C348 232 318 255 260 255 H200"/>
+        <path d="M200 255 H268 C325 255 355 280 355 305 C355 332 325 355 268 355 H200"/>
+      </g>
     </g>
   </g>
+
+  <!-- Contour graffiti du B -->
+  <g fill="none" stroke="#150528" stroke-width="76" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M200 155 V355"/>
+    <path d="M200 155 H260 C318 155 348 178 348 205 C348 232 318 255 260 255 H200"/>
+    <path d="M200 255 H268 C325 255 355 280 355 305 C355 332 325 355 268 355 H200"/>
+  </g>
+
+  <!-- Corps bubble du B -->
+  <g filter="url(#bGlow)">
+    <g fill="none" stroke="url(#bGrad)" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M200 155 V355"/>
+      <path d="M200 155 H260 C318 155 348 178 348 205 C348 232 318 255 260 255 H200"/>
+      <path d="M200 255 H268 C325 255 355 280 355 305 C355 332 325 355 268 355 H200"/>
+    </g>
+  </g>
+
+  <!-- Reflets bubble -->
+  <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M186 175 V225" stroke-width="12" opacity="0.65"/>
+    <path d="M186 265 V320" stroke-width="10" opacity="0.45"/>
+    <path d="M218 172 H255 C295 172 320 186 328 200" stroke-width="11" opacity="0.55"/>
+    <path d="M220 272 H265 C305 272 330 288 336 300" stroke-width="10" opacity="0.45"/>
+  </g>
+
+  <!-- Points brillants -->
+  <ellipse cx="220" cy="195" rx="9" ry="13" fill="#ffffff" opacity="0.75"/>
+  <ellipse cx="224" cy="290" rx="7" ry="10" fill="#ffffff" opacity="0.55"/>
+  <ellipse cx="290" cy="190" rx="6" ry="8" fill="#ffffff" opacity="0.5"/>
+
+  <!-- Gouttes graffiti -->
+  <path d="M215 380 Q212 400 210 414 Q216 418 222 412 Q220 398 224 380 Z"
+        fill="url(#bGrad)" stroke="#150528" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="216" cy="420" r="5" fill="url(#bGrad)" stroke="#150528" stroke-width="3"/>
+
+  <path d="M285 380 Q287 396 285 410 Q292 414 298 407 Q296 394 300 380 Z"
+        fill="url(#bGrad)" stroke="#150528" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="291" cy="416" r="4.5" fill="url(#bGrad)" stroke="#150528" stroke-width="3"/>
+
+  <path d="M240 380 Q238 390 237 398 Q242 401 246 396 Q245 388 247 380 Z"
+        fill="url(#bGrad)" stroke="#150528" stroke-width="3.5" stroke-linejoin="round"/>
+
+  <rect width="512" height="512" rx="128" fill="url(#grain)"/>
 </svg>
