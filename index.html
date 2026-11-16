@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>DeepChat · Multi-Provider AI</title>
+  <!-- Fichier Manifest pour la PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#121212">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
@@ -7229,5 +7234,15 @@ isHydrating = false;
   })();
 })();
 </script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('✅ PWA enregistrée avec succès !'))
+      .catch(err => console.log('❌ Erreur PWA:', err));
+  });
+}
+</script>
+
 </body>
 </html>
