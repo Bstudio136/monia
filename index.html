@@ -4558,7 +4558,7 @@ async function streamChatWithPuter(history, callbacks) {
     const onDelta = callbacks.onDelta;
     // Puter ne gère pas le "reasoning" nativement dans cet appel, on l'ignore.
     
-    const apiMessages = buildApiMessages(history);
+    const apiMessages = buildApiMessagesForPuter(history);
     const model = getCurrentModel();
 
     try {
