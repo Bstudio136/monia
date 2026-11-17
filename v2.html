@@ -2262,8 +2262,6 @@ body.compact .reasoning-content { max-height: 250px; }
           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
         </svg>
       </button>
-      <input type="file" id="folderInput" webkitdirectory multiple style="display:none;">
-
 
       <button class="icon-btn upload-btn" id="imageBtn" style="display: none;" title="Mode image — générer une image avec Agnes (ou tapez /image)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2980,12 +2978,10 @@ let currentConvId = null;
 let apiKeys = JSON.parse(localStorage.getItem('deepchat_keys') || '{}');
 let currentAttachedFiles = [];
 let activeProjectContext = null;
-  
 
 // ==========================================
 // CLASSE POUR ANALYSER LES DOSSIERS DE PROJET
 // ==========================================
-const AGENTIC_SYSTEM_PROMPT = `Tu es un développeur senior. Analyse le code du projet chargé et réponds à la demande de l'utilisateur avec des modifications concrètes.`;
 class ProjectAnalyzer {
     constructor() {
         this.files = [];
@@ -3110,7 +3106,8 @@ const inputWrapperEl = $('inputWrapperEl');
 // ==========================================
 // MODULE: AGENTIC PROJECT ANALYZER
 // ==========================================
-let isAgenticModeActive = false; // Flag pour savoir si on est en mode "Projet"
+const AGENTIC_SYSTEM_PROMPT = `Tu es un développeur senior. Analyse le code du projet chargé et réponds à la demande de l'utilisateur avec des modifications concrètes.`;
+let isAgenticModeActive = false;
 
 function initAgenticUI() {
     const folderBtn = document.getElementById('folderBtn');
@@ -5035,18 +5032,6 @@ async function sendMessage() {
       else finalPromptContent = `Voici les fichiers joints à analyser :` + fileContext;
     } catch (err) { console.error("Erreur de lecture fichier", err); }
   }
-  // --- MODE AGENTIQUE : Injection du contexte du dossier ---
-  let agenticSystemPrompt = null;
-  if (activeProjectContext) {
-      // On combine le prompt système standard avec le prompt agentique
-      agenticSystemPrompt = (systemPrompt ? systemPrompt + "\n\n" : "") + AGENTIC_SYSTEM_PROMPT + "\n\n" + activeProjectContext;
-      
-      // On ajoute une note au message utilisateur pour que l'IA sache qu'un projet est présent
-      finalPromptContent += "\n\n[Note : Un projet a été chargé, référez-vous à l'analyse dans le système]";
-      
-      // On pré-remplit le message si l'utilisateur n'a rien écrit ? Non, on attend sa demande.
-  }
-
 
   const hasImage = currentAttachedFiles.some(f => f.type.startsWith('image/'));
   if (hasImage && !text) {
