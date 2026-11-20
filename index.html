@@ -3468,7 +3468,17 @@ function renderMarkdown(el, text, skipHighlight=false) {
   const rawHTML = marked.parse(cleanText);
   
   if (window.DOMPurify) {
-    el.innerHTML = DOMPurify.sanitize(rawHTML);
+    // ✅ MODIFICATION : Autoriser les attributs target et rel pour les liens
+    const safeHTML = DOMPurify.sanitize(rawHTML, {
+      ADD_ATTR: ['target', 'rel']
+    });
+    el.innerHTML = safeHTML;
+    
+    // ✅ MODIFICATION : Forcer tous les liens à s'ouvrir dans une nouvelle fenêtre
+    el.querySelectorAll('a').forEach(a => {
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener noreferrer');
+    });
   } else {
     console.error('[DeepChat] DOMPurify absent — rendu texte brut par sécurité');
     el.textContent = text;
