@@ -1381,7 +1381,7 @@ kbd {
 .lb-action-btn:hover { background: rgba(255,255,255,0.25); }
 
 /* ============ GALLERY MODAL ============ */
-.gallery-modal .modal { max-width: 900px; }
+.gallery-modal .modal { max-width: 600px; }
 .gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1722,14 +1722,20 @@ body.compact .reasoning-content { max-height: 250px; }
     bottom: 16px; right: 16px;
   }
 
-  /* ---------- MODALES PLEIN ÉCRAN ---------- */
-  .modal-overlay { padding: 0; align-items: stretch; }
+  /* ---------- MODALES RESPONSIVES (Petites) ---------- */
+  .modal-overlay { 
+    padding: 20px; /* Marge autour de la fenêtre */
+    align-items: center; /* Centrage vertical */
+    justify-content: center;
+  }
   .modal {
-    max-width: 100%;
-    max-height: 100dvh;
-    height: 100dvh;
-    border-radius: 0;
-    border: none;
+    max-width: 480px; /* Largeur fixe et réduite */
+    width: 90%; /* Ne dépasse jamais 90% de l'écran */
+    max-height: 85dvh; /* Hauteur max 85% de l'écran */
+    height: auto; /* Hauteur automatique selon le contenu */
+    border-radius: 16px; /* Coins arrondis */
+    border: 1px solid var(--border); /* Bordure visible */
+    box-shadow: var(--shadow); /* Ombre pour détacher */
   }
   .modal-header {
     padding: 12px 16px;
@@ -2092,7 +2098,7 @@ body.compact .reasoning-content { max-height: 250px; }
 [data-theme="light"] .error-raw pre { background: rgba(0,0,0,0.05); }
 /* ===== MODALE DE CONFIRMATION ACCORDÉE AU SITE ===== */
 .confirm-modal .modal {
-  max-width: 420px;
+  max-width: 320px;
   height: auto;
 }
 .confirm-modal-body p {
