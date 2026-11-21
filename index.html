@@ -272,6 +272,36 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   text-transform: uppercase;
   flex-shrink: 0;
 }
+/* ============ LIGNE DE CHANGEMENT DE MODÈLE ============ */
+.model-switch-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  margin: 4px auto;
+  max-width: 820px;
+  border-top: 1px dashed var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  user-select: none;
+}
+.model-switch-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 9.5px;
+  opacity: 0.8;
+}
+.model-switch-name {
+  color: var(--accent);
+  font-weight: 500;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  word-break: break-all;
+}
+.model-switch-time { margin-left: auto; opacity: 0.7; font-size: 10px; }
+@media (max-width: 768px) {
+  .model-switch-line { max-width: 100%; }
+}
 /* ============ CHAT ============ */
 .chat-container { flex: 1; position: relative; overflow: hidden; }
 .chat-messages {
@@ -4358,6 +4388,23 @@ function renderConversations() {
   });
 }
 
+function modelChangeLabel(prev, cur) {
+  if (!prev || !cur || prev === cur) return null;
+  return '⇄ ' + cur;
+}
+
+function addModelSwitchLine(label, ts) {
+  const div = document.createElement('div');
+  div.className = 'model-switch-line';
+  const t = translations[currentLang] || translations.fr;
+  div.innerHTML = `
+    <span class="model-switch-label">${t.modelSwitched || 'Changement de modèle'}</span>
+    <span class="model-switch-name">${escapeHtml(label)}</span>
+    ${showTimestamps && ts ? `<span class="model-switch-time">${formatTime(ts)}</span>` : ''}
+  `;
+  messagesInner.appendChild(div);
+}
+
 function renderCurrentConversation() {
   stopTTS();
   const activePreview = document.querySelector('.code-preview-container.active');
@@ -4369,12 +4416,26 @@ function renderCurrentConversation() {
   const conv = conversations[currentConvId];
   if (!conv || !Array.isArray(conv.messages) || conv.messages.length === 0) { renderWelcome(); return; }
   const visibleMessages = conv.messages.filter(m => !m.isHidden);
+  let prevModel = null;
   conv.messages.forEach((m) => {
     if (m.isHidden) return;
     const isLastVisible = m === visibleMessages[visibleMessages.length - 1];
     const idx = conv.messages.indexOf(m);
     const contentToShow = (m.role === 'user' && m.displayContent !== undefined) ? m.displayContent : m.content;
+
+    // Recalcul : changer de modèle = ce user msg a un modelLabel différent du user msg précédent
+    if (m.role === 'user' && m.modelLabel) {
+      let prevUserLabel = null;
+      for (let j = idx - 1; j >= 0; j--) {
+        if (conv.messages[j].modelLabel) { prevUserLabel = conv.messages[j].modelLabel; break; }
+      }
+      if (prevUserLabel !== null && prevUserLabel !== m.modelLabel) {
+        addModelSwitchLine(m.modelLabel, m.timestamp);
+      }
+    }
+
     addMessage(m.role, contentToShow, {
+
       isLast: isLastVisible, files: m.files, images: m.images, timestamp: m.timestamp,
       reasoning: m.reasoning, reasoningDuration: m.reasoningDuration,
       skipScroll: true, messageIndex: idx,
@@ -5276,11 +5337,23 @@ const textFilesToRead = currentAttachedFiles.filter(f => isTextFile(f));
 
   const isImageRequest = shouldGenerateImage(rawText);
 
+  const _m = getCurrentModel();
+  const _prov = providerSelect.value;
+  const _mLabel = (PROVIDERS[_prov] ? PROVIDERS[_prov].label : _prov) + ' · ' + _m;
+  // Trouver le DERNIER message utilisateur qui a un modelLabel
+  let _prevUserLabel = null;
+  for (let _i = conv.messages.length - 1; _i >= 0; _i--) {
+    if (conv.messages[_i].modelLabel) { _prevUserLabel = conv.messages[_i].modelLabel; break; }
+  }
+  const _modelSwitch = _prevUserLabel !== null && _prevUserLabel !== _mLabel;
+
   conv.messages.push({
     role: 'user', content: finalPromptContent, displayContent: text || (hasImage ? '🖼️ [Image jointe]' : ''),
     files: fileMetadatas, timestamp: Date.now(),
     isImageRequest: isImageRequest,
-    images: imagesForApi.length > 0 ? imagesForApi : undefined
+    images: imagesForApi.length > 0 ? imagesForApi : undefined,
+    model: _m, provider: _prov, modelLabel: _mLabel,
+    modelSwitch: _modelSwitch
   });
   conv.upd = Date.now();
 
@@ -5289,7 +5362,13 @@ const textFilesToRead = currentAttachedFiles.filter(f => isTextFile(f));
     conv.title = titleSource.slice(0, 50) + (titleSource.length > 50 ? '…' : '');
   }
 
+  // Ligne de changement de modèle (affichage immédiat, insérée AVANT le message utilisateur)
+  if (_modelSwitch && _mLabel) {
+    addModelSwitchLine(_mLabel, Date.now());
+  }
+
   addMessage('user', text || (hasImage ? '🖼️ [Image jointe]' : ''), { files: fileMetadatas, images: imagesForApi, timestamp: Date.now(), messageIndex: conv.messages.length - 1 });
+
   saveConversations();
   renderConversations();
   messageInput.value = '';
@@ -6919,6 +6998,7 @@ const translations = {
     chatOpts: "Options d'affichage", chatReason: "Afficher les réflexions (reasoning)", chatReasonHint: "Montre le raisonnement interne des modèles compatibles", chatTs: "Afficher l'horodatage", chatTsHint: "Heure d'envoi de chaque message", chatScroll: "Retour automatique en bas", chatScrollHint: "Défile automatiquement à la fin du stream", chatSound: "Notification sonore", chatSoundHint: "Un petit son quand la réponse est terminée",
     dataExport: "Exporter les conversations", dataExportBtn: "📥 Exporter", dataImport: "Importer des conversations", dataImportBtn: "📤 Importer", dataClear: "Effacer toutes les conversations", dataClearBtn: "Tout effacer", dataKeys: "Réinitialiser les clés API", dataKeysBtn: "Réinitialiser les clés", dataReset: "Réinitialiser les paramètres", dataResetBtn: "Réinitialiser",
     copy: "Copier", regen: "Régénérer", continueBtn: "Continuer", edit: "Modifier",
+    modelSwitched: "Changement de modèle",
     speak: "Lire", stopSpeak: "Arrêter", nothingToRead: "Rien à lire",
     chatTts: "Lecture audio (synthèse vocale)", chatTtsHint: "Ajoute un bouton pour écouter les réponses de l'IA",
     reasoning: "Réflexion", reasoningInProgress: "en cours", reasoningFinished: "terminée",
@@ -7045,6 +7125,7 @@ const translations = {
     chatOpts: "Display options", chatReason: "Show reasoning", chatReasonHint: "Shows the internal reasoning of compatible models", chatTs: "Show timestamp", chatTsHint: "Time each message was sent", chatScroll: "Auto-scroll to bottom", chatScrollHint: "Automatically scrolls at the end of the stream", chatSound: "Sound notification", chatSoundHint: "A little sound when the response is finished",
     dataExport: "Export conversations", dataExportBtn: "📥 Export", dataImport: "Import conversations", dataImportBtn: "📤 Import", dataClear: "Clear all conversations", dataClearBtn: "Clear all", dataKeys: "Reset API keys", dataKeysBtn: "Reset keys", dataReset: "Reset settings", dataResetBtn: "Reset",
     copy: "Copy", regen: "Regenerate", continueBtn: "Continue", edit: "Edit",
+    modelSwitched: "Model switched to",
     speak: "Read", stopSpeak: "Stop", nothingToRead: "Nothing to read",
     chatTts: "Audio playback (text-to-speech)", chatTtsHint: "Adds a button to listen to AI responses",
     reasoning: "Reasoning", reasoningInProgress: "in progress", reasoningFinished: "finished",
@@ -7171,6 +7252,7 @@ const translations = {
     chatOpts: "Opzioni di visualizzazione", chatReason: "Mostra il ragionamento", chatReasonHint: "Mostra il ragionamento interno dei modelli compatibili", chatTs: "Mostra data e ora", chatTsHint: "Ora di invio di ogni messaggio", chatScroll: "Scorrimento automatico in basso", chatScrollHint: "Scorre automaticamente alla fine del flusso", chatSound: "Notifica sonora", chatSoundHint: "Un piccolo suono al termine della risposta",
     dataExport: "Esporta conversazioni", dataExportBtn: "📥 Esporta", dataImport: "Importa conversazioni", dataImportBtn: "📤 Importa", dataClear: "Cancella tutte le conversazioni", dataClearBtn: "Cancella tutto", dataKeys: "Ripristina chiavi API", dataKeysBtn: "Ripristina chiavi", dataReset: "Ripristina impostazioni", dataResetBtn: "Ripristina",
     copy: "Copia", regen: "Rigenera", continueBtn: "Continua", edit: "Modifica",
+    modelSwitched: "Modello cambiato in",
     speak: "Leggi", stopSpeak: "Ferma", nothingToRead: "Niente da leggere",
     chatTts: "Riproduzione audio (sintesi vocale)", chatTtsHint: "Aggiunge un pulsante per ascoltare le risposte dell'IA",
     reasoning: "Ragionamento", reasoningInProgress: "in corso", reasoningFinished: "terminato",
@@ -7297,6 +7379,7 @@ const translations = {
     chatOpts: "Görüntüleme seçenekleri", chatReason: "Akıl yürütmeyi göster", chatReasonHint: "Uyumlu modellerin iç akıl yürütmesini gösterir", chatTs: "Zaman damgasını göster", chatTsHint: "Her mesajın gönderilme saati", chatScroll: "Otomatik aşağı kaydır", chatScrollHint: "Akış sonunda otomatik olarak aşağı kaydırır", chatSound: "Ses bildirimi", chatSoundHint: "Yanıt bittiğinde küçük bir ses",
     dataExport: "Sohbetleri dışa aktar", dataExportBtn: "📥 Dışa aktar", dataImport: "Sohbetleri içe aktar", dataImportBtn: "📤 İçe aktar", dataClear: "Tüm sohbetleri temizle", dataClearBtn: "Tümünü temizle", dataKeys: "API anahtarlarını sıfırla", dataKeysBtn: "Anahtarları sıfırla", dataReset: "Ayarları sıfırla", dataResetBtn: "Sıfırla",
     copy: "Kopyala", regen: "Yeniden oluştur", continueBtn: "Devam et", edit: "Düzenle",
+    modelSwitched: "Model değiştirildi:",
     speak: "Oku", stopSpeak: "Durdur", nothingToRead: "Okunacak bir şey yok",
     chatTts: "Sesli okuma (konuşma sentezi)", chatTtsHint: "Yapay zeka yanıtlarını dinlemek için bir düğme ekler",
     reasoning: "Akıl yürütme", reasoningInProgress: "devam ediyor", reasoningFinished: "tamamlandı",
