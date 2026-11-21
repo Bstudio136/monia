@@ -7249,13 +7249,15 @@ function applyLanguage(lang) {
   });
 
   // --- BOUTONS D'ACTION DES BLOCS DE CODE ---
-  document.querySelectorAll('.code-action-btn[data-action]').forEach(btn => {
-    if (btn.dataset.action === 'wrap') {
-      btn.title = t.codeWrap || 'Retour à la ligne';
-    } else if (btn.dataset.action === 'download') {
-      btn.title = t.codeDownload || 'Télécharger';
-    }
-  });
+document.querySelectorAll('.code-action-btn[data-action]').forEach(btn => {
+  if (btn.dataset.action === 'wrap') {
+    btn.title = t.codeWrap || 'Retour à la ligne';
+  } else if (btn.dataset.action === 'download') {
+    btn.title = t.codeDownload || 'Télécharger';
+  } else if (btn.dataset.action === 'preview') {
+    btn.title = t.codePreviewTitle || 'Voir le rendu en plein écran';
+  }
+});
 
   // --- MODALE PARAMETRES (Onglets) ---
   const tabs = { 'api': t.tabApi, 'generation': t.tabGen, 'appearance': t.tabApp, 'chat': t.tabChat, 'data': t.tabData, 'shortcuts': t.tabShort, 'about': t.tabAbout };
