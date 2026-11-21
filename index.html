@@ -2763,6 +2763,7 @@ function blobToBase64(blob) {
 function generateImageId() { return 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10); }
 
 // ==== LIMITES DE CONTEXTE (cache + découverte API) ====
+// ==== LIMITES DE CONTEXTE (cache + découverte API) ====
 const TOKEN_LIMITS = {
   'llama-3.3-70b-versatile': 131072,
   'llama-3.1-8b-instant': 131072,
@@ -2774,8 +2775,11 @@ const TOKEN_LIMITS = {
   'mistral-medium-latest': 32000,
   'codestral-latest': 32000,
   'magistral-medium-latest': 128000,
-  'gemini-3.5-flash': 1048576,
-  'gemini-3.5-flash-lite': 1048576,
+  // Modèles Gemini stables et rapides
+  'gemini-2.5-flash-lite': 1048576,
+  'gemini-flash-lite-latest': 1048576,
+  'gemini-2.5-flash': 1048576,
+  'gemini-flash-latest': 1048576,
   'agnes-3.0-flash': 512000,
   'agnes-2.5-pro-beta': 1000000,
   'gpt-4o': 128000,
@@ -2788,8 +2792,11 @@ const MAX_OUTPUT_LIMITS = {
   'openai/gpt-oss-120b': 65536,
   'llama-3.3-70b-versatile': 32768,
   'llama-3.1-8b-instant': 8192,
-  'gemini-3.5-flash': 65536,
-  'gemini-3.5-flash-lite': 65536,
+  // Modèles Gemini stables et rapides
+  'gemini-2.5-flash-lite': 65536,
+  'gemini-flash-lite-latest': 65536,
+  'gemini-2.5-flash': 65536,
+  'gemini-flash-latest': 65536,
   'mistral-large-latest': 8192,
   'mistral-small-latest': 8192,
   'agnes-3.0-flash': 65536,
@@ -2913,15 +2920,21 @@ const DEFAULT_PROVIDERS = {
     apiKeyUrl: 'https://console.mistral.ai/api-keys'
   },
 
-  gemini: {
+gemini: {
     label: 'Gemini',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent',
-    models: ['gemini-3.5-flash', 'gemini-3.5-flash-lite'],
+    models: [
+        'gemini-2.5-flash-lite',       // Le plus léger et rapide (Recommandé pour la vitesse)
+        'gemini-flash-lite-latest',    // Alias dynamique vers le dernier Flash Lite
+        'gemini-2.5-flash',            // Bon équilibre rapidité/intelligence
+        'gemini-flash-latest'          // Alias dynamique vers le dernier Flash standard
+    ],
     format: 'gemini',
     testUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
     testType: 'query',
     apiKeyUrl: 'https://aistudio.google.com/apikey'
-  },
+},
+
 
   openrouter: {
     label: 'OpenRouter',
@@ -3849,8 +3862,10 @@ const MODEL_DESCRIPTIONS = {
   'magistral-medium-latest': 'Modèle orienté raisonnement (Chain of Thought) de Mistral.',
   
   // Gemini
-  'gemini-3.5-flash': 'Le plus rapide de Google. Contexte gigantesque de 1 million de tokens. Parfait pour de longs documents.',
-  'gemini-3.5-flash-lite': 'Version encore plus rapide et légère de Gemini.',
+  'gemini-2.5-flash-lite': 'Ultra-rapide et léger. Idéal pour les tâches courantes.',
+  'gemini-flash-lite-latest': 'La version la plus récente de Flash Lite.',
+  'gemini-2.5-flash': 'Le modèle Gemini le plus rapide. Contexte 1M tokens.',
+  'gemini-flash-latest': 'Le dernier modèle Flash standard de Google.',
   
   // OpenRouter
   'openrouter/free': 'Sélectionne automatiquement un modèle gratuit disponible sur OpenRouter.',
