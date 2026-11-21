@@ -3528,6 +3528,7 @@ function renderMarkdown(el, text, skipHighlight=false) {
     // 1. Bouton Retour à la ligne
     const wrapBtn = document.createElement('button');
     wrapBtn.className = 'code-action-btn';
+    wrapBtn.dataset.action = 'wrap';
     wrapBtn.title = t.codeWrap || 'Retour à la ligne';
     wrapBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 3 21 7 17 11"/><path d="M3 3v10a4 4 0 0 0 4 4h14"/></svg>';
     wrapBtn.onclick = () => {
@@ -3539,6 +3540,7 @@ function renderMarkdown(el, text, skipHighlight=false) {
     // 2. Bouton Télécharger
     const dlBtn = document.createElement('button');
     dlBtn.className = 'code-action-btn';
+    dlBtn.dataset.action = 'download';
     dlBtn.title = t.codeDownload || 'Télécharger';
     dlBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
     dlBtn.onclick = () => {
@@ -3562,7 +3564,8 @@ function renderMarkdown(el, text, skipHighlight=false) {
     if (['html', 'htm', 'svg', 'xml'].includes(currentLang)) {
       const previewBtn = document.createElement('button');
       previewBtn.className = 'code-action-btn';
-      previewBtn.title = 'Voir le rendu en plein écran';
+      previewBtn.dataset.action = 'preview';
+      previewBtn.title = t.codePreviewTitle || 'Voir le rendu en plein écran';
       previewBtn.innerHTML = `👁️ ${t.codePreview}`;
       
       const previewContainer = document.createElement('div');
@@ -3912,9 +3915,10 @@ function updateModelList() {
 }
 
 function getCurrentModel() {
-  const v = modelSelect.value;
-  if (v) localStorage.setItem('deepchat_model_' + providerSelect.value, v);
-  return v;
+    if (hfModelInput && hfModelInput.offsetParent !== null && hfModelInput.value.trim()) {
+        return hfModelInput.value.trim();
+    }
+    return modelSelect.value;
 }
 
 function saveDraftsToStorage() {
@@ -4264,7 +4268,7 @@ function renderWelcome() {
       <button class="welcome-card" data-prompt="/image un chat astronaute sur la lune"><strong>${t.card1T}</strong>${t.card1D}</button>
       <button class="welcome-card" data-prompt="Explique-moi les principes SOLID avec des exemples concrets en JavaScript."><strong>${t.card2T}</strong>${t.card2D}</button>
       <button class="welcome-card" data-prompt="Écris une fonction Python qui trouve le plus long palindrome dans une chaîne."><strong>${t.card3T}</strong>${t.card3D}</button>
-      <button class="welcome-card" data-prompt="Compare les avantages et inconvénients de React, Vue et Svelte en 2024."><strong>${t.card4T}</strong>${t.card4D}</button>
+      <button class="welcome-card" data-prompt="Compare les avantages et inconvénients de React, Vue et Svelte en 2026."><strong>${t.card4T}</strong>${t.card4D}</button>
     </div>`;
   messagesInner.appendChild(div);
   div.querySelectorAll('.welcome-card').forEach(b => {
@@ -5892,7 +5896,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedModels = Array.from(checkedBoxes).map(cb => currentFetchedModelsList[parseInt(cb.value)]);
     
     if (selectedModels.length === 0) {
-      showToast(t('selectAtLeastOneModel') || 'Veuillez sélectionner au moins un modèle.', 'warning')
+      showToast((translations[currentLang] && translations[currentLang].selectAtLeastOneModel) || 'Veuillez sélectionner au moins un modèle.', 'warning');
       return;
     }
 
@@ -6765,7 +6769,9 @@ const translations = {
     tooltipGallery: "Galerie d'images",
     codeOpenCanvas: "Ouvrir dans le canvas",
     codeDownload: "Télécharger",
+      codeWrap: "Retour à la ligne",
     codePreview: "Aperçu",
+    codePreviewTitle: "Voir le rendu en plein écran",
     codeClosePreview: "Fermer l'aperçu",
     codeCopy: "Copier",
     codeCopied: "Copié",
@@ -6814,6 +6820,7 @@ const translations = {
     searchModelPlaceholder: "Rechercher un modèle...",
     validateSelection: "Valider la sélection",
     availableModelsFor: "Modèles disponibles",
+    selectAtLeastOneModel: "Veuillez sélectionner au moins un modèle.",
     toggleKeyVisibility: "Afficher/Masquer"
   },
 
@@ -6886,7 +6893,9 @@ const translations = {
     tooltipGallery: "Image gallery",
     codeOpenCanvas: "Open in canvas",
     codeDownload: "Download",
+      codeWrap: "Wrap lines",
     codePreview: "Preview",
+    codePreviewTitle: "View full-screen preview",
     codeClosePreview: "Close preview",
     codeCopy: "Copy",
     codeCopied: "Copied",
@@ -6935,6 +6944,7 @@ const translations = {
     searchModelPlaceholder: "Search a model...",
     validateSelection: "Validate selection",
     availableModelsFor: "Available models",
+    selectAtLeastOneModel: "Please select at least one model.",
     toggleKeyVisibility: "Show/Hide"
   },
 
@@ -7007,7 +7017,9 @@ const translations = {
     tooltipGallery: "Galleria immagini",
     codeOpenCanvas: "Apri nel canvas",
     codeDownload: "Scarica",
+      codeWrap: "A capo automatico",
     codePreview: "Anteprima",
+    codePreviewTitle: "Visualizza anteprima a schermo intero",
     codeClosePreview: "Chiudi anteprima",
     codeCopy: "Copia",
     codeCopied: "Copiato",
@@ -7056,6 +7068,7 @@ const translations = {
     searchModelPlaceholder: "Cerca un modello...",
     validateSelection: "Conferma selezione",
     availableModelsFor: "Modelli disponibili",
+    selectAtLeastOneModel: "Seleziona almeno un modello.",
     toggleKeyVisibility: "Mostra/Nascondi"
   },
 
@@ -7117,6 +7130,7 @@ const translations = {
     searchModelPlaceholder: "Model ara...",
     validateSelection: "Seçimi onayla",
     availableModelsFor: "Kullanılabilir modeller",
+    selectAtLeastOneModel: "Lütfen en az bir model seçin.",
     toggleKeyVisibility: "Göster/Gizle",
     dataExportDesc: "Tüm sohbetlerinizi JSON formatında indirir (yedekleme).",
     dataImportDesc: "Sohbetleri bir JSON dosyasından geri yükler.",
@@ -7136,7 +7150,9 @@ const translations = {
     tooltipGallery: "Resim galerisi",
     codeOpenCanvas: "Canvas'ta aç",
     codeDownload: "İndir",
+      codeWrap: "Satır kaydır",
     codePreview: "Önizleme",
+    codePreviewTitle: "Tam ekran önizlemeyi gör",
     codeClosePreview: "Önizlemeyi kapat",
     codeCopy: "Kopyala",
     codeCopied: "Kopyalandı",
@@ -7229,6 +7245,15 @@ function applyLanguage(lang) {
     const svg = btn.querySelector('svg');
     if (nextLabel && svg) {
       btn.innerHTML = svg.outerHTML + ' ' + nextLabel;
+    }
+  });
+
+  // --- BOUTONS D'ACTION DES BLOCS DE CODE ---
+  document.querySelectorAll('.code-action-btn[data-action]').forEach(btn => {
+    if (btn.dataset.action === 'wrap') {
+      btn.title = t.codeWrap || 'Retour à la ligne';
+    } else if (btn.dataset.action === 'download') {
+      btn.title = t.codeDownload || 'Télécharger';
     }
   });
 
@@ -7412,10 +7437,38 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+function applyStaticLanguage(lang) {
+  const t = translations[lang] || translations.fr;
+  const langSelect = $('languageSelect');
+  if (langSelect) langSelect.value = lang;
+
+  document.querySelector('#newChatBtn span').textContent = t.newChat;
+  $('searchInput').placeholder = t.search;
+  document.querySelector('#settingsBtn span').textContent = t.settings;
+  document.querySelector('#themeBtn span').textContent = t.appearance;
+  messageInput.placeholder = t.placeholder;
+  document.querySelector('.topbar-group input').placeholder = t.inputHfModel;
+  document.querySelector('#settingsModal h2').textContent = t.settingsTitle;
+  document.querySelector('#galleryModal h2').textContent = t.galleryTitle;
+  document.querySelector('#lbDownloadBtn').textContent = '⬇ ' + t.downloadImg;
+  if ($('modelsSelectionTitle')) $('modelsSelectionTitle').textContent = t.selectModelsTitle;
+  if ($('selectAllModelsBtn')) $('selectAllModelsBtn').textContent = t.selectAllModels;
+  if ($('unselectAllModelsBtn')) $('unselectAllModelsBtn').textContent = t.unselectAllModels;
+  if ($('modelSearchInput')) $('modelSearchInput').placeholder = t.searchModelPlaceholder;
+  if ($('cancelModelsSelectionBtn')) $('cancelModelsSelectionBtn').textContent = t.cancel;
+  if ($('validateModelsSelectionBtn')) $('validateModelsSelectionBtn').textContent = t.validateSelection;
+  updateSelectedModelsCount();
+  $('uploadBtn').title = t.tooltipAttach;
+  $('openSidebarBtn').title = t.tooltipOpenSidebar;
+  $('imageBtn').title = t.tooltipImageMode;
+  $('newChatBtn2').title = t.tooltipNewChatShortcut;
+  $('galleryBtn').title = t.tooltipGallery;
+}
+
 (function init() {
   checkMobile();
   if (localStorage.getItem('deepchat_sidebar') === '1') document.body.classList.add('sidebar-collapsed');
-  applyLanguage(currentLang); 
+  applyStaticLanguage(currentLang);
   applyAllAppearance();
   initProviderSelect();
   updateImageModeUI();
@@ -7488,6 +7541,7 @@ isHydrating = false;
     const ids = Object.keys(conversations).sort((a,b) => (conversations[b].updated || conversations[b].upd || conversations[b].created||0) - (conversations[a].upd || conversations[a].created||0));
     if (ids.length > 0) loadConversation(ids[0]);
     else newConversation();
+    applyLanguage(currentLang);
 
     updateTokenCounter();
 
