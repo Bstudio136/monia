@@ -630,6 +630,11 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
 }
 .action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 .action-btn svg { width: 13px; height: 13px; }
+
+/* ============ TTS / LECTURE AUDIO ============ */
+.action-btn.speaking { color: var(--accent); background: rgba(251, 191, 36, 0.15); }
+.action-btn.speaking svg { animation: ttsPulse 1s ease-in-out infinite; }
+@keyframes ttsPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .typing-cursor {
   display: inline-block;
   width: 7px; height: 14px;
@@ -2482,6 +2487,10 @@ body.compact .reasoning-content { max-height: 250px; }
             <div class="toggle-label">Notification sonore<small>Un petit son quand la réponse est terminée</small></div>
             <div class="toggle-switch" id="soundToggle"></div>
           </div>
+          <div class="toggle-row">
+            <div class="toggle-label">Lecture audio (synthèse vocale)<small>Ajoute un bouton 🔊 pour écouter les réponses de l'IA</small></div>
+            <div class="toggle-switch" id="ttsToggle"></div>
+          </div>
         </div>
       </div>
 
@@ -3038,6 +3047,15 @@ let showTimestamps = localStorage.getItem('deepchat_timestamps') === '1';
 let showReasoning = localStorage.getItem('deepchat_show_reasoning') !== '0';
 let soundEnabled = localStorage.getItem('deepchat_sound') === '1';
 let autoScrollEnabled = localStorage.getItem('deepchat_autoscroll') !== '0';
+// ==== TEXTE VERS LA PAROLE (TTS) ====
+let ttsEnabled = localStorage.getItem('deepchat_tts') !== '0';
+let currentUtterance = null;
+let ttsVoices = [];
+function loadTTSVoices() { if (window.speechSynthesis) ttsVoices = window.speechSynthesis.getVoices(); }
+if (window.speechSynthesis) {
+  loadTTSVoices();
+  window.speechSynthesis.onvoiceschanged = loadTTSVoices;
+}
 let isStreaming = false;
 let abortController = null;
 let userScrolledDuringStream = false;
@@ -4341,6 +4359,7 @@ function renderConversations() {
 }
 
 function renderCurrentConversation() {
+  stopTTS();
   const activePreview = document.querySelector('.code-preview-container.active');
   if (activePreview) {
     const btnClose = activePreview.querySelector('.code-preview-close');
@@ -4578,6 +4597,62 @@ function addMessage(role, content, opts={}) {
   return { msg, bubble, body };
 }
 
+// ==== TTS : fonctions ====
+function getTTSVoice(lang) {
+  if (!ttsVoices.length) loadTTSVoices();
+  const langMap = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', tr: 'tr-TR' };
+  const target = langMap[lang] || 'fr-FR';
+  const base = target.split('-')[0];
+  return ttsVoices.find(v => v.lang === target)
+      || ttsVoices.find(v => v.lang === base)
+      || ttsVoices.find(v => v.lang.startsWith(base))
+      || null;
+}
+
+function getMessageTextForSpeech(bubble) {
+  const clone = bubble.cloneNode(true);
+  clone.querySelectorAll('.code-block-wrapper, .reasoning-block, .message-actions, .typing-cursor, .img-actions, .image-prompt-preview').forEach(el => el.remove());
+  return (clone.innerText || '').trim();
+}
+
+function resetSpeakBtn(btn) {
+  if (!btn) return;
+  btn.classList.remove('speaking');
+  if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+}
+
+function stopTTS() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  document.querySelectorAll('.action-btn.speaking').forEach(resetSpeakBtn);
+  currentUtterance = null;
+}
+
+function toggleSpeak(text, btn) {
+  if (!window.speechSynthesis) {
+    showToast("La synthèse vocale n'est pas supportée par ce navigateur.", 'error');
+    return;
+  }
+  if (btn.classList.contains('speaking')) { stopTTS(); return; }
+  stopTTS();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = ({ fr: 'fr-FR', en: 'en-US', it: 'it-IT', tr: 'tr-TR' })[currentLang] || 'fr-FR';
+  const voice = getTTSVoice(currentLang);
+  if (voice) utterance.voice = voice;
+  utterance.rate = 1.0;
+
+  const t = translations[currentLang] || translations.fr;
+  btn.dataset.originalHtml = btn.innerHTML;
+  btn.classList.add('speaking');
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg> ' + (t.stopSpeak || 'Arrêter');
+
+  utterance.onend = () => resetSpeakBtn(btn);
+  utterance.onerror = () => resetSpeakBtn(btn);
+
+  currentUtterance = utterance;
+  window.speechSynthesis.speak(utterance);
+}
+
 function addMessageActions(body, isLast) {
   const actions = document.createElement('div');
   actions.className = 'message-actions';
@@ -4588,6 +4663,21 @@ function addMessageActions(body, isLast) {
   copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ' + (translations[currentLang] || translations.fr).copy;
   copyBtn.onclick = () => navigator.clipboard.writeText(bubble.innerText).then(() => showToast('Copié !', 'success'));
   actions.appendChild(copyBtn);
+  // Bouton Lire (synthèse vocale)
+  if (ttsEnabled && window.speechSynthesis) {
+    const speakBtn = document.createElement('button');
+    speakBtn.className = 'action-btn';
+    speakBtn.dataset.action = 'speak';
+    const speakLabel = (translations[currentLang] || translations.fr).speak || 'Lire';
+    speakBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg> ' + speakLabel;
+    speakBtn.onclick = () => {
+      const text = getMessageTextForSpeech(bubble);
+      if (!text) { showToast((translations[currentLang] || translations.fr).nothingToRead || 'Rien à lire', 'warning'); return; }
+      toggleSpeak(text, speakBtn);
+    };
+    actions.appendChild(speakBtn);
+  }
+
   if (isLast) {
     const regenBtn = document.createElement('button');
     regenBtn.className = 'action-btn';
@@ -5763,6 +5853,18 @@ function initSettingsControls() {
   const sToggle = $('soundToggle');
   sToggle.classList.toggle('on', soundEnabled);
   sToggle.onclick = () => { soundEnabled = !soundEnabled; sToggle.classList.toggle('on', soundEnabled); localStorage.setItem('deepchat_sound', soundEnabled ? '1' : '0'); if (soundEnabled) playNotification(); };
+
+  const ttsToggle = $('ttsToggle');
+  if (ttsToggle) {
+    ttsToggle.classList.toggle('on', ttsEnabled);
+    ttsToggle.onclick = () => {
+      ttsEnabled = !ttsEnabled;
+      ttsToggle.classList.toggle('on', ttsEnabled);
+      localStorage.setItem('deepchat_tts', ttsEnabled ? '1' : '0');
+      if (!ttsEnabled) stopTTS();
+      renderCurrentConversation();
+    };
+  }
   
   const idbToggle = $('idbToggle');
   if (idbToggle) {
@@ -6817,6 +6919,8 @@ const translations = {
     chatOpts: "Options d'affichage", chatReason: "Afficher les réflexions (reasoning)", chatReasonHint: "Montre le raisonnement interne des modèles compatibles", chatTs: "Afficher l'horodatage", chatTsHint: "Heure d'envoi de chaque message", chatScroll: "Retour automatique en bas", chatScrollHint: "Défile automatiquement à la fin du stream", chatSound: "Notification sonore", chatSoundHint: "Un petit son quand la réponse est terminée",
     dataExport: "Exporter les conversations", dataExportBtn: "📥 Exporter", dataImport: "Importer des conversations", dataImportBtn: "📤 Importer", dataClear: "Effacer toutes les conversations", dataClearBtn: "Tout effacer", dataKeys: "Réinitialiser les clés API", dataKeysBtn: "Réinitialiser les clés", dataReset: "Réinitialiser les paramètres", dataResetBtn: "Réinitialiser",
     copy: "Copier", regen: "Régénérer", continueBtn: "Continuer", edit: "Modifier",
+    speak: "Lire", stopSpeak: "Arrêter", nothingToRead: "Rien à lire",
+    chatTts: "Lecture audio (synthèse vocale)", chatTtsHint: "Ajoute un bouton pour écouter les réponses de l'IA",
     reasoning: "Réflexion", reasoningInProgress: "en cours", reasoningFinished: "terminée",
     loading: "Chargement...", loadError: "Erreur de chargement", loadImagesError: "Impossible de charger les images. Les messages texte restent accessibles.",
     imgModeActive: "Mode image actif", imgModeDesc: "votre prochaine requête génèrera une image Agnes", ratio: "Ratio", size: "Taille", cancel: "Annuler", describeImage: "🎨 Décrivez l'image à générer…",
@@ -6941,6 +7045,8 @@ const translations = {
     chatOpts: "Display options", chatReason: "Show reasoning", chatReasonHint: "Shows the internal reasoning of compatible models", chatTs: "Show timestamp", chatTsHint: "Time each message was sent", chatScroll: "Auto-scroll to bottom", chatScrollHint: "Automatically scrolls at the end of the stream", chatSound: "Sound notification", chatSoundHint: "A little sound when the response is finished",
     dataExport: "Export conversations", dataExportBtn: "📥 Export", dataImport: "Import conversations", dataImportBtn: "📤 Import", dataClear: "Clear all conversations", dataClearBtn: "Clear all", dataKeys: "Reset API keys", dataKeysBtn: "Reset keys", dataReset: "Reset settings", dataResetBtn: "Reset",
     copy: "Copy", regen: "Regenerate", continueBtn: "Continue", edit: "Edit",
+    speak: "Read", stopSpeak: "Stop", nothingToRead: "Nothing to read",
+    chatTts: "Audio playback (text-to-speech)", chatTtsHint: "Adds a button to listen to AI responses",
     reasoning: "Reasoning", reasoningInProgress: "in progress", reasoningFinished: "finished",
     loading: "Loading...", loadError: "Loading error", loadImagesError: "Failed to load images. Text messages remain accessible.",
     imgModeActive: "Image mode active", imgModeDesc: "your next request will generate an Agnes image", ratio: "Ratio", size: "Size", cancel: "Cancel", describeImage: "🎨 Describe the image to generate...",
@@ -7065,6 +7171,8 @@ const translations = {
     chatOpts: "Opzioni di visualizzazione", chatReason: "Mostra il ragionamento", chatReasonHint: "Mostra il ragionamento interno dei modelli compatibili", chatTs: "Mostra data e ora", chatTsHint: "Ora di invio di ogni messaggio", chatScroll: "Scorrimento automatico in basso", chatScrollHint: "Scorre automaticamente alla fine del flusso", chatSound: "Notifica sonora", chatSoundHint: "Un piccolo suono al termine della risposta",
     dataExport: "Esporta conversazioni", dataExportBtn: "📥 Esporta", dataImport: "Importa conversazioni", dataImportBtn: "📤 Importa", dataClear: "Cancella tutte le conversazioni", dataClearBtn: "Cancella tutto", dataKeys: "Ripristina chiavi API", dataKeysBtn: "Ripristina chiavi", dataReset: "Ripristina impostazioni", dataResetBtn: "Ripristina",
     copy: "Copia", regen: "Rigenera", continueBtn: "Continua", edit: "Modifica",
+    speak: "Leggi", stopSpeak: "Ferma", nothingToRead: "Niente da leggere",
+    chatTts: "Riproduzione audio (sintesi vocale)", chatTtsHint: "Aggiunge un pulsante per ascoltare le risposte dell'IA",
     reasoning: "Ragionamento", reasoningInProgress: "in corso", reasoningFinished: "terminato",
     loading: "Caricamento...", loadError: "Errore di caricamento", loadImagesError: "Impossibile caricare le immagini. I messaggi di testo rimangono accessibili.",
     imgModeActive: "Modalità immagine attiva", imgModeDesc: "la tua prossima richiesta genererà un'immagine Agnes", ratio: "Proporzioni", size: "Dimensione", cancel: "Annulla", describeImage: "🎨 Descrivi l'immagine da generare...",
@@ -7189,6 +7297,8 @@ const translations = {
     chatOpts: "Görüntüleme seçenekleri", chatReason: "Akıl yürütmeyi göster", chatReasonHint: "Uyumlu modellerin iç akıl yürütmesini gösterir", chatTs: "Zaman damgasını göster", chatTsHint: "Her mesajın gönderilme saati", chatScroll: "Otomatik aşağı kaydır", chatScrollHint: "Akış sonunda otomatik olarak aşağı kaydırır", chatSound: "Ses bildirimi", chatSoundHint: "Yanıt bittiğinde küçük bir ses",
     dataExport: "Sohbetleri dışa aktar", dataExportBtn: "📥 Dışa aktar", dataImport: "Sohbetleri içe aktar", dataImportBtn: "📤 İçe aktar", dataClear: "Tüm sohbetleri temizle", dataClearBtn: "Tümünü temizle", dataKeys: "API anahtarlarını sıfırla", dataKeysBtn: "Anahtarları sıfırla", dataReset: "Ayarları sıfırla", dataResetBtn: "Sıfırla",
     copy: "Kopyala", regen: "Yeniden oluştur", continueBtn: "Devam et", edit: "Düzenle",
+    speak: "Oku", stopSpeak: "Durdur", nothingToRead: "Okunacak bir şey yok",
+    chatTts: "Sesli okuma (konuşma sentezi)", chatTtsHint: "Yapay zeka yanıtlarını dinlemek için bir düğme ekler",
     reasoning: "Akıl yürütme", reasoningInProgress: "devam ediyor", reasoningFinished: "tamamlandı",
     loading: "Yükleniyor...", loadError: "Yükleme hatası", loadImagesError: "Resimler yüklenemedi. Metin mesajları erişilebilir durumda.",
     imgModeActive: "Resim modu aktif", imgModeDesc: "bir sonraki isteğiniz bir Agnes resmi oluşturacak", ratio: "Oran", size: "Boyut", cancel: "İptal", describeImage: "🎨 Oluşturulacak resmi tanımlayın...",
@@ -7336,7 +7446,8 @@ function applyLanguage(lang) {
       copy: t.copy,
       regen: t.regen,
       continue: t.continueBtn,
-      edit: t.edit
+      edit: t.edit,
+      speak: t.speak
     };
     const nextLabel = labelMap[btn.dataset.action];
     const svg = btn.querySelector('svg');
@@ -7430,6 +7541,7 @@ document.querySelectorAll('.code-action-btn[data-action]').forEach(btn => {
     toggles[1].innerHTML = `${t.chatTs}<small>${t.chatTsHint}</small>`;
     toggles[2].innerHTML = `${t.chatScroll}<small>${t.chatScrollHint}</small>`;
     toggles[3].innerHTML = `${t.chatSound}<small>${t.chatSoundHint}</small>`;
+    if (toggles[4]) toggles[4].innerHTML = `${t.chatTts}<small>${t.chatTtsHint}</small>`;
   }
 
 // --- ONGLET DONNÉES ---
