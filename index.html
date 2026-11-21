@@ -6151,9 +6151,13 @@ function renderProviderKeys() {
       }
 
       // Vérifier si l'utilisateur a forcé une URL custom
+      // ⚠️ On ignore le champ s'il contient "streamGenerateContent" (c'est l'URL d'envoi, pas de liste)
       const customUrlInput = container.querySelector(`input[data-custom-url="${k}"]`);
-      if (customUrlInput && customUrlInput.value.trim()) {
-         url = customUrlInput.value.trim();
+      const customUrlValue = customUrlInput ? customUrlInput.value.trim() : '';
+      const isCustomUsable = customUrlValue && !customUrlValue.includes('streamGenerateContent');
+      
+      if (isCustomUsable) {
+         url = customUrlValue;
          if (provider.testType === 'query' && key && !url.includes('key=')) {
              url += (url.includes('?') ? '&' : '?') + `key=${key}`;
          } else if (provider.testType === 'bearer' && key) {
