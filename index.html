@@ -2090,6 +2090,23 @@ body.compact .reasoning-content { max-height: 250px; }
   overflow-y: auto;
 }
 [data-theme="light"] .error-raw pre { background: rgba(0,0,0,0.05); }
+/* ===== MODALE DE CONFIRMATION ACCORDÉE AU SITE ===== */
+.confirm-modal .modal {
+  max-width: 420px;
+  height: auto;
+}
+.confirm-modal-body p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-line;
+}
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
 </style>
 </head>
 <body>
@@ -2557,6 +2574,27 @@ body.compact .reasoning-content { max-height: 250px; }
       <div class="modal-footer-actions">
         <button class="btn btn-secondary" id="cancelModelsSelectionBtn">Annuler</button>
         <button class="btn btn-primary" id="validateModelsSelectionBtn">Valider la sélection</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE DE CONFIRMATION ACCORDÉE AU SITE -->
+<div class="modal-overlay confirm-modal" id="confirmModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="confirmTitle">Confirmation</h2>
+      <button class="icon-btn" id="closeConfirmBtn" aria-label="Fermer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="modal-body confirm-modal-body">
+      <p id="confirmMessage">Êtes-vous sûr de vouloir continuer ?</p>
+      <div class="confirm-modal-actions">
+        <button class="btn btn-secondary" id="cancelConfirmBtn">Annuler</button>
+        <button class="btn btn-danger" id="okConfirmBtn">Confirmer</button>
       </div>
     </div>
   </div>
@@ -3330,6 +3368,60 @@ function showToast(msg, type = 'info', duration = 4000) {
   setTimeout(() => t.remove(), duration + 400);
 }
 
+function showToast(msg, type = 'info', duration = 4000) {
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  $('toastContainer').appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; }, duration);
+  setTimeout(() => t.remove(), duration + 400);
+}
+
+let confirmResolver = null;
+
+function customConfirm(message, options = {}) {
+  const modal = $('confirmModal');
+  const titleEl = $('confirmTitle');
+  const msgEl = $('confirmMessage');
+  const okBtn = $('okConfirmBtn');
+  const cancelBtn = $('cancelConfirmBtn');
+
+  if (!modal || !msgEl || !okBtn || !cancelBtn) {
+    return Promise.resolve(window.confirm(message));
+  }
+
+  const t = translations[currentLang] || translations.fr;
+  titleEl.textContent = options.title || t.confirmTitle || 'Confirmation';
+  msgEl.textContent = message;
+  cancelBtn.textContent = options.cancelText || t.cancel || 'Annuler';
+  okBtn.textContent = options.okText || t.confirmBtn || 'Confirmer';
+
+  okBtn.className = 'btn ' + (options.danger === false ? 'btn-primary' : 'btn-danger');
+
+  return new Promise((resolve) => {
+    confirmResolver = resolve;
+    modal.classList.add('open');
+    okBtn.focus();
+  });
+}
+
+function closeConfirmModal(result = false) {
+  const modal = $('confirmModal');
+  if (modal) modal.classList.remove('open');
+  if (confirmResolver) {
+    const resolve = confirmResolver;
+    confirmResolver = null;
+    resolve(result);
+  }
+}
+
+$('okConfirmBtn').addEventListener('click', () => closeConfirmModal(true));
+$('cancelConfirmBtn').addEventListener('click', () => closeConfirmModal(false));
+$('closeConfirmBtn').addEventListener('click', () => closeConfirmModal(false));
+$('confirmModal').addEventListener('click', (e) => {
+  if (e.target === $('confirmModal')) closeConfirmModal(false);
+});
+
 let scrollScheduled = false;
 function scrollToBottom(force=false) {
   if (!autoScrollEnabled && !force) return;
@@ -3979,7 +4071,12 @@ function loadConversation(id) {
 }
 async function deleteConversation(id) {
   if (!conversations[id]) return;
-  if (!confirm((translations[currentLang] || translations.fr).confirmDelete)) return;
+  const okDeleteConv = await customConfirm((translations[currentLang] || translations.fr).confirmDelete, {
+  title: (translations[currentLang] || translations.fr).tooltipDelete || 'Supprimer',
+  okText: (translations[currentLang] || translations.fr).deleteBtn || 'Supprimer',
+  danger: true
+});
+if (!okDeleteConv) return;
 
   const conv = conversations[id];
   const toDelete = [];
@@ -6323,12 +6420,32 @@ function importConversations(file) {
   };
   reader.readAsText(file);
 }
-function resetAllSettings() {
-  if (!confirm('Réinitialiser tous les paramètres (apparence, génération, chat) ?')) return;
-  ['deepchat_theme','deepchat_accent','deepchat_fontsize','deepchat_bubblewidth','deepchat_compact','deepchat_timestamps','deepchat_sound','deepchat_autoscroll','deepchat_system_prompt','deepchat_temperature','deepchat_maxtokens','deepchat_topp','deepchat_freqpenalty','deepchat_prespenalty','deepchat_show_reasoning'].forEach(k => localStorage.removeItem(k));
-  currentTheme = 'dark'; customAccent = 'default'; currentFontSize = 14; currentBubbleWidth = 100;
-  compactMode = false; showTimestamps = false; showReasoning = true; soundEnabled = false; autoScrollEnabled = true;
-  systemPrompt = ''; currentTemperature = 0.7; currentMaxTokens = 8192; currentTopP = 1; currentFreqPenalty = 0; currentPresPenalty = 0;
+async function resetAllSettings() {
+  const okReset = await customConfirm('Réinitialiser tous les paramètres (apparence, génération, chat) ?', {
+    title: 'Réinitialiser les paramètres',
+    okText: 'Réinitialiser',
+    danger: true
+  });
+  if (!okReset) return;
+
+  ['deepchat_theme', 'deepchat_accent', 'deepchat_fontsize', 'deepchat_bubblewidth', 'deepchat_compact', 'deepchat_timestamps', 'deepchat_sound', 'deepchat_autoscroll', 'deepchat_system_prompt', 'deepchat_temperature', 'deepchat_maxtokens', 'deepchat_topp', 'deepchat_freqpenalty', 'deepchat_prespenalty', 'deepchat_show_reasoning'].forEach(k => localStorage.removeItem(k));
+
+  currentTheme = 'dark';
+  customAccent = 'default';
+  currentFontSize = 14;
+  currentBubbleWidth = 100;
+  compactMode = false;
+  showTimestamps = false;
+  showReasoning = true;
+  soundEnabled = false;
+  autoScrollEnabled = true;
+  systemPrompt = '';
+  currentTemperature = 0.7;
+  currentMaxTokens = 8192;
+  currentTopP = 1;
+  currentFreqPenalty = 0;
+  currentPresPenalty = 0;
+
   applyAllAppearance();
   initSettingsControls();
   renderCurrentConversation();
@@ -6408,7 +6525,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 $('clearAllBtn').addEventListener('click', async () => {
-  if (confirm('Supprimer TOUTES les conversations ? Cette action est irréversible.')) {
+  const okClearAll = await customConfirm('Supprimer TOUTES les conversations ? Cette action est irréversible.', {
+    title: 'Tout effacer',
+    okText: 'Tout effacer',
+    danger: true
+  });
+  if (okClearAll) {
     conversations = {}; drafts = {};
     localStorage.removeItem('deepchat_drafts');
     await idbClearAll();
@@ -6417,8 +6539,13 @@ $('clearAllBtn').addEventListener('click', async () => {
     showToast('Conversations et images supprimées', 'success');
   }
 });
-$('clearKeysBtn').addEventListener('click', () => {
-  if (confirm('Supprimer toutes les clés API ?')) {
+$('clearKeysBtn').addEventListener('click', async () => {
+  const okClearKeys = await customConfirm('Supprimer toutes les clés API ?', {
+    title: 'Réinitialiser les clés API',
+    okText: 'Réinitialiser les clés',
+    danger: true
+  });
+  if (okClearKeys) {
     apiKeys = {};
     localStorage.removeItem('deepchat_keys');
     renderProviderKeys();
@@ -6468,10 +6595,14 @@ document.addEventListener('keydown', (e) => {
   if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); newConversation(); }
   if (mod && e.key === ',') { e.preventDefault(); openSettings(); }
   if (mod && e.key.toLowerCase() === 'e') { e.preventDefault(); exportConversations(); }
-  if (e.key === 'Escape') { 
-    closeSettings(); 
-    document.body.classList.remove('sidebar-mobile-open'); 
-    $('galleryModal').classList.remove('open'); 
+if (e.key === 'Escape') {
+    if ($('confirmModal') && $('confirmModal').classList.contains('open')) {
+      closeConfirmModal(false);
+      return;
+    }
+    closeSettings();
+    document.body.classList.remove('sidebar-mobile-open');
+    $('galleryModal').classList.remove('open');
     
     // Ferme l'aperçu de code si ouvert
     const activePreview = document.querySelector('.code-preview-container.active');
