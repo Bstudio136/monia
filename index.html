@@ -2181,7 +2181,7 @@ body.compact .reasoning-content { max-height: 250px; }
       <select id="providerSelect"></select>
       <div class="topbar-divider"></div>
       <select id="modelSelect"></select>
-      <input type="text" id="hfModelInput" placeholder="ID modèle HF" data-i18n-placeholder="inputHfModel" style="display:none">
+      <input type="text" id="customModelInput" placeholder="ID modèle personnalisé" data-i18n-placeholder="inputCustomModel" style="display:none">
     </div>
     <div class="topbar-right">
       <button class="icon-btn" id="galleryBtn" title="Galerie d'images" data-i18n-title="tooltipGallery">
@@ -2517,7 +2517,7 @@ body.compact .reasoning-content { max-height: 250px; }
         <div class="form-group">
           <h3 style="font-size:16px; margin-bottom:12px;">Deepchat</h3>
           <p style="color:var(--text-secondary); line-height:1.6; margin-bottom:16px;">
-            Deepchat est un client de chat multi-fournisseurs (multi-provider AI) qui vous permet de discuter avec différents modèles d'intelligence artificielle (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) depuis une interface unique. Il supporte le streaming, le raisonnement (reasoning), la génération d'images, le rendu Markdown, la coloration syntaxique, les pièces jointes, et bien plus encore. Toutes les données (conversations, clés API) sont stockées localement dans votre navigateur pour une confidentialité maximale.
+            Deepchat est un client de chat multi-fournisseurs (multi-provider AI) qui vous permet de discuter avec différents modèles d'intelligence artificielle (Agnes, Groq, Mistral, Gemini, OpenRouter, TokenHarbor, Puter, OVHcloud) depuis une interface unique. Il supporte le streaming, le raisonnement (reasoning), la génération d'images, le rendu Markdown, la coloration syntaxique, les pièces jointes, et bien plus encore. Toutes les données (conversations, clés API) sont stockées localement dans votre navigateur pour une confidentialité maximale.
           </p>
           <h3 style="font-size:16px; margin-bottom:12px;">Créateur</h3>
           <p style="color:var(--text-secondary); line-height:1.6; margin-bottom:16px;">
@@ -3031,7 +3031,7 @@ let currentFetchedModelsList = [];
 const $ = id => document.getElementById(id);
 const providerSelect = $('providerSelect');
 const modelSelect = $('modelSelect');
-const hfModelInput = $('hfModelInput');
+const customModelInput = $('customModelInput');
 const chatMessages = $('chatMessages');
 const messagesInner = $('messagesInner');
 const messageInput = $('messageInput');
@@ -3368,15 +3368,6 @@ function showToast(msg, type = 'info', duration = 4000) {
   setTimeout(() => t.remove(), duration + 400);
 }
 
-function showToast(msg, type = 'info', duration = 4000) {
-  const t = document.createElement('div');
-  t.className = 'toast ' + type;
-  t.textContent = msg;
-  $('toastContainer').appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; }, duration);
-  setTimeout(() => t.remove(), duration + 400);
-}
-
 let confirmResolver = null;
 
 function customConfirm(message, options = {}) {
@@ -3669,7 +3660,7 @@ function renderMarkdown(el, text, skipHighlight=false) {
         <button class="code-preview-close">${t.codeClosePreview}</button>`;
       
       const iframe = document.createElement('iframe');
-      iframe.sandbox = 'allow-scripts allow-same-origin allow-modals allow-forms allow-popups';
+      iframe.sandbox = 'allow-scripts allow-modals allow-forms allow-popups';
       
       previewContainer.appendChild(previewHeader);
       previewContainer.appendChild(iframe);
@@ -4972,7 +4963,19 @@ function renderErrorInBubble(container, err, ctx = {}) {
       const id = btn.dataset.action;
       if (id === 'settings') openSettings();
       else if (id === 'newchat') newConversation();
-      else if (id === 'retry') regenerate();
+      else if (id === 'retry') {
+        if (ctx.isImage) {
+          const conv = conversations[currentConvId];
+          const lastUser = conv?.messages?.[conv.messages.length - 1];
+          const prompt = lastUser?.displayContent || lastUser?.content;
+          if (prompt) runImageGeneration(prompt, imageRatio, imageSize);
+        } else {
+          const conv = conversations[currentConvId];
+          const lastMsg = conv?.messages?.[conv.messages.length - 1];
+          if (lastMsg?.role === 'user') runCompletion();
+          else regenerate();
+        }
+      }
     };
   });
 }
@@ -6428,7 +6431,7 @@ async function resetAllSettings() {
   });
   if (!okReset) return;
 
-  ['deepchat_theme', 'deepchat_accent', 'deepchat_fontsize', 'deepchat_bubblewidth', 'deepchat_compact', 'deepchat_timestamps', 'deepchat_sound', 'deepchat_autoscroll', 'deepchat_system_prompt', 'deepchat_temperature', 'deepchat_maxtokens', 'deepchat_topp', 'deepchat_freqpenalty', 'deepchat_prespenalty', 'deepchat_show_reasoning'].forEach(k => localStorage.removeItem(k));
+  ['deepchat_theme', 'deepchat_accent', 'deepchat_fontsize', 'deepchat_bubblewidth', 'deepchat_compact', 'deepchat_timestamps', 'deepchat_sound', 'deepchat_autoscroll', 'deepchat_system_prompt', 'deepchat_temperature', 'deepchat_maxtokens', 'deepchat_topp', 'deepchat_freqpenalty', 'deepchat_prespenalty', 'deepchat_show_reasoning', 'deepchat_use_idb'].forEach(k => localStorage.removeItem(k));
 
   currentTheme = 'dark';
   customAccent = 'default';
@@ -6439,6 +6442,7 @@ async function resetAllSettings() {
   showReasoning = true;
   soundEnabled = false;
   autoScrollEnabled = true;
+  useIDB = true;
   systemPrompt = '';
   currentTemperature = 0.7;
   currentMaxTokens = 8192;
@@ -6463,8 +6467,8 @@ function autoResize() {
 
 providerSelect.addEventListener('change', updateModelList);
 modelSelect.addEventListener('change', updateModelDescription);
-hfModelInput.addEventListener('input', updateModelDescription);
-hfModelInput.addEventListener('change', () => localStorage.setItem('deepchat_hfmodel', hfModelInput.value));
+customModelInput.addEventListener('input', updateModelDescription);
+customModelInput.addEventListener('change', () => localStorage.setItem('deepchat_custommodel', customModelInput.value));
 sendBtn.addEventListener('click', () => { if (isStreaming) stopStreaming(); else sendMessage(); });
 messageInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (!isStreaming) sendMessage(); }
@@ -6858,9 +6862,9 @@ const translations = {
     cpName: "Nom", cpEndpoint: "Endpoint Chat", cpTestUrl: "Test URL", cpModels: "Modèles (séparés par virgule)",
     scToggle: "Basculer la barre latérale", scNew: "Nouvelle conversation", scSettings: "Ouvrir les paramètres", scExport: "Exporter les conversations", scSend: "Envoyer le message", scNewLine: "Nouvelle ligne", scImage: "Mode image", scClose: "Fermer les modales",
     aboutCreator: "Créateur", aboutLink: "Voir mes projets", confirmDelete: "Supprimer cette conversation ?",
-    aboutDesc: "DeepChat est un client de chat multi-fournisseurs (multi-provider AI) qui vous permet de discuter avec différents modèles d'intelligence artificielle (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) depuis une interface unique. Il supporte le streaming, le raisonnement (reasoning), la génération d'images, le rendu Markdown, la coloration syntaxique, les pièces jointes, et bien plus encore. Toutes les données (conversations, clés API) sont stockées localement dans votre navigateur pour une confidentialité maximale.",
+    aboutDesc: "DeepChat est un client de chat multi-fournisseurs (multi-provider AI) qui vous permet de discuter avec différents modèles d'intelligence artificielle (Agnes, Groq, Mistral, Gemini, OpenRouter, TokenHarbor, Puter, OVHcloud) depuis une interface unique. Il supporte le streaming, le raisonnement (reasoning), la génération d'images, le rendu Markdown, la coloration syntaxique, les pièces jointes, et bien plus encore. Toutes les données (conversations, clés API) sont stockées localement dans votre navigateur pour une confidentialité maximale.",
     // === AJOUTS ===
-    inputHfModel: "ID modèle HF",
+    inputCustomModel: "ID modèle personnalisé",
     settingsTitle: "Paramètres",
     galleryTitle: "Galerie d'images",
     downloadImg: "Télécharger",
@@ -6942,6 +6946,11 @@ const translations = {
       'cohere/north-mini-code:free': 'Modèle Cohere North Mini Code, spécialisé dans le code, gratuit via Puter.',
       'google/gemma-4-31b-it': 'Google Gemma 4 31B (instruction-tuned), modèle open-weight polyvalent via Puter.',
       'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B actifs) instruction-tuned, efficace et rapide via Puter.',
+      'Qwen3.5-397B-A17B': 'Modèle OVHcloud (sans clé) orienté raisonnement et tâches avancées.',
+      'gpt-oss-120b': 'Modèle open-source 120B disponible sur OVHcloud (sans clé).',
+      'gpt-oss-20b': 'Version légère et rapide 20B disponible sur OVHcloud (sans clé).',
+      'Meta-Llama-3_3-70B-Instruct': 'Llama 3.3 70B Instruct hébergé sur OVHcloud (sans clé).',
+      'Mistral-Small-3.2-24B-Instruct-2506': 'Mistral Small 3.2 24B Instruct hébergé sur OVHcloud (sans clé).',
       infoLabel: 'Info'
     },
     selectModelsTitle: "Sélectionner les modèles",
@@ -6982,7 +6991,7 @@ const translations = {
     cpName: "Name", cpEndpoint: "Chat Endpoint", cpTestUrl: "Test URL", cpModels: "Models (comma separated)",
     scToggle: "Toggle sidebar", scNew: "New chat", scSettings: "Open settings", scExport: "Export conversations", scSend: "Send message", scNewLine: "New line", scImage: "Image mode", scClose: "Close modals",
     aboutCreator: "Creator", aboutLink: "See my projects", confirmDelete: "Delete this conversation?",
-    aboutDesc: "DeepChat is a multi-provider AI chat client that allows you to chat with different AI models (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) from a single interface. It supports streaming, reasoning, image generation, Markdown rendering, syntax highlighting, attachments, and much more. All data (conversations, API keys) is stored locally in your browser for maximum privacy.",
+    aboutDesc: "DeepChat is a multi-provider AI chat client that allows you to chat with different AI models (Agnes, Groq, Mistral, Gemini, OpenRouter, TokenHarbor, Puter, OVHcloud) from a single interface. It supports streaming, reasoning, image generation, Markdown rendering, syntax highlighting, attachments, and much more. All data (conversations, API keys) is stored locally in your browser for maximum privacy.",
     // === AJOUTS ===
     inputHfModel: "HF model ID",
     settingsTitle: "Settings",
@@ -7106,7 +7115,7 @@ const translations = {
     cpName: "Nome", cpEndpoint: "Endpoint Chat", cpTestUrl: "URL di test", cpModels: "Modelli (separati da virgola)",
     scToggle: "Attiva/disattiva barra laterale", scNew: "Nuova chat", scSettings: "Apri impostazioni", scExport: "Esporta conversazioni", scSend: "Invia messaggio", scNewLine: "Nuova riga", scImage: "Modalità immagine", scClose: "Chiudi finestre",
     aboutCreator: "Creatore", aboutLink: "Vedi i miei progetti", confirmDelete: "Eliminare questa conversazione?",
-    aboutDesc: "DeepChat è un client di chat multi-provider che ti permette di chattare con diversi modelli AI (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) da un'unica interfaccia. Supporta streaming, ragionamento, generazione di immagini, rendering Markdown, evidenziazione della sintassi, allegati e molto altro. Tutti i dati sono memorizzati localmente nel tuo browser per la massima privacy.",
+    aboutDesc: "DeepChat è un client di chat multi-provider che ti permette di chattare con diversi modelli AI (Agnes, Groq, Mistral, Gemini, OpenRouter, TokenHarbor, Puter, OVHcloud) da un'unica interfaccia. Supporta streaming, ragionamento, generazione di immagini, rendering Markdown, evidenziazione della sintassi, allegati e molto altro. Tutti i dati sono memorizzati localmente nel tuo browser per la massima privacy.",
     // === AJOUTS ===
     inputHfModel: "ID modello HF",
     settingsTitle: "Impostazioni",
@@ -7230,7 +7239,7 @@ const translations = {
     cpName: "Ad", cpEndpoint: "Sohbet Uç Noktası", cpTestUrl: "Test URL'si", cpModels: "Modeller (virgülle ayrılmış)",
     scToggle: "Kenar çubuğunu aç/kapat", scNew: "Yeni sohbet", scSettings: "Ayarları aç", scExport: "Sohbetleri dışa aktar", scSend: "Mesaj gönder", scNewLine: "Yeni satır", scImage: "Resim modu", scClose: "Modalları kapat",
     aboutCreator: "Yaratıcı", aboutLink: "Projelerimi gör", confirmDelete: "Bu sohbet silinsin mi?",
-    aboutDesc: "DeepChat, farklı yapay zeka modelleri (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) ile tek bir arayüzden sohbet etmenizi sağlayan çok sağlayıcılı bir yapay zeka sohbet istemcisidir. Akış, akıl yürütme, resim oluşturma, Markdown işleme, sözdizimi vurgulama, ekler ve daha fazlasını destekler. Tüm veriler maksimum gizlilik için tarayıcınızda yerel olarak saklanır.",
+    aboutDesc: "DeepChat, farklı yapay zeka modelleri (Agnes, Groq, Mistral, Gemini, OpenRouter, TokenHarbor, Puter, OVHcloud) ile tek bir arayüzden sohbet etmenizi sağlayan çok sağlayıcılı bir yapay zeka sohbet istemcisidir. Akış, akıl yürütme, resim oluşturma, Markdown işleme, sözdizimi vurgulama, ekler ve daha fazlasını destekler. Tüm veriler maksimum gizlilik için tarayıcınızda yerel olarak saklanır.",
     // === AJOUTS ===
     inputHfModel: "HF model kimliği",
     settingsTitle: "Ayarlar",
