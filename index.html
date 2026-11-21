@@ -2776,9 +2776,9 @@ const TOKEN_LIMITS = {
   'codestral-latest': 32000,
   'magistral-medium-latest': 128000,
   // Modèles Gemini stables et rapides
-  'gemini-2.5-flash-lite': 1048576,
+  'gemini-3.5-flash-lite': 1048576,
   'gemini-flash-lite-latest': 1048576,
-  'gemini-2.5-flash': 1048576,
+  'gemini-3.5-flash': 1048576,
   'gemini-flash-latest': 1048576,
   'agnes-3.0-flash': 512000,
   'agnes-2.5-pro-beta': 1000000,
@@ -2793,9 +2793,9 @@ const MAX_OUTPUT_LIMITS = {
   'llama-3.3-70b-versatile': 32768,
   'llama-3.1-8b-instant': 8192,
   // Modèles Gemini stables et rapides
-  'gemini-2.5-flash-lite': 65536,
+  'gemini-3.5-flash-lite': 65536,
   'gemini-flash-lite-latest': 65536,
-  'gemini-2.5-flash': 65536,
+  'gemini-3.5-flash': 65536,
   'gemini-flash-latest': 65536,
   'mistral-large-latest': 8192,
   'mistral-small-latest': 8192,
@@ -2924,9 +2924,9 @@ gemini: {
     label: 'Gemini',
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent',
     models: [
-        'gemini-2.5-flash-lite',       // Le plus léger et rapide (Recommandé pour la vitesse)
+        'gemini-3.5-flash-lite',       // Le plus léger et rapide (Recommandé pour la vitesse)
         'gemini-flash-lite-latest',    // Alias dynamique vers le dernier Flash Lite
-        'gemini-2.5-flash',            // Bon équilibre rapidité/intelligence
+        'gemini-3.5-flash',            // Bon équilibre rapidité/intelligence
         'gemini-flash-latest'          // Alias dynamique vers le dernier Flash standard
     ],
     format: 'gemini',
@@ -3862,9 +3862,9 @@ const MODEL_DESCRIPTIONS = {
   'magistral-medium-latest': 'Modèle orienté raisonnement (Chain of Thought) de Mistral.',
   
   // Gemini
-  'gemini-2.5-flash-lite': 'Ultra-rapide et léger. Idéal pour les tâches courantes.',
+  'gemini-3.5-flash-lite': 'Ultra-rapide et léger. Idéal pour les tâches courantes.',
   'gemini-flash-lite-latest': 'La version la plus récente de Flash Lite.',
-  'gemini-2.5-flash': 'Le modèle Gemini le plus rapide. Contexte 1M tokens.',
+  'gemini-3.5-flash': 'Le modèle Gemini le plus rapide. Contexte 1M tokens.',
   'gemini-flash-latest': 'Le dernier modèle Flash standard de Google.',
   
   // OpenRouter
