@@ -6150,20 +6150,9 @@ function renderProviderKeys() {
          headers['Authorization'] = `Bearer ${key}`;
       }
 
-      // Vérifier si l'utilisateur a forcé une URL custom
-      // ⚠️ On ignore le champ s'il contient "streamGenerateContent" (c'est l'URL d'envoi, pas de liste)
-      const customUrlInput = container.querySelector(`input[data-custom-url="${k}"]`);
-      const customUrlValue = customUrlInput ? customUrlInput.value.trim() : '';
-      const isCustomUsable = customUrlValue && !customUrlValue.includes('streamGenerateContent');
-      
-      if (isCustomUsable) {
-         url = customUrlValue;
-         if (provider.testType === 'query' && key && !url.includes('key=')) {
-             url += (url.includes('?') ? '&' : '?') + `key=${key}`;
-         } else if (provider.testType === 'bearer' && key) {
-             headers['Authorization'] = `Bearer ${key}`;
-         }
-      }
+      // On n'utilise PAS le champ "URL de base" car il contient les endpoints de chat.
+      // La récupération des modèles utilise TOUJOURS provider.testUrl.
+      // Si l'utilisateur veut forcer une URL, il doit utiliser le champ "Test URL" du fournisseur personnalisé.
 
       if (!url) {
         showToast("Aucune URL de test configurée pour ce fournisseur.", "warning");
