@@ -6123,52 +6123,102 @@ function renderProviderKeys() {
     };
   });
 
-  // Bouton Tester
-  container.querySelectorAll('.test-btn').forEach(btn => {
+// Bouton Récupérer les modèles (CORRIGÉ POUR GEMINI & CORS)
+  container.querySelectorAll('[data-fetch-models]').forEach(btn => {
     btn.onclick = async (e) => {
       e.stopPropagation();
-      const k = btn.dataset.test;
-      const inp = container.querySelector(`input[data-provider="${k}"]`);
-      let keyToTest = inp.value.trim();
+      const k = btn.dataset.fetchModels;
+      let key = apiKeys[k];
+      const provider = PROVIDERS[k];
       
-      if (keyToTest.startsWith('••')) keyToTest = apiKeys[k];
-      if (!keyToTest) { showToast('Veuillez saisir une clé avant de tester.', 'error'); return; }
-      
-      if (!keyToTest.startsWith('••') && !apiKeys[k]) {
-        apiKeys[k] = keyToTest;
+      // 1. Gérer la clé API
+      if (!key && !provider.noKey) {
+        key = prompt(`Colle ta clé API pour ${provider.label} afin de récupérer les modèles :`);
+        if (!key) return;
+        apiKeys[k] = key;
         localStorage.setItem('deepchat_keys', JSON.stringify(apiKeys));
       }
-      
-      btn.className = 'btn test-btn testing';
-      btn.innerHTML = 'Test…';
+
+      // 2. Construire l'URL correcte
+      let url = provider.testUrl;
+      const headers = {};
+
+      // Gestion spécifique pour Gemini (qui utilise la clé en query param ?key=...)
+      if (provider.testType === 'query' && key) {
+         if (!url.includes('key=')) url += (url.includes('?') ? '&' : '?') + `key=${key}`;
+      } else if (provider.testType === 'bearer' && key) {
+         headers['Authorization'] = `Bearer ${key}`;
+      }
+
+      // Vérifier si l'utilisateur a forcé une URL custom
+      const customUrlInput = container.querySelector(`input[data-custom-url="${k}"]`);
+      if (customUrlInput && customUrlInput.value.trim()) {
+         url = customUrlInput.value.trim();
+         if (provider.testType === 'query' && key && !url.includes('key=')) {
+             url += (url.includes('?') ? '&' : '?') + `key=${key}`;
+         } else if (provider.testType === 'bearer' && key) {
+             headers['Authorization'] = `Bearer ${key}`;
+         }
+      }
+
+      if (!url) {
+        showToast("Aucune URL de test configurée pour ce fournisseur.", "warning");
+        return;
+      }
+
+      btn.innerHTML = '⏳ Chargement...';
       btn.disabled = true;
-      
+
       try {
-        const isValid = await testApiKey(k, keyToTest);
-        if (isValid) {
-          btn.className = 'btn test-btn success';
-          btn.innerHTML = '✅ OK';
-          showToast(`La clé ${PROVIDERS[k].label} est valide !`, 'success');
-        } else {
-          btn.className = 'btn test-btn error';
-          btn.innerHTML = '❌ Invalide';
-          showToast(`La clé ${PROVIDERS[k].label} est invalide.`, 'error');
+        const res = await fetch(url, {
+          method: 'GET',
+          headers: headers
+        });
+
+        if (!res.ok) {
+            const errText = await res.text();
+            if (res.status === 401 || res.status === 403) {
+                throw new Error(`Clé invalide (HTTP ${res.status})`);
+            }
+            throw new Error(`Erreur HTTP ${res.status}`);
         }
+        
+        const data = await res.json();
+
+        let allModels = [];
+        if (data.data && Array.isArray(data.data)) allModels = data.data;
+        else if (data.models && Array.isArray(data.models)) allModels = data.models;
+        else if (Array.isArray(data)) allModels = data;
+
+        // Filtrage simple
+        let filteredModels = allModels.filter(m => {
+            const id = (m.id || m.name || '').toLowerCase();
+            if (id.includes('embed') || id.includes('tts') || id.includes('whisper')) return false;
+            return true;
+        });
+
+        if (filteredModels.length === 0) filteredModels = allModels;
+        const modelIds = filteredModels.map(m => m.id || m.name);
+        
+        openModelsSelectionModal(k, modelIds);
+        
       } catch (err) {
-        btn.className = 'btn test-btn error';
-        btn.innerHTML = '❌ Erreur';
-        showToast(`Erreur réseau/CORS pour ${PROVIDERS[k].label}.`, 'error');
+        let msg = "Erreur réseau ou CORS.";
+        if (err.message.includes('401') || err.message.includes('403')) {
+            msg = "Clé API invalide ou refusée.";
+        } else if (err.name === 'TypeError') {
+            msg = "Impossible de joindre le serveur (CORS/Internet).";
+        } else {
+            msg = err.message;
+        }
+        showToast(`❌ ${msg}`, "error", 6000);
       } finally {
-        setTimeout(() => {
-          if (btn.classList.contains('testing')) return;
-          const currentT = translations[currentLang] || translations.fr;
-          btn.className = 'btn btn-secondary test-btn';
-          btn.innerHTML = currentT.testBtn;
-          btn.disabled = false;
-        }, 3000);
+        btn.innerHTML = '🔄 Récupérer les modèles';
+        btn.disabled = false;
       }
     };
   });
+
 
   // Sauvegarde URL personnalisée
   container.querySelectorAll('input[data-custom-url]').forEach(inp => {
