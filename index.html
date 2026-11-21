@@ -3766,7 +3766,7 @@ const MODEL_DESCRIPTIONS = {
   
   // OpenRouter
   'openrouter/free': 'Sélectionne automatiquement un modèle gratuit disponible sur OpenRouter.',
-  'nividia/nemotron-3.5-super-vl:free': 'Modèle NVIDIA gratuit orienté Vision-Langage (analyse d\'images).',
+  'nvidia/nemotron-3.5-super-vl:free': 'Modèle NVIDIA gratuit orienté Vision-Langage (analyse d\'images).',
   'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Petit modèle NVIDIA gratuit spécialisé dans le raisonnement.',
   
   // TokenHarbor
@@ -3910,11 +3910,6 @@ function updateModelList() {
 }
 
 function getCurrentModel() {
-  if (providerSelect.value === 'huggingface') {
-    const v = hfModelInput.value.trim();
-    if (v) localStorage.setItem('deepchat_hfmodel', v);
-    return v;
-  }
   const v = modelSelect.value;
   if (v) localStorage.setItem('deepchat_model_' + providerSelect.value, v);
   return v;
@@ -3964,7 +3959,7 @@ function loadConversation(id) {
   if (isStreaming) return;
   if (currentConvId && currentConvId !== id) {
     drafts[currentConvId] = messageInput.value;
-    try { localStorage.setItem('deepchat_drafts', JSON.stringify(drafts)); } catch(e) {}
+    saveDraftsToStorage();
   }
   currentConvId = id;
   cancelEdit();
@@ -4197,7 +4192,7 @@ function renderConversations() {
       input.select();
       const saveEdit = () => {
         const newTitle = input.value.trim();
-        if (newTitle && newTitle !== c.title) {
+        if (newTitle && newTitle !== c.title && conversations[c.id]) {
           conversations[c.id].title = newTitle;
           conversations[c.id].upd = Date.now();
           saveConversations();
@@ -4231,6 +4226,11 @@ function renderConversations() {
 }
 
 function renderCurrentConversation() {
+  const activePreview = document.querySelector('.code-preview-container.active');
+  if (activePreview) {
+    const btnClose = activePreview.querySelector('.code-preview-close');
+    if (btnClose) btnClose.click();
+  }
   messagesInner.innerHTML = '';
   const conv = conversations[currentConvId];
   if (!conv || conv.messages.length === 0) { renderWelcome(); return; }
@@ -4300,7 +4300,10 @@ async function generateImage(prompt, ratio, size, signal) {
         throw new Error(`Erreur API Image: ${res.status} - ${errorText.substring(0, 100)}`);
     }
     const data = await res.json();
-    const imageData = data.data[0];
+    const imageData = Array.isArray(data?.data) ? data.data[0] : null;
+    if (!imageData) {
+      throw new Error("Aucune image retournée par l'API.");
+    }
     let imageUrl;
     if (imageData.b64_json) imageUrl = `data:image/png;base64,${imageData.b64_json}`;
     else if (imageData.url) imageUrl = imageData.url;
@@ -4444,6 +4447,7 @@ function addMessage(role, content, opts={}) {
     actions.className = 'message-actions';
     const editBtn = document.createElement('button');
     editBtn.className = 'action-btn edit-btn';
+    editBtn.dataset.action = 'edit';
     editBtn.title = 'Modifier et renvoyer';
     editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L14 13l-4 1 1-4 7.5-7.5z"></path></svg> Modifier';
     editBtn.onclick = () => startEditingMessage(opts.messageIndex, content);
@@ -4465,12 +4469,14 @@ function addMessageActions(body, isLast) {
   const bubble = body.querySelector('.bubble');
   const copyBtn = document.createElement('button');
   copyBtn.className = 'action-btn';
+  copyBtn.dataset.action = 'copy';
   copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ' + (translations[currentLang] || translations.fr).copy;
   copyBtn.onclick = () => navigator.clipboard.writeText(bubble.innerText).then(() => showToast('Copié !', 'success'));
   actions.appendChild(copyBtn);
   if (isLast) {
     const regenBtn = document.createElement('button');
     regenBtn.className = 'action-btn';
+    regenBtn.dataset.action = 'regen';
     regenBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg> ' + (translations[currentLang] || translations.fr).regen;
     regenBtn.onclick = regenerate;
     actions.appendChild(regenBtn);
@@ -4478,6 +4484,7 @@ function addMessageActions(body, isLast) {
     if (!isImageMsg) {
       const contBtn = document.createElement('button');
       contBtn.className = 'action-btn';
+      contBtn.dataset.action = 'continue';
       contBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg> ' + (translations[currentLang] || translations.fr).continueBtn;
       contBtn.onclick = () => continueGeneration(body, bubble);
       actions.appendChild(contBtn);
@@ -4867,6 +4874,80 @@ function renderErrorInBubble(container, err, ctx = {}) {
   });
 }
 
+function splitFileIntoChunks(content, maxChars = 15000) {
+  const chunks = [];
+  for (let i = 0; i < content.length; i += maxChars) {
+    chunks.push(content.slice(i, i + maxChars));
+  }
+  return chunks;
+}
+
+async function sendLongFileInChunks(fileName, ext, content, userInstruction, maxChars = 15000) {
+  const chunks = splitFileIntoChunks(content, maxChars);
+  const totalParts = chunks.length;
+  let lastResponse = '';
+
+  for (let idx = 0; idx < totalParts; idx++) {
+    const partNumber = idx + 1;
+    const isLast = partNumber === totalParts;
+
+    let promptText = '';
+    if (totalParts === 1) {
+      promptText = userInstruction
+        ? `${userInstruction}\n\n### Fichier joint : ${fileName} (${ext})\n\`\`\`${ext}\n${chunks[0]}\n\`\`\``
+        : `Voici le fichier joint \`${fileName}\` à analyser :\n\n### Fichier joint : ${fileName} (${ext})\n\`\`\`${ext}\n${chunks[0]}\n\`\`\``;
+    } else if (!isLast) {
+      promptText =
+        `Partie ${partNumber}/${totalParts} du fichier \`${fileName}\` (envoi automatique en plusieurs parties). ` +
+        `D'autres parties vont suivre : confirme brièvement la réception de cette partie et attends la suite sans conclure.\n\n` +
+        `### Fichier joint : ${fileName} (${ext}) — Partie ${partNumber}/${totalParts}\n` +
+        `\`\`\`${ext}\n${chunks[idx]}\n\`\`\``;
+    } else {
+      const requestPart = userInstruction ? `\n\nDemande : ${userInstruction}` : '';
+      promptText =
+        `Dernière partie (${partNumber}/${totalParts}) du fichier \`${fileName}\`. Le fichier est maintenant complet.${requestPart}\n\n` +
+        `### Fichier joint : ${fileName} (${ext}) — Partie ${partNumber}/${totalParts}\n` +
+        `\`\`\`${ext}\n${chunks[idx]}\n\`\`\``;
+    }
+
+    lastResponse = await sendSingleAutoMessage(promptText, {
+      displayContent: totalParts > 1
+        ? `📎 Envoi automatique de \`${fileName}\` — Partie ${partNumber}/${totalParts}${isLast && userInstruction ? `\n${userInstruction}` : ''}`
+        : (userInstruction || `📎 Fichier joint : \`${fileName}\``),
+      files: [{ name: fileName, size: content.length, type: 'text/plain' }],
+      isHidden: totalParts > 1 && !isLast
+    });
+  }
+
+  return lastResponse;
+}
+
+async function sendSingleAutoMessage(promptText, opts = {}) {
+  const conv = conversations[currentConvId];
+  if (!conv) return '';
+
+  conv.messages.push({
+    role: 'user',
+    content: promptText,
+    displayContent: opts.displayContent !== undefined ? opts.displayContent : promptText,
+    files: opts.files || [],
+    timestamp: Date.now(),
+    isHidden: !!opts.isHidden
+  });
+  conv.upd = Date.now();
+  await saveConversations();
+  renderCurrentConversation();
+
+  if (shouldGenerateImage(promptText) && apiKeys['agnes']) {
+    await runImageGeneration(promptText, imageRatio, imageSize);
+  } else {
+    await runCompletion();
+  }
+
+  const lastMsg = conv.messages[conv.messages.length - 1];
+  return (lastMsg && lastMsg.role === 'assistant') ? (lastMsg.content || '') : '';
+}
+
 async function sendMessage() {
   const rawText = messageInput.value.trim();
     if (isHydrating) { showToast('Chargement en cours… réessayez dans un instant.', 'warning'); return; }
@@ -4887,17 +4968,79 @@ async function sendMessage() {
 
   const fileMetadatas = currentAttachedFiles.map(f => ({ name: f.name, size: f.size, type: f.type }));
   let finalPromptContent = text;
-  const textFilesToRead = currentAttachedFiles.filter(f => isTextFile(f));
+const textFilesToRead = currentAttachedFiles.filter(f => isTextFile(f));
+  const maxChunkChars = 15000;
+  let hasLongTextFile = false;
+
   if (textFilesToRead.length > 0) {
     try {
       const fileContents = await Promise.all(textFilesToRead.map(f => readFileContent(f)));
-      const fileContext = fileContents.map((content, i) => {
-        const ext = textFilesToRead[i].name.split('.').pop();
-        return `\n\n### Fichier joint : ${textFilesToRead[i].name} (${ext})\n\`\`\`${ext}\n${content}\n\`\`\``;
-      }).join('');
-      if (finalPromptContent) finalPromptContent += fileContext;
-      else finalPromptContent = `Voici les fichiers joints à analyser :` + fileContext;
-    } catch (err) { console.error("Erreur de lecture fichier", err); }
+      hasLongTextFile = fileContents.some(c => c.length > maxChunkChars);
+
+      if (!hasLongTextFile) {
+        const fileContext = fileContents.map((content, i) => {
+          const ext = textFilesToRead[i].name.split('.').pop();
+          const fileName = textFilesToRead[i].name;
+          return `\n\n### Fichier joint : ${fileName} (${ext})\n\`\`\`${ext}\n${content}\n\`\`\``;
+        }).join('');
+
+        if (finalPromptContent) finalPromptContent += fileContext;
+        else finalPromptContent = `Voici les fichiers joints à analyser :` + fileContext;
+      } else {
+        const attachedImages = currentAttachedFiles.filter(f => f.type.startsWith('image/'));
+        let imagesForApi = [];
+        if (attachedImages.length > 0) {
+          imagesForApi = await Promise.all(attachedImages.map(async f => {
+            const dataUrl = await readFileAsDataURL(f);
+            const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : '';
+            return { name: f.name, mime: f.type || 'image/png', base64, dataUrl };
+          }));
+        }
+
+        if (imagesForApi.length > 0 || text) {
+          conv.messages.push({
+            role: 'user',
+            content: text || '🖼️ [Image jointe]',
+            displayContent: text || '🖼️ [Image jointe]',
+            files: fileMetadatas,
+            timestamp: Date.now(),
+            images: imagesForApi.length > 0 ? imagesForApi : undefined
+          });
+          conv.upd = Date.now();
+          if (conv.messages.length === 1) {
+            const titleSource = text || `Fichier: ${fileMetadatas[0]?.name}`;
+            conv.title = titleSource.slice(0, 50) + (titleSource.length > 50 ? '…' : '');
+          }
+          await saveConversations();
+          renderCurrentConversation();
+        }
+
+        messageInput.value = '';
+        delete drafts[currentConvId];
+        idbSaveDrafts(drafts).catch(() => {});
+        currentAttachedFiles = [];
+        renderFilePreviews();
+        autoResize();
+        updateTokenCounter();
+
+        for (let i = 0; i < textFilesToRead.length; i++) {
+          const f = textFilesToRead[i];
+          const ext = f.name.split('.').pop();
+          await sendLongFileInChunks(
+            f.name,
+            ext,
+            fileContents[i],
+            i === textFilesToRead.length - 1 ? text : '',
+            maxChunkChars
+          );
+        }
+
+        renderConversations();
+        return;
+      }
+    } catch (err) {
+      console.error("Erreur de lecture fichier", err);
+    }
   }
 
   const hasImage = currentAttachedFiles.some(f => f.type.startsWith('image/'));
@@ -5287,28 +5430,41 @@ async function continueGeneration(body, bubble) {
 
   abortController = new AbortController();
   try {
-    const result = await streamChat(conv.messages, {
-      onReasoning: (fullReasoning) => {
-        reasoningContent = fullReasoning;
-        if (!reasoningStartTime) reasoningStartTime = Date.now();
-        if (showReasoning) {
-          if (!reasoningBlock) {
-            reasoningBlock = createReasoningBlock();
-            if (existingReasoningBlock) existingReasoningBlock.insertAdjacentElement('afterend', reasoningBlock);
-            else bubble.insertBefore(reasoningBlock, contentEl);
-          }
-          updateReasoningBlock(reasoningBlock, fullReasoning);
-          updateReasoningStatus(reasoningBlock, reasoningStartTime);
+    let result;
+    if (providerSelect.value === 'puter') {
+      result = await streamChatWithPuter(conv.messages, {
+        onReasoning: () => {},
+        onDelta: (partial) => {
+          if (!reasoningEndTime && reasoningContent) reasoningEndTime = Date.now();
+          streamingText = originalContent + partial;
+          scheduleStreamRender(contentEl, streamingText);
+          scrollToBottom();
         }
-        scrollToBottom();
-      },
-      onDelta: (partial) => {
-        if (!reasoningEndTime && reasoningContent) reasoningEndTime = Date.now();
-        streamingText = originalContent + partial;
-        scheduleStreamRender(contentEl, streamingText);
-        scrollToBottom();
-      }
-    }, abortController.signal);
+      });
+    } else {
+      result = await streamChat(conv.messages, {
+        onReasoning: (fullReasoning) => {
+          reasoningContent = fullReasoning;
+          if (!reasoningStartTime) reasoningStartTime = Date.now();
+          if (showReasoning) {
+            if (!reasoningBlock) {
+              reasoningBlock = createReasoningBlock();
+              if (existingReasoningBlock) existingReasoningBlock.insertAdjacentElement('afterend', reasoningBlock);
+              else bubble.insertBefore(reasoningBlock, contentEl);
+            }
+            updateReasoningBlock(reasoningBlock, fullReasoning);
+            updateReasoningStatus(reasoningBlock, reasoningStartTime);
+          }
+          scrollToBottom();
+        },
+        onDelta: (partial) => {
+          if (!reasoningEndTime && reasoningContent) reasoningEndTime = Date.now();
+          streamingText = originalContent + partial;
+          scheduleStreamRender(contentEl, streamingText);
+          scrollToBottom();
+        }
+      }, abortController.signal);
+    }
 
     const full = result.content;
     const finalReasoning = result.reasoning || reasoningContent;
@@ -5648,7 +5804,8 @@ function openModelsSelectionModal(providerKey, models) {
   const listContainer = $('modelsSelectionList');
   const searchInput = $('modelSearchInput');
   
-  title.textContent = `Modèles disponibles (${PROVIDERS[providerKey].label})`;
+  const t = translations[currentLang] || translations.fr;
+  title.textContent = `${t.availableModelsFor} (${PROVIDERS[providerKey].label})`;
   searchInput.value = '';
   
   renderModelsList(models, searchInput.value);
@@ -5686,8 +5843,9 @@ function renderModelsList(models, filterText = '') {
 }
 
 function updateSelectedModelsCount() {
+  const t = translations[currentLang] || translations.fr;
   const checked = document.querySelectorAll('.model-checkbox:checked').length;
-  $('selectedModelsCount').textContent = `${checked} sélectionné(s)`;
+  $('selectedModelsCount').textContent = `${checked} ${t.selectedModelsSuffix}`;
 }
 
 // Gestion des boutons de la modale (à exécuter au chargement de la page)
@@ -5766,7 +5924,7 @@ function renderProviderKeys() {
     
     const status = apiKeys[k] 
       ? `<span class="provider-status set">${t.defined}</span>` 
-      : `<span class="provider-status">${t.undefined}</span>`;
+      : `<span class="provider-status">${t.notDefined}</span>`;
       
     const keyLink = p.apiKeyUrl
       ? ` <a href="${p.apiKeyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);text-decoration:none;margin-left:6px;">${t.getKey} ↗</a>`
@@ -5785,7 +5943,7 @@ function renderProviderKeys() {
       <div class="provider-key-content">
         <div class="form-row">
           <input type="password" data-provider="${k}" placeholder="Clé API ${p.label}" value="${apiKeys[k] ? '••••••••••••' : ''}">
-          <button class="btn btn-secondary" data-toggle="${k}" title="Afficher/Masquer" style="padding:8px 12px;">👁</button>
+          <button class="btn btn-secondary" data-toggle="${k}" title="${t.toggleKeyVisibility}" style="padding:8px 12px;">👁</button>
           <button class="btn btn-secondary test-btn" data-test="${k}">${t.testBtn}</button>
         </div>
 
@@ -5894,8 +6052,9 @@ function renderProviderKeys() {
       } finally {
         setTimeout(() => {
           if (btn.classList.contains('testing')) return;
+          const currentT = translations[currentLang] || translations.fr;
           btn.className = 'btn btn-secondary test-btn';
-          btn.innerHTML = 'Tester';
+          btn.innerHTML = currentT.testBtn;
           btn.disabled = false;
         }, 3000);
       }
@@ -6023,7 +6182,8 @@ function renderProviderKeys() {
       } catch (err) {
         showToast("❌ Impossible de récupérer les modèles : " + err.message, "error");
       } finally {
-        btn.innerHTML = '🔄 Récupérer les modèles disponibles';
+        const currentT = translations[currentLang] || translations.fr;
+        btn.innerHTML = currentT.fetchModels;
         btn.disabled = false;
       }
     };
@@ -6546,7 +6706,7 @@ const translations = {
     emptySearch: "Aucun résultat", emptyChat: "Aucune conversation", noImages: "Aucune image générée dans cette conversation.",
     tabApi: "Clés API", tabGen: "Génération", tabApp: "Apparence", tabChat: "Chat", tabData: "Données", tabShort: "Raccourcis", tabAbout: "À propos",
     apiDesc: "Vos clés sont stockées localement dans ce navigateur uniquement. Testez-les pour vérifier leur validité.",
-    defined: "Définie", undefined: "Non définie", getKey: "Obtenir une clé", testBtn: "Tester",
+    defined: "Définie", notDefined: "Non définie", getKey: "Obtenir une clé", testBtn: "Tester",
     customProviders: "Fournisseurs personnalisés", addBtn: "+ Ajouter", customDesc: "Ajoutez n'importe quelle API compatible OpenAI (endpoint + modèles + clé).", noCustom: "Aucun fournisseur personnalisé.",
     genSys: "Prompt système (personnalité / instructions)", genSysHint: "Ce prompt est ajouté au début de chaque conversation (invisible dans le chat).",
     genTemp: "Température (créativité)", genMax: "Tokens maximaux",
@@ -6598,6 +6758,8 @@ const translations = {
     tooltipRename: "Renommer",
     tooltipDelete: "Supprimer",
     tooltipAttach: "Joindre un fichier",
+    tooltipNewChatShortcut: "Nouvelle conversation (Ctrl+K)",
+    tooltipGallery: "Galerie d'images",
     tooltipImageMode: "Mode image — générer une image avec Agnes (ou tapez /image)",
     imgModeOn: "Mode image activé",
     imgModeOff: "Mode image désactivé",
@@ -6619,7 +6781,7 @@ const translations = {
       'gemini-3.5-flash': 'Le plus rapide de Google. Contexte gigantesque de 1 million de tokens. Parfait pour de longs documents.',
       'gemini-3.5-flash-lite': 'Version encore plus rapide et légère de Gemini.',
       'openrouter/free': 'Sélectionne automatiquement un modèle gratuit disponible sur OpenRouter.',
-      'nividia/nemotron-3.5-super-vl:free': 'Modèle NVIDIA gratuit orienté Vision-Langage (analyse d\'images).',
+      'nvidia/nemotron-3.5-super-vl:free': 'Modèle NVIDIA gratuit orienté Vision-Langage (analyse d\'images).',
       'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Petit modèle NVIDIA gratuit spécialisé dans le raisonnement.',
       'deepseek-v4-flash:free': 'Modèle DeepSeek ultra-rapide et gratuit via TokenHarbor.',
       'deepseek-v4.1-flash:free': 'Version améliorée de DeepSeek Flash, gratuit.',
@@ -6636,7 +6798,16 @@ const translations = {
       'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B actifs) instruction-tuned, efficace et rapide via Puter.',
       infoLabel: 'Info'
     },
+    selectModelsTitle: "Sélectionner les modèles",
+    selectAllModels: "Tout cocher",
+    unselectAllModels: "Tout décocher",
+    selectedModelsSuffix: "sélectionné(s)",
+    searchModelPlaceholder: "Rechercher un modèle...",
+    validateSelection: "Valider la sélection",
+    availableModelsFor: "Modèles disponibles",
+    toggleKeyVisibility: "Afficher/Masquer"
   },
+
   en: {
     newChat: "New chat", newChatTitle: "New chat", search: "Search...", settings: "Settings", appearance: "Appearance",
     placeholder: "Type your message...", welcomeTitle: "How can I help you?", 
@@ -6649,7 +6820,7 @@ const translations = {
     emptySearch: "No results", emptyChat: "No conversations", noImages: "No images generated in this conversation.",
     tabApi: "API Keys", tabGen: "Generation", tabApp: "Appearance", tabChat: "Chat", tabData: "Data", tabShort: "Shortcuts", tabAbout: "About",
     apiDesc: "Your keys are stored locally in this browser only. Test them to verify their validity.",
-    defined: "Defined", undefined: "Not defined", getKey: "Get key", testBtn: "Test",
+    defined: "Defined", notDefined: "Not defined", getKey: "Get key", testBtn: "Test",
     customProviders: "Custom providers", addBtn: "+ Add", customDesc: "Add any OpenAI-compatible API (endpoint + models + key).", noCustom: "No custom provider.",
     genSys: "System prompt (personality / instructions)", genSysHint: "This prompt is added at the beginning of each conversation (invisible in chat).",
     genTemp: "Temperature (creativity)", genMax: "Max tokens",
@@ -6701,6 +6872,8 @@ const translations = {
     tooltipRename: "Rename",
     tooltipDelete: "Delete",
     tooltipAttach: "Attach a file",
+    tooltipNewChatShortcut: "New chat (Ctrl+K)",
+    tooltipGallery: "Image gallery",
     tooltipImageMode: "Image mode — generate an image with Agnes (or type /image)",
     imgModeOn: "Image mode enabled",
     imgModeOff: "Image mode disabled",
@@ -6722,7 +6895,7 @@ const translations = {
       'gemini-3.5-flash': 'Google\'s fastest. Huge 1M token context. Perfect for long documents.',
       'gemini-3.5-flash-lite': 'Even faster and lighter version of Gemini.',
       'openrouter/free': 'Automatically selects an available free model on OpenRouter.',
-      'nividia/nemotron-3.5-super-vl:free': 'Free NVIDIA model focused on Vision-Language (image analysis).',
+      'nvidia/nemotron-3.5-super-vl:free': 'Free NVIDIA model focused on Vision-Language (image analysis).',
       'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Small free NVIDIA model specialized in reasoning.',
       'deepseek-v4-flash:free': 'Ultra-fast and free DeepSeek model via TokenHarbor.',
       'deepseek-v4.1-flash:free': 'Improved version of DeepSeek Flash, free.',
@@ -6739,7 +6912,16 @@ const translations = {
       'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B active) instruction-tuned, efficient and fast via Puter.',
       infoLabel: 'Info'
     },
+    selectModelsTitle: "Select models",
+    selectAllModels: "Select all",
+    unselectAllModels: "Unselect all",
+    selectedModelsSuffix: "selected",
+    searchModelPlaceholder: "Search a model...",
+    validateSelection: "Validate selection",
+    availableModelsFor: "Available models",
+    toggleKeyVisibility: "Show/Hide"
   },
+
   it: {
     newChat: "Nuova chat", newChatTitle: "Nuova chat", search: "Cerca...", settings: "Impostazioni", appearance: "Aspetto",
     placeholder: "Scrivi il tuo messaggio...", welcomeTitle: "Come posso aiutarti?", 
@@ -6752,7 +6934,7 @@ const translations = {
     emptySearch: "Nessun risultato", emptyChat: "Nessuna conversazione", noImages: "Nessuna immagine generata in questa conversazione.",
     tabApi: "Chiavi API", tabGen: "Generazione", tabApp: "Aspetto", tabChat: "Chat", tabData: "Dati", tabShort: "Scorciatoie", tabAbout: "Informazioni",
     apiDesc: "Le tue chiavi sono memorizzate localmente in questo browser. Testale per verificarne la validità.",
-    defined: "Definito", undefined: "Non definito", getKey: "Ottieni chiave", testBtn: "Test",
+    defined: "Definito", notDefined: "Non definito", getKey: "Ottieni chiave", testBtn: "Test",
     customProviders: "Provider personalizzati", addBtn: "+ Aggiungi", customDesc: "Aggiungi qualsiasi API compatibile con OpenAI.", noCustom: "Nessun provider personalizzato.",
     genSys: "Prompt di sistema (personalità / istruzioni)", genSysHint: "Questo prompt viene aggiunto all'inizio di ogni conversazione.",
     genTemp: "Temperatura (creatività)", genMax: "Token massimi",
@@ -6804,6 +6986,8 @@ const translations = {
     tooltipRename: "Rinomina",
     tooltipDelete: "Elimina",
     tooltipAttach: "Allega un file",
+    tooltipNewChatShortcut: "Nuova chat (Ctrl+K)",
+    tooltipGallery: "Galleria immagini",
     tooltipImageMode: "Modalità immagine — genera un'immagine con Agnes (o digita /image)",
     imgModeOn: "Modalità immagine attivata",
     imgModeOff: "Modalità immagine disattivata",
@@ -6825,7 +7009,7 @@ const translations = {
       'gemini-3.5-flash': 'Il più veloce di Google. Contesto gigantesco di 1 milione di token. Perfetto per documenti lunghi.',
       'gemini-3.5-flash-lite': 'Versione ancora più veloce e leggera di Gemini.',
       'openrouter/free': 'Seleziona automaticamente un modello gratuito disponibile su OpenRouter.',
-      'nividia/nemotron-3.5-super-vl:free': 'Modello NVIDIA gratuito orientato a Visione-Linguaggio (analisi immagini).',
+      'nvidia/nemotron-3.5-super-vl:free': 'Modello NVIDIA gratuito orientato a Visione-Linguaggio (analisi immagini).',
       'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Piccolo modello NVIDIA gratuito specializzato nel ragionamento.',
       'deepseek-v4-flash:free': 'Modello DeepSeek ultra-veloce e gratuito tramite TokenHarbor.',
       'deepseek-v4.1-flash:free': 'Versione migliorata di DeepSeek Flash, gratuita.',
@@ -6842,7 +7026,16 @@ const translations = {
       'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B attivi) instruction-tuned, efficiente e veloce tramite Puter.',
       infoLabel: 'Info'
     },
+    selectModelsTitle: "Seleziona modelli",
+    selectAllModels: "Seleziona tutto",
+    unselectAllModels: "Deseleziona tutto",
+    selectedModelsSuffix: "selezionato/i",
+    searchModelPlaceholder: "Cerca un modello...",
+    validateSelection: "Conferma selezione",
+    availableModelsFor: "Modelli disponibili",
+    toggleKeyVisibility: "Mostra/Nascondi"
   },
+
   tr: {
     newChat: "Yeni sohbet", newChatTitle: "Yeni sohbet", search: "Ara...", settings: "Ayarlar", appearance: "Görünüm",
     placeholder: "Mesajınızı yazın...", welcomeTitle: "Size nasıl yardımcı olabilirim?", 
@@ -6855,7 +7048,7 @@ const translations = {
     emptySearch: "Sonuç yok", emptyChat: "Sohbet yok", noImages: "Bu sohbette oluşturulmuş resim yok.",
     tabApi: "API Anahtarları", tabGen: "Oluşturma", tabApp: "Görünüm", tabChat: "Sohbet", tabData: "Veriler", tabShort: "Kısayollar", tabAbout: "Hakkında",
     apiDesc: "Anahtarlarınız yalnızca bu tarayıcıda yerel olarak saklanır. Geçerliliğini test edin.",
-    defined: "Tanımlı", undefined: "Tanımlı değil", getKey: "Anahtar al", testBtn: "Test et",
+    defined: "Tanımlı", notDefined: "Tanımlı değil", getKey: "Anahtar al", testBtn: "Test et",
     customProviders: "Özel sağlayıcılar", addBtn: "+ Ekle", customDesc: "OpenAI uyumlu herhangi bir API ekleyin.", noCustom: "Özel sağlayıcı yok.",
     genSys: "Sistem istemi (kişilik / talimatlar)", genSysHint: "Bu istem her sohbetin başına eklenir.",
     genTemp: "Sıcaklık (yaratıcılık)", genMax: "Maksimum token",
@@ -6894,6 +7087,14 @@ const translations = {
     presetDeveloper: "Geliştirici",
     presetTeacher: "Eğitmen",
     presetCreative: "Yaratıcı",
+    selectModelsTitle: "Modelleri seçin",
+    selectAllModels: "Tümünü seç",
+    unselectAllModels: "Tümünü kaldır",
+    selectedModelsSuffix: "seçildi",
+    searchModelPlaceholder: "Model ara...",
+    validateSelection: "Seçimi onayla",
+    availableModelsFor: "Kullanılabilir modeller",
+    toggleKeyVisibility: "Göster/Gizle",
     dataExportDesc: "Tüm sohbetlerinizi JSON formatında indirir (yedekleme).",
     dataImportDesc: "Sohbetleri bir JSON dosyasından geri yükler.",
     compactModeHint: "Daha fazla mesaj göstermek için boşlukları azaltır",
@@ -6907,6 +7108,8 @@ const translations = {
     tooltipRename: "Yeniden adlandır",
     tooltipDelete: "Sil",
     tooltipAttach: "Dosya ekle",
+    tooltipNewChatShortcut: "Yeni sohbet (Ctrl+K)",
+    tooltipGallery: "Resim galerisi",
     tooltipImageMode: "Resim modu — Agnes ile resim oluştur (veya /image yazın)",
     imgModeOn: "Resim modu etkinleştirildi",
     imgModeOff: "Resim modu devre dışı bırakıldı",
@@ -6928,7 +7131,7 @@ const translations = {
       'gemini-3.5-flash': 'Google\'ın en hızlısı. 1 milyon token\'lık devasa bağlam. Uzun belgeler için mükemmel.',
       'gemini-3.5-flash-lite': 'Gemini\'nin daha da hızlı ve hafif sürümü.',
       'openrouter/free': 'OpenRouter\'da mevcut olan ücretsiz bir modeli otomatik olarak seçer.',
-      'nividia/nemotron-3.5-super-vl:free': 'Görsel-Dil (görsel analizi) odaklı ücretsiz NVIDIA modeli.',
+      'nvidia/nemotron-3.5-super-vl:free': 'Görsel-Dil (görsel analizi) odaklı ücretsiz NVIDIA modeli.',
       'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Akıl yürütme konusunda uzmanlaşmış küçük ücretsiz NVIDIA modeli.',
       'deepseek-v4-flash:free': 'TokenHarbor aracılığıyla ultra hızlı ve ücretsiz DeepSeek modeli.',
       'deepseek-v4.1-flash:free': 'DeepSeek Flash\'ın geliştirilmiş ücretsiz sürümü.',
@@ -6967,6 +7170,13 @@ function applyLanguage(lang) {
   document.querySelector('#settingsModal h2').textContent = t.settingsTitle;
   document.querySelector('#galleryModal h2').textContent = t.galleryTitle;
   document.querySelector('#lbDownloadBtn').textContent = '⬇ ' + t.downloadImg;
+  if ($('modelsSelectionTitle')) $('modelsSelectionTitle').textContent = t.selectModelsTitle;
+  if ($('selectAllModelsBtn')) $('selectAllModelsBtn').textContent = t.selectAllModels;
+  if ($('unselectAllModelsBtn')) $('unselectAllModelsBtn').textContent = t.unselectAllModels;
+  if ($('modelSearchInput')) $('modelSearchInput').placeholder = t.searchModelPlaceholder;
+  if ($('cancelModelsSelectionBtn')) $('cancelModelsSelectionBtn').textContent = t.cancel;
+  if ($('validateModelsSelectionBtn')) $('validateModelsSelectionBtn').textContent = t.validateSelection;
+  updateSelectedModelsCount();
 
   // --- BANNIÈRE MODE IMAGE ---
   const imgBanner = $('imageModeBanner');
@@ -6978,11 +7188,18 @@ function applyLanguage(lang) {
   }
 
   // --- BOUTONS D'ACTION DES MESSAGES ---
-  document.querySelectorAll('.action-btn').forEach(btn => {
-    if (btn.innerHTML.includes('Copier')) btn.innerHTML = btn.innerHTML.replace(/Copier/g, t.copy);
-    if (btn.innerHTML.includes('Régénérer')) btn.innerHTML = btn.innerHTML.replace(/Régénérer/g, t.regen);
-    if (btn.innerHTML.includes('Continuer')) btn.innerHTML = btn.innerHTML.replace(/Continuer/g, t.continueBtn);
-    if (btn.innerHTML.includes('Modifier')) btn.innerHTML = btn.innerHTML.replace(/Modifier/g, t.edit);
+  document.querySelectorAll('.action-btn[data-action]').forEach(btn => {
+    const labelMap = {
+      copy: t.copy,
+      regen: t.regen,
+      continue: t.continueBtn,
+      edit: t.edit
+    };
+    const nextLabel = labelMap[btn.dataset.action];
+    const svg = btn.querySelector('svg');
+    if (nextLabel && svg) {
+      btn.innerHTML = svg.outerHTML + ' ' + nextLabel;
+    }
   });
 
   // --- MODALE PARAMETRES (Onglets) ---
@@ -7107,11 +7324,10 @@ if (dataTab) {
     scList[6].textContent = t.scImage; scList[7].textContent = t.scClose;
   }
   const kbdList = document.querySelectorAll('.shortcut-list kbd');
-  if (kbdList.length >= 14) {
-    kbdList[8].textContent  = t.enter;
-    kbdList[9].textContent  = t.shiftEnter.split(' + ')[0];
-    kbdList[10].textContent = t.enter;
-    kbdList[13].textContent = t.escape;
+  if (kbdList.length >= 10) {
+    kbdList[6].textContent = t.enter;
+    kbdList[7].textContent = t.shiftEnter.split(' + ')[0];
+    kbdList[9].textContent = t.escape;
   }
 
   // --- ONGLET À PROPOS ---
@@ -7131,6 +7347,8 @@ if (dataTab) {
   // 👇 NOUVEAU : INFOBULLES (TOOLTIPS) 👇
   $('uploadBtn').title = t.tooltipAttach;
   $('imageBtn').title = t.tooltipImageMode;
+  $('newChatBtn2').title = t.tooltipNewChatShortcut;
+  $('galleryBtn').title = t.tooltipGallery;
   // 👆 FIN NOUVEAU 👆
 
   // --- RAFRAÎCHISSEMENTS DYNAMIQUES ---
