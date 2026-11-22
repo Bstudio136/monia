@@ -1,6 +1,6 @@
 <div align="center">
-  <h3>🌍 Choose your language / Choisissez votre langue / Scegli la lingua / Dilinizi seçin</h3>
-  <a href="#english">🇬🇧 English</a> | <a href="#francais">🇫🇷 Français</a> | <a href="#italiano">🇮🇹 Italiano</a> | <a href="#turkce">🇹🇷 Türkçe</a>
+  <h3>🌍 Choose your language / Choisissez votre langue / Scegli la lingua / Dilinizi seçin / Elige tu idioma / Wählen Sie Ihre Sprache</h3>
+  <a href="#english">🇬🇧 English</a> | <a href="#francais">🇫🇷 Français</a> | <a href="#italiano">🇮🇹 Italiano</a> | <a href="#turkce">🇹🇷 Türkçe</a> | <a href="#espanol">🇪🇸 Español</a> | <a href="#deutsch">🇩🇪 Deutsch</a>
 </div>
 
 ---
@@ -30,7 +30,7 @@ A powerful, 100% client-side, multi-provider AI chat interface delivered as a **
 - **Advanced Markdown & Syntax Highlighting**: Beautiful code blocks with `highlight.js`, copy buttons, and line-wrap toggle. Supports tables, headings, blockquotes and more.
 - **Live HTML/CSS/JS Preview**: Execute generated code blocks in a fullscreen sandbox preview.
 - **Token & Context Tracking**: Real-time estimation of token usage with a visual context bar to prevent API errors.
-- **Multilingual Interface**: Available in French, English, Italian, and Turkish.
+- **Multilingual Interface**: Available in French, English, Italian, Turkish, Spanish and German.
 - **Fully Customizable UI**: Dark/Light/System themes, custom accent colors, adjustable font size, bubble width, and a compact mode.
 - **Export & Import**: Backup your entire chat history as a JSON file and restore it anytime.
 - **Mobile Responsive**: Carefully optimized for mobile devices with safe-area support, touch-friendly targets, and a sliding sidebar.
@@ -116,7 +116,7 @@ Une interface de chat IA puissante, 100% côté client, compatible avec de multi
 - **Markdown Avancé & Coloration Syntaxique** : Blocs de code optimisés avec `highlight.js`, boutons de copie et retour à la ligne. Prend en charge les tableaux, titres, citations, etc.
 - **Aperçu HTML/CSS/JS en Direct** : Exécutez les blocs de code générés dans un aperçu plein écran sécurisé (sandbox).
 - **Suivi des Tokens** : Estimation en temps réel de l'utilisation des tokens avec une barre de contexte visuelle pour éviter les erreurs API.
-- **Interface Multilingue** : Disponible en français, anglais, italien et turc.
+- **Interface Multilingue** : Disponible en français, anglais, italien, turc, espagnol et allemand.
 - **Interface Entièrement Personnalisable** : Thèmes Sombre/Clair/Système, couleurs d'accentuation personnalisées, taille du texte, largeur des bulles et mode compact.
 - **Export & Import** : Sauvegardez tout votre historique de chat dans un fichier JSON et restaurez-le à tout moment.
 - **100% Responsive** : Soigneusement optimisé pour les mobiles avec support des safe-areas, cibles tactiles adaptées et menu latéral coulissant.
@@ -202,7 +202,7 @@ Un'interfaccia di chat IA potente, 100% lato client, compatibile con più provid
 - **Markdown Avanzato ed Evidenziazione della Sintassi**: Blocchi di codice curati con `highlight.js`, pulsanti di copia e a capo automatico. Supporta tabelle, titoli, citazioni e altro.
 - **Anteprima HTML/CSS/JS in Diretta**: Esegui i blocchi di codice generati in un'anteprima a schermo intero in sandbox.
 - **Monitoraggio di Token e Contesto**: Stima in tempo reale dell'utilizzo dei token con una barra di contesto visiva per evitare errori API.
-- **Interfaccia Multilingue**: Disponibile in francese, inglese, italiano e turco.
+- **Interfaccia Multilingue**: Disponibile in francese, inglese, italiano, turco, spagnolo e tedesco.
 - **Interfaccia Completamente Personalizzabile**: Modalità Scura/Chiara/Sistema, colori d'accento personalizzati, dimensione del testo regolabile, larghezza dei messaggi e modalità compatta.
 - **Esporta e Importa**: Salva l'intera cronologia delle chat in un file JSON e ripristinala quando vuoi.
 - **Ottimizzato per Mobile**: Curato nei dettagli per i dispositivi mobili, con supporto per le safe-area, elementi touch-friendly e barra laterale scorrevole.
@@ -288,7 +288,7 @@ Güçlü, %100 istemci taraflı, çok sağlayıcılı bir yapay zeka sohbet aray
 - **Gelişmiş Markdown ve Sözdizimi Vurgulama**: `highlight.js` ile şık kod blokları, kopyalama düğmeleri ve satır kaydırma seçeneği. Tablolar, başlıklar, alıntılar ve daha fazlası desteklenir.
 - **Canlı HTML/CSS/JS Önizleme**: Oluşturulan kod bloklarını tam ekran sandbox önizlemede çalıştırın.
 - **Token ve Bağlam Takibi**: API hatalarını önlemek için görsel bağlam çubuğuyla gerçek zamanlı token kullanım tahmini.
-- **Çok Dilli Arayüz**: Fransızca, İngilizce, İtalyanca ve Türkçe olarak kullanılabilir.
+- **Çok Dilli Arayüz**: Fransızca, İngilizce, İtalyanca, Türkçe, İspanyolca ve Almanca olarak kullanılabilir.
 - **Tamamen Özelleştirilebilir Arayüz**: Koyu/Açık/Sistem teması, özel vurgu renkleri, ayarlanabilir yazı boyutu, mesaj balonu genişliği ve kompakt mod.
 - **Dışa ve İçe Aktarma**: Tüm sohbet geçmişinizi JSON dosyası olarak yedekleyin ve istediğiniz zaman geri yükleyin.
 - **Mobil Uyumlu**: Güvenli alan (safe-area) desteği, dokunmatik dostu öğeler ve kayan kenar çubuğu ile mobil cihazlar için özenle optimize edilmiştir.
@@ -344,5 +344,177 @@ Bu proje %100 statiktir: derleme adımı yok, npm yok, sunucu yok.
 ## 📄 Lisans
 
 Bu proje MIT Lisansı altındadır. İhtiyaçlarınıza göre özgürce kullanabilir ve değiştirebilirsiniz.
+
+<a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
+
+---
+
+<div id="espanol"></div>
+🇪🇸<br>
+
+# 🧠 DeepChat | Chat IA Multi-Proveedor
+
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Privacy](https://img.shields.io/badge/Privacidad_100%25_Local-22c55e?style=for-the-badge&logo=shield)
+
+Una potente interfaz de chat con IA, 100% del lado del cliente y compatible con múltiples proveedores, entregada como **un único archivo HTML**. Conéctate a Puter.js (modelos gratuitos), Hugging Face o cualquier API personalizada compatible con OpenAI desde una única y hermosa interfaz. Sin backend, sin recopilación de datos: tus claves API y conversaciones nunca abandonan tu navegador.
+
+## 🔗 Demo en vivo
+👉 **[Probar DeepChat aquí](https://bstudio136.github.io/monia/)**
+
+## ✨ Características
+
+- **Soporte Multi-Proveedor**: Compatibilidad nativa con Puter.js (acceso gratuito a GPT, Claude, Gemini, Llama, Mistral…), Hugging Face y cualquier endpoint personalizado compatible con OpenAI.
+- **Privacidad 100% Local**: Todas las conversaciones, imágenes y claves API se almacenan de forma segura en tu navegador (`localStorage` e `IndexedDB`). Ningún servidor involucrado.
+- **Streaming y Razonamiento**: Respuestas en tiempo real (SSE) con soporte para bloques plegables de "Pensamiento/Reasoning" (DeepSeek-R1, o1, Gemini…).
+- **Generación de Imágenes con IA (Agnes)**: Genera imágenes directamente en el chat mediante el comando `/image` o el modo dedicado, con opciones de proporción y tamaño, además de una galería y lightbox integrados.
+- **Adjuntos Enriquecidos**: Arrastra y suelta imágenes, textos o archivos de código en el chat. Los archivos de texto se leen en el contexto; las imágenes se envían a los modelos con capacidad de visión.
+- **Markdown Avanzado y Resaltado de Sintaxis**: Bloques de código elegantes con `highlight.js`, botones de copia y ajuste de línea. Admite tablas, encabezados, citas y más.
+- **Vista Previa HTML/CSS/JS en Vivo**: Ejecuta los bloques de código generados en una vista previa a pantalla completa en sandbox.
+- **Seguimiento de Tokens y Contexto**: Estimación en tiempo real del uso de tokens con una barra de contexto visual para evitar errores de API.
+- **Interfaz Multilingüe**: Disponible en francés, inglés, italiano, turco, español y alemán.
+- **Interfaz Totalmente Personalizable**: Temas Oscuro/Claro/Sistema, colores de acento personalizados, tamaño de fuente ajustable, ancho de burbujas y modo compacto.
+- **Exportar e Importar**: Haz una copia de seguridad de todo tu historial de chat en un archivo JSON y restáuralo en cualquier momento.
+- **100% Responsive**: Cuidadosamente optimizado para dispositivos móviles con soporte de safe-area, objetivos táctiles amigables y barra lateral deslizante.
+
+## 🛠️ Tecnologías Utilizadas
+
+- **HTML5 y CSS3**: Estructura semántica, Variables CSS, Flexbox, CSS Grid y animaciones fluidas.
+- **JavaScript (Vanilla)**: Sin frameworks. Manipulación directa del DOM y gestión del estado.
+- **IndexedDB**: Utilizado para almacenar localmente imágenes pesadas en base64 sin alcanzar el límite de `localStorage`.
+- **Bibliotecas (vía CDN)**:
+  - `marked.js` (Análisis de Markdown)
+  - `DOMPurify` (Protección XSS / Saneamiento de HTML)
+  - `highlight.js` (Resaltado de sintaxis del código)
+  - `Puter.js` (Acceso gratuito a varios modelos de IA)
+
+## 📁 Estructura del Proyecto
+
+```
+monia/
+└── MONIA.html   # La aplicación completa (HTML + CSS + JS en un solo archivo)
+```
+
+> ⚠️ `MONIA.html` es una **aplicación autónoma en un solo archivo**. Sin paso de compilación, sin assets separados: ábrela en un navegador y funciona.
+
+## 🚀 Instalación y Uso
+
+Este proyecto es 100% estático: sin paso de compilación, sin npm, sin backend.
+
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/Bstudio136/MONIA.git
+   ```
+2. Abre `MONIA.html` directamente en tu navegador.
+3. Ve a **Ajustes (⚙️)** -> **Claves API**.
+4. Introduce tus claves API para los proveedores que desees usar, o utiliza **Puter** para modelos gratuitos sin clave.
+5. ¡Empieza a chatear!
+
+## 🎨 Personalización y Configuración
+
+- **Proveedores Personalizados**: Puedes añadir cualquier API que imite el formato de OpenAI (Endpoint + Modelos + Clave API) directamente en los ajustes.
+- **Prompt del Sistema**: Define la personalidad de la IA con presets listos para usar (Conciso, Desarrollador, Profesor, Creativo).
+- **Seguridad de las Claves API**: Tus claves se almacenan localmente en `localStorage`. Solo se envían al endpoint del proveedor de IA correspondiente. **Nunca compartas los datos de tu navegador ni los archivos de exportación con nadie si contienen tus claves API.**
+
+## 👨‍💻 Autor
+
+**Bstudio136**
+
+- 🐙 GitHub : [@Bstudio136](https://github.com/Bstudio136)
+- 🎵 TikTok : [@bstudio136](https://tiktok.com/@bstudio136)
+- 🐦 Twitter / X : [@Bstudio136](https://x.com/Bstudio136)
+- 📺 YouTube : [@Bstudio136](https://www.youtube.com/@Bstudio136)
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Eres libre de usarlo y modificarlo para tus propias necesidades.
+
+<a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
+
+---
+
+<div id="deutsch"></div>
+🇩🇪<br>
+
+# 🧠 DeepChat | Multi-Provider-KI-Chat
+
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![Privacy](https://img.shields.io/badge/100%25_Lokaler_Datenschutz-22c55e?style=for-the-badge&logo=shield)
+
+Eine leistungsstarke, zu 100 % clientseitige Multi-Provider-KI-Chat-Oberfläche, geliefert als **einzelne HTML-Datei**. Verbinde dich mit Puter.js (kostenlose Modelle), Hugging Face oder einer beliebigen benutzerdefinierten, OpenAI-kompatiblen API über eine einzige, wunderschöne Oberfläche. Kein Backend, keine Datenerfassung — deine API-Schlüssel und Unterhaltungen verlassen niemals deinen Browser.
+
+## 🔗 Live-Demo
+👉 **[DeepChat hier testen](https://bstudio136.github.io/monia/)**
+
+## ✨ Funktionen
+
+- **Multi-Provider-Unterstützung**: Native Unterstützung für Puter.js (kostenloser Zugang zu GPT, Claude, Gemini, Llama, Mistral…), Hugging Face und jeden benutzerdefinierten, OpenAI-kompatiblen Endpunkt.
+- **100 % Lokaler Datenschutz**: Alle Unterhaltungen, Bilder und API-Schlüssel werden sicher in deinem Browser gespeichert (`localStorage` und `IndexedDB`). Kein Server beteiligt.
+- **Streaming & Reasoning**: Echtzeit-Streaming-Antworten (SSE) mit Unterstützung für einklappbare „Thinking/Reasoning"-Blöcke (DeepSeek-R1, o1, Gemini…).
+- **KI-Bildgenerierung (Agnes)**: Erzeuge Bilder direkt im Chat über den Befehl `/image` oder den dedizierten Modus, mit Seitenverhältnis- und Größenoptionen sowie einer integrierten Galerie und Lightbox.
+- **Umfangreiche Anhänge**: Ziehe Bilder, Texte oder Code-Dateien per Drag & Drop in den Chat. Textdateien werden in den Kontext eingelesen; Bilder werden an vision-fähige Modelle gesendet.
+- **Erweitertes Markdown & Syntaxhervorhebung**: Wunderschöne Code-Blöcke mit `highlight.js`, Kopierbuttons und Zeilenumbruch-Umschalter. Unterstützt Tabellen, Überschriften, Blockzitate und mehr.
+- **Live-HTML/CSS/JS-Vorschau**: Führe generierte Code-Blöcke in einer Vollbild-Sandbox-Vorschau aus.
+- **Token- & Kontext-Tracking**: Echtzeit-Schätzung des Token-Verbrauchs mit einer visuellen Kontextleiste, um API-Fehler zu vermeiden.
+- **Mehrsprachige Oberfläche**: Verfügbar in Französisch, Englisch, Italienisch, Türkisch, Spanisch und Deutsch.
+- **Vollständig anpassbare UI**: Dunkel/Hell/System-Themen, benutzerdefinierte Akzentfarben, anpassbare Schriftgröße, Blasenbreite und Kompaktmodus.
+- **Export & Import**: Sichere deinen gesamten Chat-Verlauf als JSON-Datei und stelle ihn jederzeit wieder her.
+- **Mobil-Responsiv**: Sorgfältig für Mobilgeräte optimiert mit Safe-Area-Unterstützung, touch-freundlichen Zielen und einer ausfahrbaren Seitenleiste.
+
+## 🛠️ Verwendeter Tech-Stack
+
+- **HTML5 & CSS3**: Semantische Struktur, CSS-Variablen, Flexbox, CSS Grid und flüssige Animationen.
+- **JavaScript (Vanilla)**: Keine Frameworks. Direkte DOM-Manipulation und State-Management.
+- **IndexedDB**: Wird verwendet, um schwere Base64-Bilder lokal zu speichern, ohne das `localStorage`-Kontingent zu überschreiten.
+- **Bibliotheken (via CDN)**:
+  - `marked.js` (Markdown-Parsing)
+  - `DOMPurify` (XSS-Schutz / HTML-Bereinigung)
+  - `highlight.js` (Code-Syntaxhervorhebung)
+  - `Puter.js` (Kostenloser Zugang zu mehreren KI-Modellen)
+
+## 📁 Projektstruktur
+
+```
+monia/
+└── MONIA.html   # Die gesamte Anwendung (HTML + CSS + JS in einer Datei)
+```
+
+> ⚠️ `MONIA.html` ist eine **eigenständige Single-File-App**. Kein Build-Schritt, keine separaten Assets — einfach im Browser öffnen und es funktioniert.
+
+## 🚀 Installation & Nutzung
+
+Dieses Projekt ist zu 100 % statisch: kein Build-Schritt, kein npm, kein Backend.
+
+1. Repository klonen:
+   ```bash
+   git clone https://github.com/Bstudio136/MONIA.git
+   ```
+2. Öffne `MONIA.html` direkt in deinem Browser.
+3. Gehe zu **Einstellungen (⚙️)** -> **API-Schlüssel**.
+4. Gib deine API-Schlüssel für die gewünschten Anbieter ein oder nutze **Puter** für kostenlose Modelle ohne Schlüssel.
+5. Fang an zu chatten!
+
+## 🎨 Anpassung & Konfiguration
+
+- **Benutzerdefinierte Anbieter**: Du kannst jede API hinzufügen, die das OpenAI-Format nachahmt (Endpunkt + Modelle + API-Schlüssel), direkt in den Einstellungen.
+- **System-Prompt**: Definiere die Persönlichkeit der KI mit vorgefertigten Presets (Prägnant, Entwickler, Lehrer, Kreativ).
+- **API-Schlüssel-Sicherheit**: Deine Schlüssel werden lokal im `localStorage` gespeichert. Sie werden nur an den Endpunkt des jeweiligen KI-Anbieters gesendet. **Teile niemals deine Browserdaten oder Exportdateien mit jemandem, wenn sie deine API-Schlüssel enthalten.**
+
+## 👨‍💻 Autor
+
+**Bstudio136**
+
+- 🐙 GitHub : [@Bstudio136](https://github.com/Bstudio136)
+- 🎵 TikTok : [@bstudio136](https://tiktok.com/@bstudio136)
+- 🐦 Twitter / X : [@Bstudio136](https://x.com/Bstudio136)
+- 📺 YouTube : [@Bstudio136](https://www.youtube.com/@Bstudio136)
+
+## 📄 Lizenz
+
+Dieses Projekt steht unter der MIT-Lizenz. Du bist frei, es für deine eigenen Bedürfnisse zu nutzen und zu verändern.
 
 <a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
