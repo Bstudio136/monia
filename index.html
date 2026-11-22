@@ -2307,8 +2307,10 @@ html, body {
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
       </svg>
       <select id="languageSelect" style="background: transparent; border: none; color: var(--text-secondary); outline: none; font-size: 13.5px; cursor: pointer; width: 100%; font-family: inherit;">
-        <option value="fr" style="color: black;">Français</option>
+        <option value="de" style="color: black;">Deutsch</option>
         <option value="en" style="color: black;">English</option>
+        <option value="es" style="color: black;">Español</option>
+        <option value="fr" style="color: black;">Français</option>
         <option value="it" style="color: black;">Italiano</option>
         <option value="tr" style="color: black;">Türkçe</option>
       </select>
@@ -4467,7 +4469,7 @@ function renderConversations() {
     const title = document.createElement('span');
     title.className = 'conv-item-title';
     // Traduit le titre si c'est le titre par défaut
-    const defaultTitles = ['Nouvelle conversation', 'New chat', 'Nuova chat', 'Yeni sohbet'];
+    const defaultTitles = ['Nouvelle conversation', 'New chat', 'Nuova chat', 'Nueva conversación', 'Neuer Chat', 'Yeni sohbet'];
     title.textContent = defaultTitles.includes(c.title) ? t.newChatTitle : c.title;
     title.title = "Double-cliquez pour renommer";
     const startEdit = () => {
@@ -4786,7 +4788,7 @@ function addMessage(role, content, opts={}) {
 // ==== TTS : fonctions ====
 function getTTSVoice(lang) {
   if (!ttsVoices.length) loadTTSVoices();
-  const langMap = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', tr: 'tr-TR' };
+  const langMap = { fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES', de: 'de-DE', tr: 'tr-TR' };
   const target = langMap[lang] || 'fr-FR';
   const base = target.split('-')[0];
   return ttsVoices.find(v => v.lang === target)
@@ -4822,7 +4824,7 @@ function toggleSpeak(text, btn) {
   stopTTS();
 
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = ({ fr: 'fr-FR', en: 'en-US', it: 'it-IT', tr: 'tr-TR' })[currentLang] || 'fr-FR';
+  utterance.lang = ({ fr: 'fr-FR', en: 'en-US', it: 'it-IT', es: 'es-ES', de: 'de-DE', tr: 'tr-TR' })[currentLang] || 'fr-FR';
   const voice = getTTSVoice(currentLang);
   if (voice) utterance.voice = voice;
   utterance.rate = 1.0;
@@ -7131,6 +7133,264 @@ window.addEventListener('beforeunload', () => {
 
 // ==== SYSTEME DE TRADUCTION (i18n) ====
 const translations = {
+  de: {
+  newChat: "Neuer Chat", newChatTitle: "Neuer Chat", search: "Suchen...", settings: "Einstellungen", appearance: "Erscheinungsbild",
+  placeholder: "Nachricht eingeben...", welcomeTitle: "Wie kann ich helfen?",
+  welcomeText: "Stelle eine Frage, frage nach Code, generiere Bilder... Probiere <b>\"Zeichne mir eine Katze\"</b> oder klicke auf 🎨.",
+  card1T: "🎨 Bild generieren", card1D: "Astronautenkatze (Agnes)",
+  card2T: "SOLID-Prinzipien", card2D: "Erklärungen mit JS-Beispielen",
+  card3T: "Algorithmus", card3D: "Längstes Palindrom in Python",
+  card4T: "Vergleich", card4D: "React vs Vue vs Svelte",
+  today: "Heute", yesterday: "Gestern", last7: "Letzte 7 Tage", older: "Älter",
+  emptySearch: "Keine Ergebnisse", emptyChat: "Keine Unterhaltungen", noImages: "In dieser Unterhaltung wurden keine Bilder generiert.",
+  tabApi: "API-Schlüssel", tabGen: "Generierung", tabApp: "Erscheinungsbild", tabChat: "Chat", tabData: "Daten", tabShort: "Tastenkürzel", tabAbout: "Über",
+  apiDesc: "Deine Schlüssel werden nur lokal in diesem Browser gespeichert. Teste sie, um ihre Gültigkeit zu prüfen.",
+  defined: "Definiert", notDefined: "Nicht definiert", getKey: "Schlüssel erhalten", testBtn: "Testen",
+  customProviders: "Benutzerdefinierte Anbieter", addBtn: "+ Hinzufügen", customDesc: "Füge jede OpenAI-kompatible API hinzu (Endpoint + Modelle + Schlüssel).", noCustom: "Kein benutzerdefinierter Anbieter.",
+  genSys: "System-Prompt (Persönlichkeit / Anweisungen)", genSysHint: "Dieser Prompt wird am Anfang jeder Unterhaltung hinzugefügt (im Chat unsichtbar).",
+  genTemp: "Temperatur (Kreativität)", genMax: "Maximale Tokens",
+  appTheme: "Thema", appDark: "Dunkel", appLight: "Hell", appSys: "System", appAccent: "Akzentfarbe", appCustomColor: "Benutzerdefinierte Farbe", appFont: "Textgröße", appBubble: "Blasenbreite", appCompact: "Kompaktmodus",
+  chatOpts: "Anzeigeoptionen", chatReason: "Begründung anzeigen", chatReasonHint: "Zeigt die interne Begründung kompatibler Modelle", chatTs: "Zeitstempel anzeigen", chatTsHint: "Sendezeit jeder Nachricht", chatScroll: "Automatisch nach unten scrollen", chatScrollHint: "Scrollt am Ende des Streams automatisch nach unten", chatSound: "Tonbenachrichtigung", chatSoundHint: "Ein kleiner Ton, wenn die Antwort beendet ist",
+  dataExport: "Unterhaltungen exportieren", dataExportBtn: "📥 Exportieren", dataImport: "Unterhaltungen importieren", dataImportBtn: "📤 Importieren", dataClear: "Alle Unterhaltungen löschen", dataClearBtn: "Alles löschen", dataKeys: "API-Schlüssel zurücksetzen", dataKeysBtn: "Schlüssel zurücksetzen", dataReset: "Einstellungen zurücksetzen", dataResetBtn: "Zurücksetzen",
+  copy: "Kopieren", regen: "Neu generieren", continueBtn: "Fortsetzen", edit: "Bearbeiten",
+  editBannerText: "✏️ Bearbeitung läuft — diese Nachricht und alle folgenden werden beim Senden ersetzt.",
+  modelSwitched: "Modell gewechselt zu",
+  speak: "Vorlesen", stopSpeak: "Stoppen", nothingToRead: "Nichts zum Vorlesen",
+  chatTts: "Audiowiedergabe (Sprachsynthese)", chatTtsHint: "Fügt eine Schaltfläche hinzu, um KI-Antworten anzuhören",
+  reasoning: "Begründung", reasoningInProgress: "läuft", reasoningFinished: "abgeschlossen",
+  loading: "Lädt...", loadError: "Ladefehler", loadImagesError: "Bilder konnten nicht geladen werden. Textnachrichten bleiben verfügbar.",
+  imgModeActive: "Bildmodus aktiv", imgModeDesc: "deine nächste Anfrage generiert ein Agnes-Bild", ratio: "Verhältnis", size: "Größe", cancel: "Abbrechen", describeImage: "🎨 Beschreibe das zu generierende Bild...",
+  customSettings: "Benutzerdefinierte Einstellungen", baseUrl: "Basis-URL", modelsLabel: "Modelle",
+  cpName: "Name", cpEndpoint: "Chat-Endpoint", cpTestUrl: "Test-URL", cpModels: "Modelle (durch Komma getrennt)",
+  scToggle: "Seitenleiste umschalten", scNew: "Neuer Chat", scSettings: "Einstellungen öffnen", scExport: "Unterhaltungen exportieren", scSend: "Nachricht senden", scNewLine: "Neue Zeile", scImage: "Bildmodus", scClose: "Dialoge schließen",
+  aboutCreator: "Ersteller", aboutLink: "Meine Projekte ansehen", confirmDelete: "Diese Unterhaltung löschen?",
+  aboutDesc: "DeepChat ist ein Multi-Provider-KI-Chat-Client, mit dem du mit verschiedenen KI-Modellen (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) über eine einzige Oberfläche chatten kannst. Er unterstützt Streaming, Reasoning, Bildgenerierung, Markdown-Rendering, Syntaxhervorhebung, Anhänge und vieles mehr. Alle Daten werden für maximale Privatsphäre lokal im Browser gespeichert.",
+  inputHfModel: "HF-Modell-ID",
+  settingsTitle: "Einstellungen",
+  galleryTitle: "Bildergalerie",
+  downloadImg: "Herunterladen",
+  enter: "Enter",
+  shiftEnter: "Shift + Enter",
+  escape: "Esc",
+  fetchModels: "🔄 Verfügbare Modelle abrufen",
+  addModel: "+ Modell hinzufügen",
+  deleteBtn: "Löschen",
+  showMore: "Mehr anzeigen",
+  showLess: "Weniger anzeigen",
+  promptNotFound: "Prompt nicht gefunden",
+  imgCount: "Bild(er)",
+  apiKeyMissingAgnes: "Agnes-API-Schlüssel fehlt. Konfiguriere ihn in den Einstellungen.",
+  sysPromptPlaceholder: "Leer lassen, um nichts zu senden...",
+  developedBy: "Entwickelt von",
+  presetDefault: "Standard",
+  presetConcise: "Prägnant",
+  presetDeveloper: "Entwickler",
+  presetTeacher: "Pädagoge",
+  presetCreative: "Kreativ",
+  dataExportDesc: "Lädt alle deine Unterhaltungen im JSON-Format herunter (Backup).",
+  dataImportDesc: "Stellt Unterhaltungen aus einer JSON-Datei wieder her.",
+  compactModeHint: "Reduziert den Abstand, um mehr Nachrichten anzuzeigen",
+  dataClearDesc: "Löscht dauerhaft alle deine Unterhaltungen.",
+  dataKeysDesc: "Löscht alle gespeicherten API-Schlüssel.",
+  dataResetDesc: "Stellt die Standardeinstellungen wieder her.",
+  storageOptions: "Speicheroptionen",
+  idbLabel: "Erweiterter Speicher (IndexedDB)",
+  idbHint: "Ermöglicht das Speichern mehrerer GB an Unterhaltungen und Bildern (empfohlen)",
+  activateLabel: "Aktivieren",
+  tooltipRename: "Umbenennen",
+  tooltipDelete: "Löschen",
+  tooltipAttach: "Datei anhängen",
+  tooltipOpenSidebar: "Seitenleiste öffnen",
+  tooltipNewChatShortcut: "Neuer Chat (Strg+K)",
+  tooltipGallery: "Bildergalerie",
+  codeOpenCanvas: "Im Canvas öffnen",
+  codeDownload: "Herunterladen",
+  codeWrap: "Zeilen umbrechen",
+  codePreview: "Vorschau",
+  codePreviewTitle: "Vollbildvorschau ansehen",
+  codeClosePreview: "Vorschau schließen",
+  codeCopy: "Kopieren",
+  codeCopied: "Kopiert",
+  tooltipImageMode: "Bildmodus — generiere ein Bild mit Agnes (oder tippe /image)",
+  imgModeOn: "Bildmodus aktiviert",
+  imgModeOff: "Bildmodus deaktiviert",
+  modelDesc: {
+    'agnes-3.0-flash': 'Agnes\' Flaggschiff-Modell: schnell, vielseitig, 512k-Token-Kontext.',
+    'agnes-2.5-flash': 'Leichtere Version für schnelle und alltägliche Aufgaben.',
+    'agnes-image-2.5-flash': 'Spezialisiert auf Text-zu-Bild-Generierung.',
+    'agnes-video-2.5-flash': 'Spezialisiert auf Videogenerierung.',
+    'openai/gpt-oss-120b': 'Massives Open-Source-Modell mit 120B. Ausgezeichnet für Code und komplexes Reasoning.',
+    'openai/gpt-oss-20b': 'Leichtere und ultraschnelle Version des GPT-OSS-Modells.',
+    'openai/gpt-oss-safeguard-20b': 'GPT-OSS 20B-Modell spezialisiert auf Sicherheit und Moderation (Safeguard).',
+    'qwen/qwen3.8-27b': 'Qwen 3.8B-Modell. Sehr effektiv für Code und Mathematik.',
+    'llama-3.3-70b-versatile': 'Das berühmte Llama 3.3 70B. Vielseitig, intelligent und sehr schnell auf Groq.',
+    'llama-3.1-8b-instant': 'Llama 3.1 8B-Modell. Ultraschnell, ideal für einfache Gespräche.',
+    'codestral-latest': 'Mistrals auf Code spezialisiertes Modell. Ideal für Entwickler.',
+    'mistral-medium-latest': 'Gute Balance zwischen Leistung, Geschwindigkeit und Kosten.',
+    'mistral-small-latest': 'Leichtes und schnelles Modell für einfache Aufgaben.',
+    'magistral-medium-latest': 'Reasoning-orientiertes Modell (Chain of Thought) von Mistral.',
+    'gemini-3.5-flash': 'Googles schnellstes. Riesiger 1-Million-Token-Kontext. Perfekt für lange Dokumente.',
+    'gemini-3.5-flash-lite': 'Noch schnellere und leichtere Version von Gemini.',
+    'openrouter/free': 'Wählt automatisch ein verfügbares kostenloses Modell auf OpenRouter aus.',
+    'nvidia/nemotron-3.5-super-vl:free': 'Kostenloses NVIDIA-Modell für Vision-Language (Bildanalyse).',
+    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Kleines kostenloses NVIDIA-Modell spezialisiert auf Reasoning.',
+    'deepseek-v4-flash:free': 'Ultraschnelles und kostenloses DeepSeek-Modell über TokenHarbor.',
+    'deepseek-v4.1-flash:free': 'Verbesserte Version von DeepSeek Flash, kostenlos.',
+    'mimo-v2.5:free': 'Leichtes und kostenloses Modell über TokenHarbor.',
+    'mimo-v2.6-flash:free': 'Schnelle und kostenlose Version des Mimo-Modells über TokenHarbor.',
+    'deepseek/deepseek-v4-pro': 'DeepSeek-Modell, kostenlos und ohne Schlüssel über Puter.js verfügbar.',
+    'openai/gpt-5.5': 'OpenAI-Modell, kostenlos und ohne Schlüssel über Puter.js verfügbar.',
+    'baidu/ernie-5.5-flash-preview:free': 'Baidu ERNIE 5.5 Flash (Preview), kostenlos über Puter. Schnell und vielseitig.',
+    'recursive/flint-v1.0:free': 'Recursive Flint v1.0, kostenlos und ohne Schlüssel über Puter verfügbar.',
+    'fireworks/ember-1': 'Fireworks Ember 1, optimiert für schnelle Generierung über Puter.',
+    'prism-ml/ternary-bonsai-27b': 'Prism ML Ternary Bonsai 27B, Reasoning-orientiert, über Puter verfügbar.',
+    'cohere/north-mini-code:free': 'Cohere North Mini Code, auf Code spezialisiert, kostenlos über Puter.',
+    'google/gemma-4-31b-it': 'Google Gemma 4 31B (instruction-tuned), vielseitiges Open-Weight-Modell über Puter.',
+    'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B aktiv) instruction-tuned, effizient und schnell über Puter.',
+    infoLabel: 'Info'
+  },
+  selectModelsTitle: "Modelle auswählen",
+  selectAllModels: "Alle auswählen",
+  unselectAllModels: "Alle abwählen",
+  selectedModelsSuffix: "ausgewählt",
+  searchModelPlaceholder: "Modell suchen...",
+  validateSelection: "Auswahl bestätigen",
+  availableModelsFor: "Verfügbare Modelle",
+  selectAtLeastOneModel: "Bitte mindestens ein Modell auswählen.",
+  toggleKeyVisibility: "Anzeigen/Verbergen",
+  provFreeNoKey: " (Kostenlos, ohne Schlüssel)",
+  provNoKey: " (ohne Schlüssel)"
+},
+
+es: {
+  newChat: "Nueva conversación", newChatTitle: "Nueva conversación", search: "Buscar...", settings: "Ajustes", appearance: "Apariencia",
+  placeholder: "Escribe tu mensaje...", welcomeTitle: "¿Cómo puedo ayudarte?",
+  welcomeText: "Haz una pregunta, pide código, genera imágenes... Prueba <b>\"Dibújame un gato\"</b> o haz clic en el botón 🎨.",
+  card1T: "🎨 Generar una imagen", card1D: "Gato astronauta (Agnes)",
+  card2T: "Principios SOLID", card2D: "Explicaciones con ejemplos JS",
+  card3T: "Algoritmo", card3D: "Palíndromo más largo en Python",
+  card4T: "Comparación", card4D: "React vs Vue vs Svelte",
+  today: "Hoy", yesterday: "Ayer", last7: "Últimos 7 días", older: "Más antiguo",
+  emptySearch: "Sin resultados", emptyChat: "Sin conversaciones", noImages: "No hay imágenes generadas en esta conversación.",
+  tabApi: "Claves API", tabGen: "Generación", tabApp: "Apariencia", tabChat: "Chat", tabData: "Datos", tabShort: "Atajos", tabAbout: "Acerca de",
+  apiDesc: "Tus claves se guardan localmente en este navegador. Pruébalas para verificar su validez.",
+  defined: "Definida", notDefined: "No definida", getKey: "Obtener clave", testBtn: "Probar",
+  customProviders: "Proveedores personalizados", addBtn: "+ Añadir", customDesc: "Añade cualquier API compatible con OpenAI (endpoint + modelos + clave).", noCustom: "Sin proveedor personalizado.",
+  genSys: "Prompt del sistema (personalidad / instrucciones)", genSysHint: "Este prompt se añade al inicio de cada conversación (invisible en el chat).",
+  genTemp: "Temperatura (creatividad)", genMax: "Tokens máximos",
+  appTheme: "Tema", appDark: "Oscuro", appLight: "Claro", appSys: "Sistema", appAccent: "Color de acento", appCustomColor: "Color personalizado", appFont: "Tamaño del texto", appBubble: "Ancho de burbujas", appCompact: "Modo compacto",
+  chatOpts: "Opciones de visualización", chatReason: "Mostrar razonamiento", chatReasonHint: "Muestra el razonamiento interno de los modelos compatibles", chatTs: "Mostrar marca de tiempo", chatTsHint: "Hora de envío de cada mensaje", chatScroll: "Desplazamiento automático", chatScrollHint: "Desplaza automáticamente al final del stream", chatSound: "Notificación sonora", chatSoundHint: "Un pequeño sonido al terminar la respuesta",
+  dataExport: "Exportar conversaciones", dataExportBtn: "📥 Exportar", dataImport: "Importar conversaciones", dataImportBtn: "📤 Importar", dataClear: "Borrar todas las conversaciones", dataClearBtn: "Borrar todo", dataKeys: "Restablecer claves API", dataKeysBtn: "Restablecer claves", dataReset: "Restablecer ajustes", dataResetBtn: "Restablecer",
+  copy: "Copiar", regen: "Regenerar", continueBtn: "Continuar", edit: "Editar",
+  editBannerText: "✏️ Edición en curso — este mensaje y todos los siguientes serán reemplazados al enviar.",
+  modelSwitched: "Modelo cambiado a",
+  speak: "Leer", stopSpeak: "Detener", nothingToRead: "Nada que leer",
+  chatTts: "Reproducción de audio (síntesis de voz)", chatTtsHint: "Añade un botón para escuchar las respuestas de la IA",
+  reasoning: "Razonamiento", reasoningInProgress: "en curso", reasoningFinished: "finalizado",
+  loading: "Cargando...", loadError: "Error de carga", loadImagesError: "No se pudieron cargar las imágenes. Los mensajes de texto siguen disponibles.",
+  imgModeActive: "Modo imagen activo", imgModeDesc: "tu próxima solicitud generará una imagen Agnes", ratio: "Proporción", size: "Tamaño", cancel: "Cancelar", describeImage: "🎨 Describe la imagen a generar...",
+  customSettings: "Ajustes personalizados", baseUrl: "URL base", modelsLabel: "Modelos",
+  cpName: "Nombre", cpEndpoint: "Endpoint de chat", cpTestUrl: "URL de prueba", cpModels: "Modelos (separados por coma)",
+  scToggle: "Alternar barra lateral", scNew: "Nueva conversación", scSettings: "Abrir ajustes", scExport: "Exportar conversaciones", scSend: "Enviar mensaje", scNewLine: "Nueva línea", scImage: "Modo imagen", scClose: "Cerrar modales",
+  aboutCreator: "Creador", aboutLink: "Ver mis proyectos", confirmDelete: "¿Eliminar esta conversación?",
+  aboutDesc: "DeepChat es un cliente de chat multi-proveedor que te permite conversar con diferentes modelos de IA (OpenAI, Groq, Mistral, Gemini, Hugging Face, Agnes) desde una única interfaz. Soporta streaming, razonamiento, generación de imágenes, renderizado Markdown, resaltado de sintaxis, adjuntos y mucho más. Todos los datos se guardan localmente en tu navegador para máxima privacidad.",
+  inputHfModel: "ID modelo HF",
+  settingsTitle: "Ajustes",
+  galleryTitle: "Galería de imágenes",
+  downloadImg: "Descargar",
+  enter: "Enter",
+  shiftEnter: "Shift + Enter",
+  escape: "Esc",
+  fetchModels: "🔄 Obtener modelos disponibles",
+  addModel: "+ Añadir un modelo",
+  deleteBtn: "Eliminar",
+  showMore: "Ver más",
+  showLess: "Ver menos",
+  promptNotFound: "Prompt no encontrado",
+  imgCount: "imagen(es)",
+  apiKeyMissingAgnes: "Falta la clave API de Agnes. Configúrala en los ajustes.",
+  sysPromptPlaceholder: "Deja vacío para no enviar nada...",
+  developedBy: "Desarrollado por",
+  presetDefault: "Predeterminado",
+  presetConcise: "Conciso",
+  presetDeveloper: "Desarrollador",
+  presetTeacher: "Pedagogo",
+  presetCreative: "Creativo",
+  dataExportDesc: "Descarga todas tus conversaciones en formato JSON (copia de seguridad).",
+  dataImportDesc: "Restaura conversaciones desde un archivo JSON.",
+  compactModeHint: "Reduce los espacios para mostrar más mensajes",
+  dataClearDesc: "Elimina permanentemente todas tus conversaciones.",
+  dataKeysDesc: "Elimina todas las claves API guardadas.",
+  dataResetDesc: "Restaura los ajustes predeterminados.",
+  storageOptions: "Opciones de almacenamiento",
+  idbLabel: "Almacenamiento extendido (IndexedDB)",
+  idbHint: "Permite almacenar varios GB de conversaciones e imágenes (recomendado)",
+  activateLabel: "Activar",
+  tooltipRename: "Renombrar",
+  tooltipDelete: "Eliminar",
+  tooltipAttach: "Adjuntar un archivo",
+  tooltipOpenSidebar: "Abrir barra lateral",
+  tooltipNewChatShortcut: "Nueva conversación (Ctrl+K)",
+  tooltipGallery: "Galería de imágenes",
+  codeOpenCanvas: "Abrir en el canvas",
+  codeDownload: "Descargar",
+  codeWrap: "Ajustar líneas",
+  codePreview: "Vista previa",
+  codePreviewTitle: "Ver vista previa a pantalla completa",
+  codeClosePreview: "Cerrar vista previa",
+  codeCopy: "Copiar",
+  codeCopied: "Copiado",
+  tooltipImageMode: "Modo imagen — generar una imagen con Agnes (o escribe /image)",
+  imgModeOn: "Modo imagen activado",
+  imgModeOff: "Modo imagen desactivado",
+  modelDesc: {
+    'agnes-3.0-flash': 'El modelo insignia de Agnes: rápido, versátil, contexto de 512k tokens.',
+    'agnes-2.5-flash': 'Versión ligera para tareas rápidas y comunes.',
+    'agnes-image-2.5-flash': 'Especializado en generación de imágenes a partir de texto.',
+    'agnes-video-2.5-flash': 'Especializado en generación de vídeos.',
+    'openai/gpt-oss-120b': 'Modelo open-source masivo de 120B. Excelente para código y razonamiento complejo.',
+    'openai/gpt-oss-20b': 'Versión más ligera y ultrarrápida del modelo GPT-OSS.',
+    'openai/gpt-oss-safeguard-20b': 'Modelo GPT-OSS 20B especializado en seguridad y moderación (safeguard).',
+    'qwen/qwen3.8-27b': 'Modelo Qwen 3.8B. Muy eficaz para código y matemáticas.',
+    'llama-3.3-70b-versatile': 'El famoso Llama 3.3 70B. Versátil, inteligente y muy rápido en Groq.',
+    'llama-3.1-8b-instant': 'Modelo Llama 3.1 8B. Ultrarrápido, ideal para conversaciones simples.',
+    'codestral-latest': 'Modelo de Mistral especializado en código. Ideal para desarrolladores.',
+    'mistral-medium-latest': 'Buen equilibrio entre potencia, velocidad y coste.',
+    'mistral-small-latest': 'Modelo ligero y rápido para tareas básicas.',
+    'magistral-medium-latest': 'Modelo orientado al razonamiento (Chain of Thought) de Mistral.',
+    'gemini-3.5-flash': 'El más rápido de Google. Contexto gigante de 1 millón de tokens. Perfecto para documentos largos.',
+    'gemini-3.5-flash-lite': 'Versión aún más rápida y ligera de Gemini.',
+    'openrouter/free': 'Selecciona automáticamente un modelo gratuito disponible en OpenRouter.',
+    'nvidia/nemotron-3.5-super-vl:free': 'Modelo NVIDIA gratuito orientado a Visión-Lenguaje (análisis de imágenes).',
+    'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free': 'Pequeño modelo NVIDIA gratuito especializado en razonamiento.',
+    'deepseek-v4-flash:free': 'Modelo DeepSeek ultrarrápido y gratuito vía TokenHarbor.',
+    'deepseek-v4.1-flash:free': 'Versión mejorada de DeepSeek Flash, gratuita.',
+    'mimo-v2.5:free': 'Modelo ligero y gratuito vía TokenHarbor.',
+    'mimo-v2.6-flash:free': 'Versión rápida y gratuita del modelo Mimo vía TokenHarbor.',
+    'deepseek/deepseek-v4-pro': 'Modelo DeepSeek disponible gratuitamente y sin clave vía Puter.js.',
+    'openai/gpt-5.5': 'Modelo OpenAI disponible gratuitamente y sin clave vía Puter.js.',
+    'baidu/ernie-5.5-flash-preview:free': 'Modelo Baidu ERNIE 5.5 Flash (preview) gratuito vía Puter. Rápido y versátil.',
+    'recursive/flint-v1.0:free': 'Modelo Recursive Flint v1.0, disponible gratuitamente y sin clave vía Puter.',
+    'fireworks/ember-1': 'Modelo Fireworks Ember 1, optimizado para generación rápida vía Puter.',
+    'prism-ml/ternary-bonsai-27b': 'Modelo Prism ML Ternary Bonsai 27B, orientado al razonamiento, vía Puter.',
+    'cohere/north-mini-code:free': 'Modelo Cohere North Mini Code, especializado en código, gratuito vía Puter.',
+    'google/gemma-4-31b-it': 'Google Gemma 4 31B (instruction-tuned), modelo open-weight versátil vía Puter.',
+    'google/gemma-4-26b-a4b-it': 'Google Gemma 4 26B MoE (4B activos) instruction-tuned, eficiente y rápido vía Puter.',
+    infoLabel: 'Info'
+  },
+  selectModelsTitle: "Seleccionar modelos",
+  selectAllModels: "Seleccionar todo",
+  unselectAllModels: "Deseleccionar todo",
+  selectedModelsSuffix: "seleccionado(s)",
+  searchModelPlaceholder: "Buscar un modelo...",
+  validateSelection: "Validar selección",
+  availableModelsFor: "Modelos disponibles",
+  selectAtLeastOneModel: "Selecciona al menos un modelo.",
+  toggleKeyVisibility: "Mostrar/Ocultar",
+  provFreeNoKey: " (Gratis, sin clave)",
+  provNoKey: " (sin clave)"
+},
+
   fr: {
     newChat: "Nouvelle conversation", newChatTitle: "Nouvelle conversation", search: "Rechercher…", settings: "Paramètres", appearance: "Apparence",
     placeholder: "Écrivez votre message…", welcomeTitle: "Comment puis-je vous aider ?", 
@@ -7652,7 +7912,10 @@ const translations = {
   }
 };
 
-let currentLang = localStorage.getItem('deepchat_lang') || 'fr';
+let currentLang = localStorage.getItem('deepchat_lang')
+  || (navigator.language || 'fr').slice(0, 2).toLowerCase();
+// Sécurité : si la langue détectée n'existe pas, on retombe sur le français
+if (!translations[currentLang]) currentLang = 'fr';
 
 function applyLanguage(lang) {
   const t = translations[lang] || translations.fr;
