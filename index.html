@@ -2387,9 +2387,10 @@ html, body {
     </div>
 
     <div class="edit-banner" id="editBanner" style="display:none;">
-      <span>✏️ Modification en cours — le message et tous les suivants seront remplacés à l'envoi.</span>
+      <span id="editBannerText">✏️ Modification en cours — le message et tous les suivants seront remplacés à l'envoi.</span>
       <button id="cancelEditBtn">Annuler</button>
     </div>
+
 
     <div class="image-mode-banner" id="imageModeBanner">
       <div class="mode-content">
@@ -3131,7 +3132,8 @@ gemini: {
   },
 
   puter: {
-    label: 'Puter (Gratuit, sans clé)',
+    label: 'Puter',
+    subtitleKey: 'provFreeNoKey',  
     endpoint: 'https://api.puter.com/v1/chat/completions',
     models: [
         'deepseek/deepseek-v4-pro',
@@ -3152,7 +3154,8 @@ gemini: {
   },
 
 ovh: {
-  label: 'OVHcloud (sans clé)',
+  label: 'OVHcloud',
+  subtitleKey: 'provNoKey',
   endpoint: 'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions',
   models: [
     'Qwen3.5-397B-A17B',
@@ -3983,10 +3986,13 @@ function finalizeReasoningBlock(block, durationMs, hasContent) {
 }
 
 function initProviderSelect() {
+  const t = translations[currentLang] || translations.fr;
   providerSelect.innerHTML = '';
   Object.entries(PROVIDERS).forEach(([k, p]) => {
     const opt = document.createElement('option');
-    opt.value = k; opt.textContent = p.label;
+    opt.value = k;
+    const subtitle = p.subtitleKey ? (t[p.subtitleKey] || '') : '';
+    opt.textContent = p.label + subtitle;
     providerSelect.appendChild(opt);
   });
   const savedProvider = localStorage.getItem('deepchat_provider');
@@ -4763,7 +4769,7 @@ function addMessage(role, content, opts={}) {
     editBtn.className = 'action-btn edit-btn';
     editBtn.dataset.action = 'edit';
     editBtn.title = 'Modifier et renvoyer';
-    editBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L14 13l-4 1 1-4 7.5-7.5z"></path></svg> Modifier';
+    editBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L14 13l-4 1 1-4 7.5-7.5z"></path></svg> ${(translations[currentLang] || translations.fr).edit}`;
     editBtn.onclick = () => startEditingMessage(opts.messageIndex, content);
     actions.appendChild(editBtn);
     body.appendChild(actions);
@@ -6376,11 +6382,12 @@ function renderProviderKeys() {
       ? ` <a href="${p.apiKeyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="font-size:11px;color:var(--accent);text-decoration:none;margin-left:6px;">${t.getKey} ↗</a>`
       : '';
 
+    const providerSubtitle = p.subtitleKey ? (t[p.subtitleKey] || '') : '';
     row.innerHTML = `
       <div class="provider-header" onclick="this.parentElement.classList.toggle('expanded')">
         <div class="provider-header-left">
           <div class="provider-label-group">
-            <strong>${p.label}</strong> 
+            <strong>${p.label}${providerSubtitle}</strong> 
             ${status}
           </div>
           ${keyLink}
@@ -7144,6 +7151,7 @@ const translations = {
     chatOpts: "Options d'affichage", chatReason: "Afficher les réflexions (reasoning)", chatReasonHint: "Montre le raisonnement interne des modèles compatibles", chatTs: "Afficher l'horodatage", chatTsHint: "Heure d'envoi de chaque message", chatScroll: "Retour automatique en bas", chatScrollHint: "Défile automatiquement à la fin du stream", chatSound: "Notification sonore", chatSoundHint: "Un petit son quand la réponse est terminée",
     dataExport: "Exporter les conversations", dataExportBtn: "📥 Exporter", dataImport: "Importer des conversations", dataImportBtn: "📤 Importer", dataClear: "Effacer toutes les conversations", dataClearBtn: "Tout effacer", dataKeys: "Réinitialiser les clés API", dataKeysBtn: "Réinitialiser les clés", dataReset: "Réinitialiser les paramètres", dataResetBtn: "Réinitialiser",
     copy: "Copier", regen: "Régénérer", continueBtn: "Continuer", edit: "Modifier",
+    editBannerText: "✏️ Modification en cours — le message et tous les suivants seront remplacés à l'envoi.",
     modelSwitched: "Changement de modèle",
     speak: "Lire", stopSpeak: "Arrêter", nothingToRead: "Rien à lire",
     chatTts: "Lecture audio (synthèse vocale)", chatTtsHint: "Ajoute un bouton pour écouter les réponses de l'IA",
@@ -7248,7 +7256,9 @@ const translations = {
     validateSelection: "Valider la sélection",
     availableModelsFor: "Modèles disponibles",
     selectAtLeastOneModel: "Veuillez sélectionner au moins un modèle.",
-    toggleKeyVisibility: "Afficher/Masquer"
+    toggleKeyVisibility: "Afficher/Masquer",
+    provFreeNoKey: " (Gratuit, sans clé)",
+    provNoKey: " (sans clé)"
   },
 
   en: {
@@ -7271,6 +7281,7 @@ const translations = {
     chatOpts: "Display options", chatReason: "Show reasoning", chatReasonHint: "Shows the internal reasoning of compatible models", chatTs: "Show timestamp", chatTsHint: "Time each message was sent", chatScroll: "Auto-scroll to bottom", chatScrollHint: "Automatically scrolls at the end of the stream", chatSound: "Sound notification", chatSoundHint: "A little sound when the response is finished",
     dataExport: "Export conversations", dataExportBtn: "📥 Export", dataImport: "Import conversations", dataImportBtn: "📤 Import", dataClear: "Clear all conversations", dataClearBtn: "Clear all", dataKeys: "Reset API keys", dataKeysBtn: "Reset keys", dataReset: "Reset settings", dataResetBtn: "Reset",
     copy: "Copy", regen: "Regenerate", continueBtn: "Continue", edit: "Edit",
+    editBannerText: "✏️ Editing in progress — this message and all following ones will be replaced on send.",
     modelSwitched: "Model switched to",
     speak: "Read", stopSpeak: "Stop", nothingToRead: "Nothing to read",
     chatTts: "Audio playback (text-to-speech)", chatTtsHint: "Adds a button to listen to AI responses",
@@ -7375,7 +7386,9 @@ const translations = {
     validateSelection: "Validate selection",
     availableModelsFor: "Available models",
     selectAtLeastOneModel: "Please select at least one model.",
-    toggleKeyVisibility: "Show/Hide"
+    toggleKeyVisibility: "Show/Hide",
+    provFreeNoKey: " (Free, no key)",
+    provNoKey: " (no key)"
   },
 
   it: {
@@ -7398,6 +7411,7 @@ const translations = {
     chatOpts: "Opzioni di visualizzazione", chatReason: "Mostra il ragionamento", chatReasonHint: "Mostra il ragionamento interno dei modelli compatibili", chatTs: "Mostra data e ora", chatTsHint: "Ora di invio di ogni messaggio", chatScroll: "Scorrimento automatico in basso", chatScrollHint: "Scorre automaticamente alla fine del flusso", chatSound: "Notifica sonora", chatSoundHint: "Un piccolo suono al termine della risposta",
     dataExport: "Esporta conversazioni", dataExportBtn: "📥 Esporta", dataImport: "Importa conversazioni", dataImportBtn: "📤 Importa", dataClear: "Cancella tutte le conversazioni", dataClearBtn: "Cancella tutto", dataKeys: "Ripristina chiavi API", dataKeysBtn: "Ripristina chiavi", dataReset: "Ripristina impostazioni", dataResetBtn: "Ripristina",
     copy: "Copia", regen: "Rigenera", continueBtn: "Continua", edit: "Modifica",
+    editBannerText: "✏️ Modifica in corso — questo messaggio e tutti i successivi saranno sostituiti all'invio.",
     modelSwitched: "Modello cambiato in",
     speak: "Leggi", stopSpeak: "Ferma", nothingToRead: "Niente da leggere",
     chatTts: "Riproduzione audio (sintesi vocale)", chatTtsHint: "Aggiunge un pulsante per ascoltare le risposte dell'IA",
@@ -7502,7 +7516,9 @@ const translations = {
     validateSelection: "Conferma selezione",
     availableModelsFor: "Modelli disponibili",
     selectAtLeastOneModel: "Seleziona almeno un modello.",
-    toggleKeyVisibility: "Mostra/Nascondi"
+    toggleKeyVisibility: "Mostra/Nascondi",
+    provFreeNoKey: " (Gratuito, senza chiave)",
+    provNoKey: " (senza chiave)"
   },
 
   tr: {
@@ -7525,6 +7541,7 @@ const translations = {
     chatOpts: "Görüntüleme seçenekleri", chatReason: "Akıl yürütmeyi göster", chatReasonHint: "Uyumlu modellerin iç akıl yürütmesini gösterir", chatTs: "Zaman damgasını göster", chatTsHint: "Her mesajın gönderilme saati", chatScroll: "Otomatik aşağı kaydır", chatScrollHint: "Akış sonunda otomatik olarak aşağı kaydırır", chatSound: "Ses bildirimi", chatSoundHint: "Yanıt bittiğinde küçük bir ses",
     dataExport: "Sohbetleri dışa aktar", dataExportBtn: "📥 Dışa aktar", dataImport: "Sohbetleri içe aktar", dataImportBtn: "📤 İçe aktar", dataClear: "Tüm sohbetleri temizle", dataClearBtn: "Tümünü temizle", dataKeys: "API anahtarlarını sıfırla", dataKeysBtn: "Anahtarları sıfırla", dataReset: "Ayarları sıfırla", dataResetBtn: "Sıfırla",
     copy: "Kopyala", regen: "Yeniden oluştur", continueBtn: "Devam et", edit: "Düzenle",
+    editBannerText: "✏️ Düzenleme sürüyor — bu mesaj ve sonraki tüm mesajlar gönderim sırasında değiştirilecek.",
     modelSwitched: "Model değiştirildi:",
     speak: "Oku", stopSpeak: "Durdur", nothingToRead: "Okunacak bir şey yok",
     chatTts: "Sesli okuma (konuşma sentezi)", chatTtsHint: "Yapay zeka yanıtlarını dinlemek için bir düğme ekler",
@@ -7568,6 +7585,8 @@ const translations = {
     availableModelsFor: "Kullanılabilir modeller",
     selectAtLeastOneModel: "Lütfen en az bir model seçin.",
     toggleKeyVisibility: "Göster/Gizle",
+    provFreeNoKey: " (Ücretsiz, anahtarsız)",
+    provNoKey: " (anahtarsız)",
     dataExportDesc: "Tüm sohbetlerinizi JSON formatında indirir (yedekleme).",
     dataImportDesc: "Sohbetleri bir JSON dosyasından geri yükler.",
     compactModeHint: "Daha fazla mesaj göstermek için boşlukları azaltır",
@@ -7646,6 +7665,11 @@ function applyLanguage(lang) {
   document.querySelector('#settingsBtn span').textContent = t.settings;
   document.querySelector('#themeBtn span').textContent = t.appearance;
   messageInput.placeholder = t.placeholder;
+
+  // --- BANNIÈRE D'ÉDITION ---
+  const editBannerEl = $('editBannerText');
+  if (editBannerEl) editBannerEl.textContent = t.editBannerText;
+  $('cancelEditBtn').textContent = t.cancel;
 
   // --- TOPBAR & MODALES (Nouveau) ---
   document.querySelector('.topbar-group input').placeholder = t.inputHfModel;
@@ -7846,6 +7870,15 @@ if (dataTab) {
   $('newChatBtn2').title = t.tooltipNewChatShortcut;
   $('galleryBtn').title = t.tooltipGallery;
   // 👆 FIN NOUVEAU 👆
+
+  // Mise à jour des labels de providers (Puter, OVHcloud...)
+  Object.entries(PROVIDERS).forEach(([k, p]) => {
+    const opt = providerSelect.querySelector(`option[value="${k}"]`);
+    if (opt) {
+      const subtitle = p.subtitleKey ? (t[p.subtitleKey] || '') : '';
+      opt.textContent = p.label + subtitle;
+    }
+  });
 
   // --- RAFRAÎCHISSEMENTS DYNAMIQUES ---
   renderConversations();
