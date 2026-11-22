@@ -2529,10 +2529,10 @@ html, body {
           <label class="form-label">Prompt système (personnalité / instructions)</label>
           <div class="preset-btns">
             <button class="preset-btn" data-prompt="">Défaut</button>
-            <button class="preset-btn" data-prompt="Tu es un assistant utile et concis. Réponds toujours en français.">Concise FR</button>
-            <button class="preset-btn" data-prompt="Tu es un développeur senior. Réponds en français avec du code propre et des commentaires pertinents.">Développeur</button>
-            <button class="preset-btn" data-prompt="Tu es un expert qui explique les concepts complexes de façon claire et pédagogique, avec des exemples concrets.">Pédagogue</button>
-            <button class="preset-btn" data-prompt="Tu es un assistant créatif. Réponds de manière originale et imaginative.">Créatif</button>
+            <button class="preset-btn" data-prompt="Tu es un assistant utile et concis. Réponds toujours dans la langue de l'utilisateur.">Concise</button>
+            <button class="preset-btn" data-prompt="Tu es un développeur senior. Réponds dans la langue de l'utilisateur avec du code propre et des commentaires pertinents.">Développeur</button>
+            <button class="preset-btn" data-prompt="Tu es un expert qui explique les concepts complexes de façon claire et pédagogique, avec des exemples concrets. Réponds dans la langue de l'utilisateur.">Pédagogue</button>
+            <button class="preset-btn" data-prompt="Tu es un assistant créatif. Réponds de manière originale et imaginative, dans la langue de l'utilisateur.">Créatif</button>
           </div>
           <textarea class="form-textarea" id="systemPromptInput" placeholder="Laissez vide pour ne rien envoyer…"></textarea>
           <p class="form-hint">Ce prompt est ajouté au début de chaque conversation (invisible dans le chat).</p>
@@ -4099,6 +4099,8 @@ function updateModelDescription() {
         fr: 'Modèle multimodal (vision + texte).',
         en: 'Multimodal model (vision + text).',
         it: 'Modello multimodale (visione + testo).',
+        es: 'Modelo multimodal (visión + texto).',
+        de: 'Multimodales Modell (Vision + Text).',
         tr: 'Çok modlu model (görsel + metin).'
       },
       // Raisonnement
@@ -4106,6 +4108,8 @@ function updateModelDescription() {
         fr: 'Modèle orienté raisonnement.',
         en: 'Reasoning-focused model.',
         it: 'Modello orientato al ragionamento.',
+        es: 'Modelo orientado al razonamiento.',
+        de: 'Reasoning-orientiertes Modell.',
         tr: 'Akıl yürütme odaklı model.'
       },
       // Code
@@ -4113,6 +4117,8 @@ function updateModelDescription() {
         fr: 'Modèle spécialisé dans le code.',
         en: 'Code-specialized model.',
         it: 'Modello specializzato nel codice.',
+        es: 'Modelo especializado en código.',
+        de: 'Auf Code spezialisiertes Modell.',
         tr: 'Koda özel model.'
       },
       // Image
@@ -4120,6 +4126,8 @@ function updateModelDescription() {
         fr: 'Modèle de génération d\'images.',
         en: 'Image generation model.',
         it: 'Modello di generazione immagini.',
+        es: 'Modelo de generación de imágenes.',
+        de: 'Bildgenerierungsmodell.',
         tr: 'Görsel oluşturma modeli.'
       },
       // Vidéo
@@ -4127,6 +4135,8 @@ function updateModelDescription() {
         fr: 'Modèle de génération de vidéos.',
         en: 'Video generation model.',
         it: 'Modello di generazione video.',
+        es: 'Modelo de generación de vídeos.',
+        de: 'Videogenerierungsmodell.',
         tr: 'Video oluşturma modeli.'
       },
       // Grand contexte (token)
@@ -4134,6 +4144,8 @@ function updateModelDescription() {
         fr: 'Modèle à grand contexte (longues conversations).',
         en: 'Large-context model (long conversations).',
         it: 'Modello a grande contesto (lunghe conversazioni).',
+        es: 'Modelo de gran contexto (conversaciones largas).',
+        de: 'Großes Kontextmodell (lange Gespräche).',
         tr: 'Geniş bağlam modeli (uzun sohbetler).'
       }
     };
@@ -7919,6 +7931,7 @@ if (!translations[currentLang]) currentLang = 'fr';
 
 function applyLanguage(lang) {
   const t = translations[lang] || translations.fr;
+  document.documentElement.lang = lang;
   const langSelect = $('languageSelect');
   if (langSelect) langSelect.value = lang;
 
