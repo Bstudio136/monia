@@ -1098,9 +1098,25 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overfox: hidden;
 }
 
+.provider-header-left a {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.provider-label-group {
+  display: flex;
+  aligne-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+  
 .provider-chevron { 
   transition: transform 0.3s ease; 
   width: 16px; 
@@ -6236,8 +6252,11 @@ function renderProviderKeys() {
     row.innerHTML = `
       <div class="provider-header" onclick="this.parentElement.classList.toggle('expanded')">
         <div class="provider-header-left">
-          <strong>${p.label}</strong> 
-          ${status}${keyLink}
+          <div class="provider-label-group">
+            <strong>${p.label}</strong> 
+            ${status}
+          </div>
+          ${keyLink}
         </div>
         <svg class="provider-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="6 9 12 15 18 9"></polyline>
