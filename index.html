@@ -3329,7 +3329,7 @@ function downloadImage(url, filename) {
     if (url.startsWith('data:')) {
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename || `image-${Date.now()}.png`;
+      a.download = filename || `deepchat-${Date.now()}.png`;
       a.click();
       showToast('Image téléchargée', 'success');
     } else {
@@ -3337,7 +3337,7 @@ function downloadImage(url, filename) {
         const objUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = objUrl;
-        a.download = filename || `image-${Date.now()}.png`;
+        a.download = filename || `deepchat-${Date.now()}.png`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(objUrl), 1000);
         showToast('Image téléchargée', 'success');
@@ -3361,7 +3361,7 @@ function buildImageActions(opts) {
   dlBtn.title = 'Télécharger';
   dlBtn.onclick = (e) => {
     e.stopPropagation();
-    downloadImage(opts.imageUrl, `image-${Date.now()}.png`);
+    downloadImage(opts.imageUrl, `deepchat-${Date.now()}.png`);
   };
   actions.appendChild(dlBtn);
 
@@ -3458,7 +3458,7 @@ function openGallery() {
       dlBtn.title = 'Télécharger';
       dlBtn.onclick = (e) => {
         e.stopPropagation();
-        downloadImage(img.url, `image-${img.index}.png`);
+        downloadImage(img.url, `deepchat-${img.index}.png`);
       };
       actions.appendChild(dlBtn);
       item.appendChild(actions);
@@ -3537,7 +3537,7 @@ imageLightbox.addEventListener('click', (e) => {
 });
 $('lbDownloadBtn').addEventListener('click', (e) => {
     e.stopPropagation();
-    downloadImage(lightboxImg.src, `image-${Date.now()}.png`);
+    downloadImage(lightboxImg.src, `deepchat-${Date.now()}.png`);
 });
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && imageLightbox.classList.contains('active')) {
@@ -3820,7 +3820,7 @@ function renderMarkdown(el, text, skipHighlight=false) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `code-${Date.now()}.${ext}`;
+      a.download = `deepchat-${Date.now()}.${ext}`;
       a.click();
       URL.revokeObjectURL(url);
     };
@@ -5272,6 +5272,10 @@ async function sendLongFileInChunks(fileName, ext, content, userInstruction, max
   const totalParts = chunks.length;
   let lastResponse = '';
 
+  const conv = conversations[currentConvId];
+  if (!conv) return '';
+  const startIndex = conv.messages.length; // 📌 mémorise la position avant les chunks
+
   for (let idx = 0; idx < totalParts; idx++) {
     const partNumber = idx + 1;
     const isLast = partNumber === totalParts;
@@ -5302,6 +5306,26 @@ async function sendLongFileInChunks(fileName, ext, content, userInstruction, max
       files: [{ name: fileName, size: content.length, type: 'text/plain' }],
       isHidden: totalParts > 1 && !isLast
     });
+  }
+
+  // ✨ FUSION : regrouper toutes les réponses IA en UNE SEULE bulle
+  if (totalParts > 1) {
+    const newMsgs = conv.messages.slice(startIndex);
+    const assistantMsgs = newMsgs.filter(m => m.role === 'assistant');
+    if (assistantMsgs.length > 1) {
+      const userMsgs = newMsgs.filter(m => m.role === 'user');
+      const mergedContent = assistantMsgs.map(m => m.content || '').join('\n\n');
+      const mergedMsg = {
+        role: 'assistant',
+        content: mergedContent,
+        timestamp: Date.now()
+      };
+      // Remplace tous les messages ajoutés par : les messages user + 1 seule bulle IA
+      conv.messages.splice(startIndex, conv.messages.length - startIndex, ...userMsgs, mergedMsg);
+      conv.upd = Date.now();
+      await saveConversations();
+      renderCurrentConversation();
+    }
   }
 
   return lastResponse;
