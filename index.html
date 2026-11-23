@@ -6011,6 +6011,61 @@ async function runCompletion() {
   }
 }
 
+// ===== CONTINUATION FIABLE (bouton « Continuer ») =====
+// Détecte un bloc de code resté ouvert dans le texte déjà généré
+function getOpenCodeFence(text) {
+  const re = /^[ \t]*(```|~~~)([\w+#.-]*)[^\n]*$/gm;
+  let m, open = null;
+  while ((m = re.exec(text)) !== null) {
+    if (open) open = null; else open = { fence: m[1], lang: m[2] || '' };
+  }
+  return open;
+}
+
+// Historique envoyé à l'API : on ajoute une vraie consigne « reprends ici »
+// (sans elle, l'API voit un dernier message "assistant" et recommence du début)
+function buildContinuationHistory(messages, lastMsg, originalContent) {
+  const idx = messages.lastIndexOf(lastMsg);
+  const base = idx >= 0 ? messages.slice(0, idx + 1) : messages.slice();
+  const tail = originalContent.slice(-600);
+  const open = getOpenCodeFence(originalContent);
+  let instr = "Ta réponse précédente a été coupée avant la fin. Reprends EXACTEMENT là où elle s'est arrêtée, au caractère près. " +
+    "Ne recommence pas depuis le début, ne répète rien de ce qui est déjà écrit, n'ajoute ni introduction, ni excuse, ni commentaire. " +
+    "Écris uniquement la suite directe.\n\n";
+  if (open) {
+    instr += "Tu étais au milieu d'un bloc de code" + (open.lang ? " (" + open.lang + ")" : "") +
+      " : continue directement le code, SANS rouvrir de balise ```, et ne ferme le bloc que lorsque le code est terminé.\n\n";
+  }
+  instr += "Les derniers caractères déjà écrits sont :\n<<<FIN\n" + tail + "\nFIN>>>\nContinue juste après.";
+  return base.concat([{ role: 'user', content: instr }]);
+}
+
+// Raccorde proprement la suite au texte existant :
+// supprime la balise ``` rouverte, le chevauchement, ou un redémarrage complet
+function stitchContinuation(original, addition, isFinal) {
+  let add = addition || '';
+  if (!add) return '';
+  if (!isFinal && add.length < 30) return '';   // trop court pour juger, on attend
+  // Cas 1 : le modèle a recommencé depuis le début -> on saute jusqu'à l'endroit déjà écrit
+  if (original.length > 120 && add.startsWith(original.slice(0, 60))) {
+    for (const len of [120, 60, 30]) {
+      const anchor = original.slice(-len);
+      const pos = add.indexOf(anchor);
+      if (pos !== -1) return add.slice(pos + anchor.length);
+    }
+    return '';
+  }
+  if (getOpenCodeFence(original)) {
+    add = add.replace(/^\s*(```|~~~)[\w+#.-]*[ \t]*\r?\n/, '');
+  }
+  // Cas 2 : petit chevauchement entre la fin du texte et le début de la suite
+  const tail = original.slice(-400);
+  for (let n = Math.min(tail.length, add.length); n >= 15; n--) {
+    if (add.startsWith(tail.slice(-n))) { add = add.slice(n); break; }
+  }
+  return add;
+}
+
 async function continueGeneration(body, bubble) {
   if (isStreaming) return;
   const conv = conversations[currentConvId];
@@ -6035,6 +6090,7 @@ async function continueGeneration(body, bubble) {
   $('scrollBottomBtn').classList.add('streaming');
   setSendBtnStop();
   const originalContent = lastMsg.content;
+  const continuationHistory = buildContinuationHistory(conv.messages, lastMsg, originalContent);
   let streamingText = originalContent;
 
   const actions = body.querySelector('.message-actions');
@@ -6064,17 +6120,17 @@ async function continueGeneration(body, bubble) {
   try {
     let result;
     if (providerSelect.value === 'puter') {
-      result = await streamChatWithPuter(conv.messages, {
+      result = await streamChatWithPuter(continuationHistory, {
         onReasoning: () => {},
         onDelta: (partial) => {
           if (!reasoningEndTime && reasoningContent) reasoningEndTime = Date.now();
-          streamingText = originalContent + partial;
+          streamingText = originalContent + stitchContinuation(originalContent, partial, false);
           scheduleStreamRender(contentEl, streamingText);
           scrollToBottom();
         }
       });
     } else {
-      result = await streamChat(conv.messages, {
+      result = await streamChat(continuationHistory, {
         onReasoning: (fullReasoning) => {
           reasoningContent = fullReasoning;
           if (!reasoningStartTime) reasoningStartTime = Date.now();
@@ -6091,14 +6147,15 @@ async function continueGeneration(body, bubble) {
         },
         onDelta: (partial) => {
           if (!reasoningEndTime && reasoningContent) reasoningEndTime = Date.now();
-          streamingText = originalContent + partial;
+          streamingText = originalContent + stitchContinuation(originalContent, partial, false);
           scheduleStreamRender(contentEl, streamingText);
           scrollToBottom();
         }
       }, abortController.signal);
     }
 
-    const full = result.content;
+    const full = stitchContinuation(originalContent, result.content, true);
+    if (!full.trim()) showToast("Le modèle n'a rien ajouté ou n'a pas repris au bon endroit. Réessayez « Continuer ».", 'warning');
     const finalReasoning = result.reasoning || reasoningContent;
 
     if (reasoningBlock) {
