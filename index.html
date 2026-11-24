@@ -109,13 +109,37 @@ body.sidebar-collapsed .new-chat-btn { width: 40px; height: 40px; padding: 0; ma
 body.sidebar-collapsed .sidebar-footer { align-items: center; padding: 8px 0; }
 body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; justify-content: center; border-radius: 8px; }
 .sidebar-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+/* ===== Logo DeepChat : couleurs dérivées automatiquement de --accent ===== */
+:root {
+  /* valeurs de secours (violet) pour les vieux navigateurs sans color-mix */
+  --logo-bg1:#1a1030; --logo-bg2:#0d0718; --logo-bg3:#050308;
+  --logo-c1:#6d28d9; --logo-c2:#4c1d95; --logo-c3:#2e1065; --logo-c4:#150a3a;
+  --logo-l1:#f0d5ff; --logo-l2:#c99cff; --logo-mid:#a855f7; --logo-dark:#6b21a8;
+  --logo-line:#150528; --logo-ring:#c4a2ff; --logo-hl:#e9d5ff;
+}
+@supports (color: color-mix(in srgb, red, blue)) {
+  :root {
+    --logo-bg1: color-mix(in srgb, var(--accent) 18%, #000);
+    --logo-bg2: color-mix(in srgb, var(--accent) 9%, #000);
+    --logo-bg3: color-mix(in srgb, var(--accent) 3%, #000);
+    --logo-c1: color-mix(in srgb, var(--accent) 80%, #000);
+    --logo-c2: color-mix(in srgb, var(--accent) 58%, #000);
+    --logo-c3: color-mix(in srgb, var(--accent) 36%, #000);
+    --logo-c4: color-mix(in srgb, var(--accent) 20%, #000);
+    --logo-l1: color-mix(in srgb, var(--accent) 28%, #fff);
+    --logo-l2: color-mix(in srgb, var(--accent) 58%, #fff);
+    --logo-mid: var(--accent);
+    --logo-dark: color-mix(in srgb, var(--accent) 68%, #000);
+    --logo-line: color-mix(in srgb, var(--accent) 12%, #000);
+    --logo-ring: color-mix(in srgb, var(--accent) 60%, #fff);
+    --logo-hl: color-mix(in srgb, var(--accent) 25%, #fff);
+  }
+}
+.app-logo { display: block; width: 100%; height: 100%; }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand-icon {
-  width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 700; color: var(--accent-text); font-size: 16px; flex-shrink: 0;
+  width: 36px; height: 36px;
+  flex-shrink: 0;
 }
 .brand-text { font-weight: 600; font-size: 15px; }
 .icon-btn {
@@ -323,12 +347,8 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   min-height: 60vh;
 }
 .welcome-icon {
-  width: 64px; height: 64px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  border-radius: 16px;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--accent-text);
-  font-size: 28px; font-weight: 700;
+  width: 88px; height: 88px;
+  filter: drop-shadow(0 6px 18px rgba(0,0,0,.35));
 }
 .welcome h1 { font-size: 24px; font-weight: 600; }
 .welcome p { color: var(--text-secondary); font-size: 14px; max-width: 480px; }
@@ -2247,7 +2267,8 @@ html, body {
 .splash-logo svg {
   width: 100%; height: 100%;
   overflow: visible;
-  filter: drop-shadow(0 8px 40px rgba(251,191,36,.35));
+  filter: drop-shadow(0 8px 36px rgba(251,191,36,.35));
+  filter: drop-shadow(0 8px 36px color-mix(in srgb, var(--accent) 40%, transparent));
 }
 .splash-logo-frame {
   fill: none;
@@ -2257,6 +2278,12 @@ html, body {
   stroke-dasharray: 340;
   stroke-dashoffset: 340;
   animation: splashDraw 1.35s cubic-bezier(.65,0,.35,1) .1s forwards;
+}
+.splash-logo-mark {
+  opacity: 0;
+  transform: scale(.4);
+  transform-origin: center;
+  animation: splashLetter 0.9s cubic-bezier(.34,1.56,.64,1) .2s forwards;
 }
 .splash-logo-letter {
   fill: url(#splashGrad);
@@ -2402,6 +2429,7 @@ html, body {
     transition-duration: .01ms !important;
   }
   .splash-logo-frame { stroke-dashoffset: 0; }
+  .splash-logo-mark,
   .splash-logo-letter,
   .splash-title span,
   .splash-tagline,
@@ -2411,6 +2439,93 @@ html, body {
 </style>
 </head>
 <body>
+<!-- Logo DeepChat (sprite SVG, couleurs liées à la couleur d'accent) -->
+<svg id="logoSprite" width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true" focusable="false">
+  <defs>
+    <radialGradient id="mlg-bg" cx="50%" cy="40%" r="75%">
+      <stop offset="0%" style="stop-color:var(--logo-bg1)"/>
+      <stop offset="60%" style="stop-color:var(--logo-bg2)"/>
+      <stop offset="100%" style="stop-color:var(--logo-bg3)"/>
+    </radialGradient>
+    <linearGradient id="mlg-circle" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:var(--logo-c1)"/>
+      <stop offset="40%" style="stop-color:var(--logo-c2)"/>
+      <stop offset="75%" style="stop-color:var(--logo-c3)"/>
+      <stop offset="100%" style="stop-color:var(--logo-c4)"/>
+    </linearGradient>
+    <linearGradient id="mlg-shine" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="mlg-b" gradientUnits="userSpaceOnUse" x1="218" y1="155" x2="362" y2="355">
+      <stop offset="0%" style="stop-color:var(--logo-l1)"/>
+      <stop offset="30%" style="stop-color:var(--logo-l2)"/>
+      <stop offset="60%" style="stop-color:var(--logo-mid)"/>
+      <stop offset="100%" style="stop-color:var(--logo-dark)"/>
+    </linearGradient>
+    <linearGradient id="mlg-drop" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" style="stop-color:var(--logo-l1)"/>
+      <stop offset="30%" style="stop-color:var(--logo-l2)"/>
+      <stop offset="60%" style="stop-color:var(--logo-mid)"/>
+      <stop offset="100%" style="stop-color:var(--logo-dark)"/>
+    </linearGradient>
+    <radialGradient id="mlg-aura" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" style="stop-color:var(--accent)" stop-opacity="0"/>
+      <stop offset="85%" style="stop-color:var(--accent)" stop-opacity="0.35"/>
+      <stop offset="100%" style="stop-color:var(--accent)" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="mlg-outer" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="mlg-glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b"/>
+      <feFlood style="flood-color:var(--logo-mid)" flood-opacity="0.9" result="f"/>
+      <feComposite in="f" in2="b" operator="in" result="c"/>
+      <feMerge><feMergeNode in="c"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="mlg-soft" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <pattern id="mlg-grain" width="3" height="3" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="0.45" fill="#ffffff" fill-opacity="0.035"/>
+    </pattern>
+  </defs>
+  <symbol id="mlogo" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="128" fill="url(#mlg-bg)"/>
+    <circle cx="256" cy="256" r="240" fill="url(#mlg-aura)"/>
+    <g filter="url(#mlg-outer)"><circle cx="256" cy="256" r="200" fill="url(#mlg-circle)"/></g>
+    <path d="M80 256 A176 176 0 0 1 432 256 L432 256 A176 176 0 0 0 80 256 Z" fill="url(#mlg-shine)"/>
+    <circle cx="256" cy="256" r="200" fill="none" style="stroke:var(--logo-ring)" stroke-opacity="0.55" stroke-width="1.5"/>
+    <circle cx="256" cy="256" r="194" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1"/>
+    <path d="M118 200 A150 150 0 0 1 210 116" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="3" stroke-linecap="round"/>
+    <path d="M118 200 A150 150 0 0 1 210 116" fill="none" style="stroke:var(--logo-hl)" stroke-opacity="0.9" stroke-width="1.2" stroke-linecap="round"/>
+    <g transform="translate(6,12)" opacity="0.65"><g filter="url(#mlg-soft)">
+      <path d="M200 155 V355 M200 155 H250 C335 155 380 195 380 255 C380 315 335 355 250 355 H200" fill="none" stroke="#000" stroke-opacity="0.85" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>
+    </g></g>
+    <path d="M200 155 V355 M200 155 H250 C335 155 380 195 380 255 C380 315 335 355 250 355 H200" fill="none" style="stroke:var(--logo-line)" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>
+    <g filter="url(#mlg-glow)">
+      <path d="M200 155 V355 M200 155 H250 C335 155 380 195 380 255 C380 315 335 355 250 355 H200" fill="none" stroke="url(#mlg-b)" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <g fill="none" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M186 178 V225" stroke-width="12" opacity="0.65"/>
+      <path d="M186 268 V325" stroke-width="10" opacity="0.45"/>
+      <path d="M218 172 H255 C300 172 335 190 355 220" stroke-width="11" opacity="0.55"/>
+      <path d="M220 338 H255 C300 338 335 322 355 292" stroke-width="9" opacity="0.35"/>
+    </g>
+    <ellipse cx="218" cy="195" rx="9" ry="13" fill="#ffffff" opacity="0.75"/>
+    <ellipse cx="220" cy="295" rx="7" ry="10" fill="#ffffff" opacity="0.55"/>
+    <ellipse cx="300" cy="182" rx="6" ry="8" fill="#ffffff" opacity="0.5"/>
+    <g style="stroke:var(--logo-line)" stroke-linejoin="round">
+      <path d="M215 380 Q212 400 210 414 Q216 418 222 412 Q220 398 224 380 Z" fill="url(#mlg-drop)" stroke-width="4"/>
+      <circle cx="216" cy="420" r="5" fill="url(#mlg-drop)" stroke-width="3"/>
+      <path d="M300 380 Q302 396 300 410 Q307 414 313 407 Q311 394 315 380 Z" fill="url(#mlg-drop)" stroke-width="4"/>
+      <circle cx="306" cy="416" r="4.5" fill="url(#mlg-drop)" stroke-width="3"/>
+      <path d="M250 380 Q248 390 247 398 Q252 401 256 396 Q255 388 257 380 Z" fill="url(#mlg-drop)" stroke-width="3.5"/>
+    </g>
+    <rect width="512" height="512" rx="128" fill="url(#mlg-grain)"/>
+  </symbol>
+</svg>
 <!-- SPLASH SCREEN -->
 <div id="splashScreen">
   <div class="splash-bg">
@@ -2423,16 +2538,7 @@ html, body {
   <div class="splash-content">
     <div class="splash-logo">
       <div class="splash-logo-glow"></div>
-      <svg viewBox="0 0 108 108" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="splashGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#fbbf24"/>
-            <stop offset="100%" stop-color="#f59e0b"/>
-          </linearGradient>
-        </defs>
-        <rect class="splash-logo-frame" x="8" y="8" width="92" height="92" rx="20"/>
-        <text class="splash-logo-letter" x="54" y="54" text-anchor="middle" dominant-baseline="central">D</text>
-      </svg>
+      <svg class="splash-logo-mark" viewBox="0 0 512 512" aria-hidden="true"><use href="#mlogo" width="512" height="512"/></svg>
     </div>
 
     <div class="splash-title">
@@ -2460,7 +2566,7 @@ html, body {
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
     <div class="brand">
-      <div class="brand-icon">D</div>
+      <div class="brand-icon"><svg class="app-logo" viewBox="0 0 512 512" aria-label="DeepChat" role="img"><use href="#mlogo" width="512" height="512"/></svg></div>
       <span class="brand-text">Deepchat</span>
     </div>
     <button class="icon-btn" id="collapseBtn" title="Basculer la barre latérale (Ctrl+B)">
@@ -4774,7 +4880,7 @@ function renderWelcome() {
   const div = document.createElement('div');
   div.className = 'welcome';
   div.innerHTML = `
-    <div class="welcome-icon">D</div>
+    <div class="welcome-icon"><svg class="app-logo" viewBox="0 0 512 512" aria-label="DeepChat" role="img"><use href="#mlogo" width="512" height="512"/></svg></div>
     <h1>${t.welcomeTitle}</h1>
     <p>${t.welcomeText}</p>
     <div class="welcome-grid">
