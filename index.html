@@ -3258,7 +3258,8 @@ const MAX_OUTPUT_LIMITS = {
   'mistral-large-latest': 8192,
   'mistral-small-latest': 8192,
   'agnes-3.0-flash': 65536,
-  'agnes-2.5-pro-beta': 65536
+  'agnes-2.5-pro-beta': 65536,
+  'cognitivecomputations/dolphin-mistral-24b-venice-edition': 1024
 };
 
 let modelLimitsCache = {};
@@ -3401,7 +3402,8 @@ gemini: {
       'openrouter/free', // ✅ Le seul modèle 100% fiable qui trouve toujours un modèle gratuit (dont DeepSeek)
       'baidu/ernie-5.5-flash-preview:free',
       'nvidia/nemotron-3.5-super-vl:free',
-      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free'
+      'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+      'cognitivecomputations/dolphin-mistral-24b-venice-edition'
     ],
     format: 'openai',
     testUrl: 'https://openrouter.ai/api/v1/models',
