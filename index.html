@@ -3020,6 +3020,7 @@ html, body {
       <div class="model-selection-controls">
         <button class="btn btn-secondary" id="selectAllModelsBtn">Tout cocher</button>
         <button class="btn btn-secondary" id="unselectAllModelsBtn">Tout décocher</button>
+        <button class="btn btn-secondary" id="defaultModelsBtn">Par défaut</button>
         <span id="selectedModelsCount" style="margin-left:auto; font-size:12px; color:var(--text-muted); align-self:center;">0 sélectionné(s)</span>
       </div>
       
@@ -6602,44 +6603,61 @@ function updateProviderModelUI(providerKey) {
   });
 }
 
-// Variables pour la modale de sélection
+// ===== Modale de sélection des modèles =====
+
+// Copie figée des modèles par défaut de chaque fournisseur (au chargement)
+const FACTORY_MODELS = Object.fromEntries(
+  Object.entries(DEFAULT_PROVIDERS).map(([k, p]) => [k, [...(p.models || [])]])
+);
+
+// Sélection en cours (indépendante de la recherche / de l'affichage)
+let selectedModelsSet = new Set();
+let initialModelsSelection = [];
+
+const normalizeModelId = (id) => {
+  if (!id) return '';
+  return id.startsWith('models/') ? id.substring(7) : id;
+};
+
+// Retrouve un modèle dans la liste (ou l'ajoute en tête s'il n'y est pas)
+function findOrAddModel(id) {
+  let found = currentFetchedModelsList.find(m => normalizeModelId(m) === normalizeModelId(id));
+  if (!found) {
+    found = id;
+    currentFetchedModelsList.unshift(id);
+  }
+  return found;
+}
+
 function openModelsSelectionModal(providerKey, models) {
   currentFetchProviderKey = providerKey;
-  currentFetchedModelsList = models;
-  
+  currentFetchedModelsList = [...models];
+
   const modal = $('modelsSelectionModal');
   const title = $('modelsSelectionTitle');
-  const listContainer = $('modelsSelectionList');
   const searchInput = $('modelSearchInput');
-  
+
   const t = translations[currentLang] || translations.fr;
   title.textContent = `${t.availableModelsFor} (${PROVIDERS[providerKey].label})`;
   searchInput.value = '';
-  
-  renderModelsList(models, searchInput.value);
+
+  // Sélection de départ = modèles actuellement activés pour ce fournisseur
+  const installed = PROVIDERS[providerKey]?.models || [];
+  selectedModelsSet = new Set();
+  installed.forEach(inst => selectedModelsSet.add(findOrAddModel(inst)));
+  initialModelsSelection = [...selectedModelsSet];
+
+  renderModelsList(currentFetchedModelsList, '');
   modal.classList.add('open');
 }
 
 function renderModelsList(models, filterText = '') {
   const listContainer = $('modelsSelectionList');
   const filter = filterText.toLowerCase().trim();
-  
-  // ✨ NOUVEAU : On récupère la liste des modèles déjà installés pour ce fournisseur
-  const installedModels = PROVIDERS[currentFetchProviderKey]?.models || [];
-  
-  // ✨ NOUVEAU : Fonction pour normaliser un ID de modèle (retirer le préfixe "models/")
-  const normalizeModelId = (id) => {
-    if (!id) return '';
-    return id.startsWith('models/') ? id.substring(7) : id;
-  };
 
   listContainer.innerHTML = models.map((m, index) => {
     if (filter && !m.toLowerCase().includes(filter)) return '';
-    
-    // ✨ NOUVEAU : On compare les IDs normalisés pour la pré-coche
-    const normalizedFetchedId = normalizeModelId(m);
-    const isChecked = installedModels.some(installed => normalizeModelId(installed) === normalizedFetchedId) ? 'checked' : '';
-
+    const isChecked = selectedModelsSet.has(m) ? 'checked' : '';
     return `
       <label class="model-select-item">
         <input type="checkbox" value="${index}" class="model-checkbox" ${isChecked}>
@@ -6648,24 +6666,27 @@ function renderModelsList(models, filterText = '') {
     `;
   }).join('');
 
-  // Mettre à jour le compteur
-  updateSelectedModelsCount();
-  
-  // Ajouter les écouteurs sur les checkboxes
+  // Chaque case met à jour la sélection globale
   listContainer.querySelectorAll('.model-checkbox').forEach(cb => {
-    cb.addEventListener('change', updateSelectedModelsCount);
+    cb.addEventListener('change', () => {
+      const m = currentFetchedModelsList[parseInt(cb.value)];
+      if (cb.checked) selectedModelsSet.add(m);
+      else selectedModelsSet.delete(m);
+      updateSelectedModelsCount();
+    });
   });
+
+  updateSelectedModelsCount();
 }
 
 function updateSelectedModelsCount() {
   const t = translations[currentLang] || translations.fr;
-  const checked = document.querySelectorAll('.model-checkbox:checked').length;
-  $('selectedModelsCount').textContent = `${checked} ${t.selectedModelsSuffix}`;
+  $('selectedModelsCount').textContent = `${selectedModelsSet.size} ${t.selectedModelsSuffix}`;
 }
 
 // Gestion des boutons de la modale (à exécuter au chargement de la page)
 document.addEventListener('DOMContentLoaded', () => {
-  // Recherche
+  // Recherche : on garde la sélection, on change seulement l'affichage
   const searchInput = $('modelSearchInput');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -6673,21 +6694,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Tout cocher
+  // Tout cocher (modèles visibles avec le filtre actuel)
   const selectAllBtn = $('selectAllModelsBtn');
   if (selectAllBtn) {
     selectAllBtn.onclick = () => {
-      document.querySelectorAll('.model-checkbox').forEach(cb => cb.checked = true);
+      document.querySelectorAll('.model-checkbox').forEach(cb => {
+        cb.checked = true;
+        selectedModelsSet.add(currentFetchedModelsList[parseInt(cb.value)]);
+      });
       updateSelectedModelsCount();
     };
   }
 
-  // Tout décocher
+  // Tout décocher (modèles visibles avec le filtre actuel)
   const unselectAllBtn = $('unselectAllModelsBtn');
   if (unselectAllBtn) {
     unselectAllBtn.onclick = () => {
-      document.querySelectorAll('.model-checkbox').forEach(cb => cb.checked = false);
+      document.querySelectorAll('.model-checkbox').forEach(cb => {
+        cb.checked = false;
+        selectedModelsSet.delete(currentFetchedModelsList[parseInt(cb.value)]);
+      });
       updateSelectedModelsCount();
+    };
+  }
+
+  // Par défaut : recoche les modèles d'origine du fournisseur
+  const defaultBtn = $('defaultModelsBtn');
+  if (defaultBtn) {
+    defaultBtn.onclick = () => {
+      const defaults = FACTORY_MODELS[currentFetchProviderKey] || initialModelsSelection;
+      selectedModelsSet = new Set();
+      defaults.forEach(d => selectedModelsSet.add(findOrAddModel(d)));
+      renderModelsList(currentFetchedModelsList, $('modelSearchInput').value);
     };
   }
 
@@ -6701,9 +6739,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Valider
   $('validateModelsSelectionBtn').onclick = () => {
-    const checkedBoxes = document.querySelectorAll('.model-checkbox:checked');
-    const selectedModels = Array.from(checkedBoxes).map(cb => currentFetchedModelsList[parseInt(cb.value)]);
-    
+    const selectedModels = Array.from(selectedModelsSet);
+
     if (selectedModels.length === 0) {
       showToast((translations[currentLang] && translations[currentLang].selectAtLeastOneModel) || 'Veuillez sélectionner au moins un modèle.', 'warning');
       return;
@@ -6724,7 +6761,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateProviderModelUI(k);
     updateModelList();
     closeModal();
-    showToast(`✅ ${selectedModels.length} modèle(s) sélectionné(s)`, 'success');
+    const _tt = translations[currentLang] || translations.fr;
+    showToast((_tt.modelsSelectedToast || '✅ {n} modèle(s) sélectionné(s)').replace('{n}', selectedModels.length), 'success');
   };
 });
 
@@ -7613,6 +7651,8 @@ const translations = {
   selectModelsTitle: "Modelle auswählen",
   selectAllModels: "Alle auswählen",
   unselectAllModels: "Alle abwählen",
+  defaultModels: "Standard",
+  modelsSelectedToast: "✅ {n} Modell(e) ausgewählt",
   selectedModelsSuffix: "ausgewählt",
   searchModelPlaceholder: "Modell suchen...",
   validateSelection: "Auswahl bestätigen",
@@ -7742,6 +7782,8 @@ es: {
   selectModelsTitle: "Seleccionar modelos",
   selectAllModels: "Seleccionar todo",
   unselectAllModels: "Deseleccionar todo",
+  defaultModels: "Predeterminados",
+  modelsSelectedToast: "✅ {n} modelo(s) seleccionado(s)",
   selectedModelsSuffix: "seleccionado(s)",
   searchModelPlaceholder: "Buscar un modelo...",
   validateSelection: "Validar selección",
@@ -7872,6 +7914,8 @@ es: {
     selectModelsTitle: "Sélectionner les modèles",
     selectAllModels: "Tout cocher",
     unselectAllModels: "Tout décocher",
+    defaultModels: "Par défaut",
+    modelsSelectedToast: "✅ {n} modèle(s) sélectionné(s)",
     selectedModelsSuffix: "sélectionné(s)",
     searchModelPlaceholder: "Rechercher un modèle...",
     validateSelection: "Valider la sélection",
@@ -8002,6 +8046,8 @@ es: {
     selectModelsTitle: "Select models",
     selectAllModels: "Select all",
     unselectAllModels: "Unselect all",
+    defaultModels: "Default",
+    modelsSelectedToast: "✅ {n} model(s) selected",
     selectedModelsSuffix: "selected",
     searchModelPlaceholder: "Search a model...",
     validateSelection: "Validate selection",
@@ -8132,6 +8178,8 @@ es: {
     selectModelsTitle: "Seleziona modelli",
     selectAllModels: "Seleziona tutto",
     unselectAllModels: "Deseleziona tutto",
+    defaultModels: "Predefiniti",
+    modelsSelectedToast: "✅ {n} modello/i selezionato/i",
     selectedModelsSuffix: "selezionato/i",
     searchModelPlaceholder: "Cerca un modello...",
     validateSelection: "Conferma selezione",
@@ -8200,6 +8248,8 @@ es: {
     selectModelsTitle: "Modelleri seçin",
     selectAllModels: "Tümünü seç",
     unselectAllModels: "Tümünü kaldır",
+    defaultModels: "Varsayılan",
+    modelsSelectedToast: "✅ {n} model seçildi",
     selectedModelsSuffix: "seçildi",
     searchModelPlaceholder: "Model ara...",
     validateSelection: "Seçimi onayla",
@@ -8304,6 +8354,7 @@ function applyLanguage(lang) {
   if ($('modelsSelectionTitle')) $('modelsSelectionTitle').textContent = t.selectModelsTitle;
   if ($('selectAllModelsBtn')) $('selectAllModelsBtn').textContent = t.selectAllModels;
   if ($('unselectAllModelsBtn')) $('unselectAllModelsBtn').textContent = t.unselectAllModels;
+  if ($('defaultModelsBtn')) $('defaultModelsBtn').textContent = t.defaultModels;
   if ($('modelSearchInput')) $('modelSearchInput').placeholder = t.searchModelPlaceholder;
   if ($('cancelModelsSelectionBtn')) $('cancelModelsSelectionBtn').textContent = t.cancel;
   if ($('validateModelsSelectionBtn')) $('validateModelsSelectionBtn').textContent = t.validateSelection;
@@ -8552,6 +8603,7 @@ function applyStaticLanguage(lang) {
   if ($('modelsSelectionTitle')) $('modelsSelectionTitle').textContent = t.selectModelsTitle;
   if ($('selectAllModelsBtn')) $('selectAllModelsBtn').textContent = t.selectAllModels;
   if ($('unselectAllModelsBtn')) $('unselectAllModelsBtn').textContent = t.unselectAllModels;
+  if ($('defaultModelsBtn')) $('defaultModelsBtn').textContent = t.defaultModels;
   if ($('modelSearchInput')) $('modelSearchInput').placeholder = t.searchModelPlaceholder;
   if ($('cancelModelsSelectionBtn')) $('cancelModelsSelectionBtn').textContent = t.cancel;
   if ($('validateModelsSelectionBtn')) $('validateModelsSelectionBtn').textContent = t.validateSelection;
