@@ -6884,12 +6884,25 @@ function renderProviderKeys() {
 
       btn.innerHTML = '⏳ Chargement...';
       btn.disabled = true;
+try {
+        // === MODIFICATION : Tenter de passer par un proxy si CORS échoue ===
+        let fetchUrl = url;
+        let fetchHeaders = headers;
 
-      try {
-        const res = await fetch(url, {
+        // Si on a une clé API, les proxies publics gratuits la refuseront souvent.
+        // On tente l'appel direct d'abord, et si ça échoue avec TypeError (CORS), on tente un proxy.
+        // NOTE : Les proxies publics ne peuvent pas envoyer de headers d'authentification (Bearer).
+        // Donc cette solution NE FONCTIONNERA PAS pour Venice/Mistral qui exigent une clé.
+        
+        if (apiKey && !provider.noKey) {
+            showToast("⚠️ L'API nécessite une clé, la récupération directe peut être bloquée par CORS.", "warning", 5000);
+        }
+
+        const res = await fetch(fetchUrl, {
           method: 'GET',
-          headers: headers
+          headers: fetchHeaders
         });
+
 
         if (!res.ok) {
             const errText = await res.text();
