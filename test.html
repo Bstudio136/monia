@@ -6846,12 +6846,12 @@ function renderProviderKeys() {
     };
   });
 
-// Bouton Récupérer les modèles (CORRIGÉ POUR GEMINI & CORS)
+// Bouton Récupérer les modèles (CORRIGÉ : Gestion des variables et des erreurs CORS)
   container.querySelectorAll('[data-fetch-models]').forEach(btn => {
     btn.onclick = async (e) => {
       e.stopPropagation();
       const k = btn.dataset.fetchModels;
-      let key = apiKeys[k];
+      let key = apiKeys[k]; // Variable locale correcte
       const provider = PROVIDERS[k];
       
       // 1. Gérer la clé API
@@ -6882,34 +6882,30 @@ function renderProviderKeys() {
         return;
       }
 
+      // 3. Vérification préalable : Si on a une clé Bearer, la plupart des APIs (Venice, Mistral, etc.)
+      //    bloquent les appels directs du navigateur (CORS). On avertit l'utilisateur.
+      if (provider.testType === 'bearer' && key && !provider.noKey) {
+        const isKnownCorsFriendly = (provider.label.toLowerCase().includes('gemini') || provider.label.toLowerCase().includes('openrouter') || provider.label.toLowerCase().includes('groq'));
+        if (!isKnownCorsFriendly) {
+           showToast(`⚠️ ${provider.label} bloque probablement les appels directs (CORS). L'opération va peut-être échouer.`, "warning", 5000);
+        }
+      }
+
       btn.innerHTML = '⏳ Chargement...';
       btn.disabled = true;
-try {
-        // === MODIFICATION : Tenter de passer par un proxy si CORS échoue ===
-        let fetchUrl = url;
-        let fetchHeaders = headers;
 
-        // Si on a une clé API, les proxies publics gratuits la refuseront souvent.
-        // On tente l'appel direct d'abord, et si ça échoue avec TypeError (CORS), on tente un proxy.
-        // NOTE : Les proxies publics ne peuvent pas envoyer de headers d'authentification (Bearer).
-        // Donc cette solution NE FONCTIONNERA PAS pour Venice/Mistral qui exigent une clé.
-        
-        if (apiKey && !provider.noKey) {
-            showToast("⚠️ L'API nécessite une clé, la récupération directe peut être bloquée par CORS.", "warning", 5000);
-        }
-
-        const res = await fetch(fetchUrl, {
+      try {
+        const res = await fetch(url, {
           method: 'GET',
-          headers: fetchHeaders
+          headers: headers
         });
-
 
         if (!res.ok) {
             const errText = await res.text();
             if (res.status === 401 || res.status === 403) {
-                throw new Error(`Clé invalide (HTTP ${res.status})`);
+                throw new Error(`Authentification échouée (HTTP ${res.status}). Clé invalide ou permissions insuffisantes.`);
             }
-            throw new Error(`Erreur HTTP ${res.status}`);
+            throw new Error(`Erreur serveur ${res.status}. ${errText.substring(0, 100)}`);
         }
         
         const data = await res.json();
@@ -6932,15 +6928,15 @@ try {
         openModelsSelectionModal(k, modelIds);
         
       } catch (err) {
-        let msg = "Erreur réseau ou CORS.";
-        if (err.message.includes('401') || err.message.includes('403')) {
-            msg = "Clé API invalide ou refusée.";
-        } else if (err.name === 'TypeError') {
-            msg = "Impossible de joindre le serveur (CORS/Internet).";
+        let msg = "";
+        if (err.name === 'TypeError') {
+            msg = `🔒 Erreur CORS détectée pour ${provider.label}. Le navigateur bloque la requête. Cette API ne permet pas les appels directs depuis un site web. Utilisez un fournisseur compatible (comme Gemini) ou un backend.`;
+        } else if (err.message.includes('401') || err.message.includes('403')) {
+            msg = `🔑 Clé API invalide ou refusée pour ${provider.label}.`;
         } else {
-            msg = err.message;
+            msg = `❌ Erreur inattendue : ${err.message}`;
         }
-        showToast(`❌ ${msg}`, "error", 6000);
+        showToast(msg, "error", 8000);
       } finally {
         btn.innerHTML = '🔄 Récupérer les modèles';
         btn.disabled = false;
