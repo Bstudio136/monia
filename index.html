@@ -349,11 +349,11 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   display: flex;
   flex-direction: column; /* VERTICAL */
   align-items: flex-start;
-  gap: 2px; /* Petit espace entre les lignes */
+  gap: 2px;
   padding: 6px 10px;
   margin: 4px auto;
   max-width: 820px;
-  border-top: 1px solid var(--border); /* Ligne pleine plus discrète */
+  border-top: 1px solid var(--border);
   font-size: 11px;
   color: var(--text-muted);
   user-select: none;
@@ -361,17 +361,16 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   background: transparent;
 }
 
-/* Ligne 1 : Le Label */
+/* Ligne 1 : Le Label (Gris discret) */
 .model-switch-label {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-size: 9px;
   opacity: 0.7;
-  z-index: 1;
 }
 
-/* Ligne 2 : Le Nom du modèle (avec bouton intégré à droite) */
+/* Ligne 2 : Le Nom du modèle */
 .model-switch-content {
   display: flex;
   align-items: center;
@@ -379,8 +378,9 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   gap: 8px;
 }
 
+/* Restauration de la couleur Accent (Orange/Verte selon thème) */
 .model-switch-name {
-  color: var(--text-primary); /* Plus lisible */
+  color: var(--accent); /* COULEUR RESTAURÉE */
   font-weight: 500;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 12px;
@@ -388,6 +388,39 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+}
+
+/* Le bouton "+" (si tu l'as conservé) */
+.model-switch-toggle {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0 8px;
+  border-radius: 4px;
+  height: 20px;
+  display: none;
+  flex-shrink: 0;
+}
+.model-switch-toggle:hover {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+
+/* État Expandé */
+.model-switch-line.expanded .model-switch-name {
+  white-space: normal;
+  word-break: break-all;
+  overflow: visible;
+}
+.model-switch-line.expanded {
+  background: var(--bg-input);
+}
+.model-switch-line.expanded .model-switch-toggle {
+  display: none;
 }
 
 /* Le bouton "+" est à droite du nom */
