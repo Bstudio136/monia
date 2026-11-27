@@ -2547,6 +2547,15 @@ html, body {
   .splash-foot { opacity: 1; transform: none; }
 }
 
+
+/* ===== Recherche web ===== */
+#webSearchBtn.active { color: var(--accent); border: 1px solid var(--accent); }
+.web-sources { margin-top: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 0.85em; }
+.web-sources-head { font-weight: 600; margin-bottom: 4px; }
+.web-sources-queries { color: var(--text-muted); margin-bottom: 6px; font-size: 0.92em; }
+.web-sources-list { display: flex; flex-direction: column; gap: 3px; }
+.web-sources-list a { color: var(--accent); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.web-sources-list a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -2838,6 +2847,13 @@ html, body {
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
           <circle cx="8.5" cy="8.5" r="1.5"/>
           <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </button>
+      <button class="icon-btn upload-btn" id="webSearchBtn" style="display: none;" title="Recherche web">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
       </button>
       <input type="file" id="fileInput" style="display:none;" multiple accept="image/*,.txt,.md,.py,.js,.html,.css,.json,.cpp,.java,.cs,.go,.rs,.php,.sh,.yml,.yaml,.xml">
@@ -3177,6 +3193,22 @@ marked.setOptions({ breaks: true, gfm: true });
 
 const AGNES_IMAGE_MODEL = 'agnes-image-2.5-flash';
 const AGNES_IMAGE_ENDPOINT = 'https://apihub.agnes-ai.com/v1/images/generations';
+// Modèles réservés à la génération d'images : /chat/completions désactivé pour eux
+const IMAGE_ONLY_MODELS = ['agnes-image-2.5-flash'];
+function isImageOnlyModel(model) {
+  return !!model && IMAGE_ONLY_MODELS.includes(String(model).toLowerCase());
+}
+const IMAGE_ONLY_NOTICES = {
+  fr: "🎨 Le modèle agnes-image-2.5-flash sert uniquement à créer des images : le chat texte est désactivé. Décrivez l'image souhaitée, ou choisissez agnes-3.0-flash / agnes-2.5-flash pour discuter.",
+  en: "🎨 The agnes-image-2.5-flash model is only for creating images: text chat is disabled. Describe the image you want, or pick agnes-3.0-flash / agnes-2.5-flash to chat.",
+  de: "🎨 Das Modell agnes-image-2.5-flash dient nur zum Erstellen von Bildern: Der Text-Chat ist deaktiviert. Beschreiben Sie das gewünschte Bild oder wählen Sie agnes-3.0-flash / agnes-2.5-flash zum Chatten.",
+  es: "🎨 El modelo agnes-image-2.5-flash solo sirve para crear imágenes: el chat de texto está desactivado. Describe la imagen que quieres o elige agnes-3.0-flash / agnes-2.5-flash para conversar.",
+  it: "🎨 Il modello agnes-image-2.5-flash serve solo a creare immagini: la chat di testo è disattivata. Descrivi l'immagine che vuoi o scegli agnes-3.0-flash / agnes-2.5-flash per chattare.",
+  tr: "🎨 agnes-image-2.5-flash modeli yalnızca görsel oluşturmak içindir: metin sohbeti devre dışı. İstediğiniz görseli tarif edin veya sohbet için agnes-3.0-flash / agnes-2.5-flash seçin."
+};
+function getImageOnlyNotice() {
+  return IMAGE_ONLY_NOTICES[(typeof currentLang !== 'undefined' && currentLang) || 'fr'] || IMAGE_ONLY_NOTICES.fr;
+}
 const IMAGE_KEYWORDS = ['dessine', 'dessin', 'génère une image', 'génére une image', 'montre-moi', "montre moi", 'image de', 'peins', 'peinture', 'photo de', 'illustration'];
 const IMAGE_SLASH_REGEX = /^\/(image|img|dessine|generate-image)\s+/i;
 let forceImageMode = false;
@@ -3883,6 +3915,7 @@ function openGallery() {
 
 // ==== SHOULD GENERATE IMAGE ====
 function shouldGenerateImage(prompt) {
+    if (providerSelect.value === 'agnes' && isImageOnlyModel(getCurrentModel()) && apiKeys['agnes']) return true;
     if (IMAGE_SLASH_REGEX.test(prompt)) return true;
     if (forceImageMode && apiKeys['agnes']) return true;
     if (!apiKeys['agnes']) return false;
@@ -3902,7 +3935,8 @@ function updateImageModeUI() {
         imageBtn.classList.remove('active');
         imageModeBanner.classList.remove('active');
         inputWrapperEl.classList.remove('image-mode');
-        messageInput.placeholder = (translations[currentLang] || translations.fr).placeholder;
+        const _imgOnly = providerSelect.value === 'agnes' && isImageOnlyModel(getCurrentModel());
+        messageInput.placeholder = (translations[currentLang] || translations.fr)[_imgOnly ? 'describeImage' : 'placeholder'];
     }
     const rs = $('imageRatioSelect');
     const ss = $('imageSizeSelect');
@@ -4405,6 +4439,95 @@ function initProviderSelect() {
   if (savedProvider && PROVIDERS[savedProvider]) providerSelect.value = savedProvider;
   updateModelList();
 }
+// ===== RECHERCHE WEB (modèles compatibles) =====
+const WEB_I18N = {
+  fr: { sources: 'Sources', queries: 'Recherches', on: 'Recherche web activée', off: 'Recherche web désactivée', always: 'Ce modèle cherche sur le web automatiquement', title: 'Recherche web', fallback: 'Recherche web indisponible pour ce modèle : réponse sans recherche.' },
+  en: { sources: 'Sources', queries: 'Searches', on: 'Web search on', off: 'Web search off', always: 'This model searches the web automatically', title: 'Web search', fallback: 'Web search unavailable for this model: answered without search.' },
+  de: { sources: 'Quellen', queries: 'Suchen', on: 'Websuche aktiviert', off: 'Websuche deaktiviert', always: 'Dieses Modell sucht automatisch im Web', title: 'Websuche', fallback: 'Websuche für dieses Modell nicht verfügbar: Antwort ohne Suche.' },
+  es: { sources: 'Fuentes', queries: 'Búsquedas', on: 'Búsqueda web activada', off: 'Búsqueda web desactivada', always: 'Este modelo busca en la web automáticamente', title: 'Búsqueda web', fallback: 'Búsqueda web no disponible para este modelo: respuesta sin búsqueda.' },
+  tr: { sources: 'Kaynaklar', queries: 'Aramalar', on: 'Web araması açık', off: 'Web araması kapalı', always: 'Bu model web\'de otomatik arama yapar', title: 'Web araması', fallback: 'Bu model için web araması kullanılamıyor: aramasız yanıt verildi.' }
+};
+function webT(k) { return (WEB_I18N[currentLang] || WEB_I18N.fr)[k]; }
+
+let webSearchEnabled = localStorage.getItem('deepchat_websearch') === '1';
+let lastWebSources = [];
+let lastWebQueries = [];
+
+// Retourne le mode de recherche web natif du modèle, ou null s'il n'est pas compatible
+function getWebSearchMode(providerKey, model) {
+  model = model || '';
+  if (providerKey === 'gemini') return 'gemini';        // outil google_search
+  if (providerKey === 'openrouter') return 'openrouter'; // outil serveur openrouter:web_search
+  if (providerKey === 'groq') {
+    if (/^groq\/compound/i.test(model)) return 'always';  // recherche intégrée, toujours active
+    if (/^openai\/gpt-oss-(20b|120b|safeguard-20b)$/i.test(model)) return 'groq'; // browser_search
+  }
+  return null;
+}
+function isWebSearchOn(providerKey, model) {
+  const mode = getWebSearchMode(providerKey, model);
+  if (!mode) return false;
+  return mode === 'always' || webSearchEnabled;
+}
+function addWebSource(url, title) {
+  if (!url || typeof url !== 'string' || !/^https?:\/\//i.test(url)) return;
+  if (lastWebSources.some(s => s.url === url)) return;
+  lastWebSources.push({ url, title: String(title || '').slice(0, 200) });
+}
+function addWebQuery(q) {
+  if (q && typeof q === 'string' && !lastWebQueries.includes(q)) lastWebQueries.push(q);
+}
+function updateWebSearchButton() {
+  const btn = $('webSearchBtn');
+  if (!btn) return;
+  const mode = getWebSearchMode(providerSelect.value, getCurrentModel());
+  if (!mode) { btn.style.display = 'none'; return; }
+  btn.style.display = 'flex';
+  const on = mode === 'always' || webSearchEnabled;
+  btn.classList.toggle('active', on);
+  btn.title = webT('title') + ' — ' + (mode === 'always' ? webT('always') : (on ? webT('on') : webT('off')));
+}
+function toggleWebSearch() {
+  const mode = getWebSearchMode(providerSelect.value, getCurrentModel());
+  if (!mode) return;
+  if (mode === 'always') { showToast(webT('always'), 'info'); return; }
+  webSearchEnabled = !webSearchEnabled;
+  localStorage.setItem('deepchat_websearch', webSearchEnabled ? '1' : '0');
+  updateWebSearchButton();
+  showToast(webSearchEnabled ? webT('on') : webT('off'), 'info');
+}
+function buildWebSourcesEl(sources, queries) {
+  if (!Array.isArray(sources) || sources.length === 0) return null;
+  const box = document.createElement('div');
+  box.className = 'web-sources';
+  const head = document.createElement('div');
+  head.className = 'web-sources-head';
+  head.textContent = '🌐 ' + webT('sources') + ' (' + sources.length + ')';
+  box.appendChild(head);
+  if (Array.isArray(queries) && queries.length) {
+    const q = document.createElement('div');
+    q.className = 'web-sources-queries';
+    q.textContent = webT('queries') + ' : ' + queries.join(' · ');
+    box.appendChild(q);
+  }
+  const list = document.createElement('div');
+  list.className = 'web-sources-list';
+  sources.forEach((s, i) => {
+    if (!s || !/^https?:\/\//i.test(s.url || '')) return;
+    let host = '';
+    try { host = new URL(s.url).hostname.replace(/^www\./, ''); } catch (e) {}
+    const a = document.createElement('a');
+    a.href = s.url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer nofollow';
+    a.title = s.url;
+    a.textContent = (i + 1) + '. ' + (s.title || host || s.url);
+    list.appendChild(a);
+  });
+  box.appendChild(list);
+  return box;
+}
+
 function updateImageButtonVisibility() {
   const imgBtn = $('imageBtn');
   if (!imgBtn) return;
@@ -4509,6 +4632,8 @@ function updateModelDescription() {
     if (fallback) desc = fallback;
   }
 
+  if (providerSelect.value === 'agnes' && isImageOnlyModel(currentModel)) desc = getImageOnlyNotice();
+
   if (desc) {
     // On construit le HTML avec le bouton "+"
     descEl.innerHTML = `
@@ -4575,6 +4700,7 @@ function updateModelList() {
   
   // 👇 C'est ici qu'on ajoute l'appel pour cacher/montrer le bouton
   updateImageButtonVisibility(); 
+  updateWebSearchButton();
   
   const m = getCurrentModel();
   if (m) fetchModelLimits(providerSelect.value, m);
@@ -4976,6 +5102,7 @@ function renderCurrentConversation() {
 
       isLast: isLastVisible, files: m.files, images: m.images, timestamp: m.timestamp,
       reasoning: m.reasoning, reasoningDuration: m.reasoningDuration,
+      sources: m.sources, webQueries: m.webQueries,
       skipScroll: true, messageIndex: idx,
       imagePrompt: m.imagePrompt, imageRatio: m.imageRatio, imageSize: m.imageSize
     });
@@ -5111,6 +5238,8 @@ function addMessage(role, content, opts={}) {
           bubble.appendChild(rb);
         }
         renderMarkdown(bubble, content);
+        const savedSrcEl = buildWebSourcesEl(opts.sources, opts.webQueries);
+        if (savedSrcEl) bubble.appendChild(savedSrcEl);
     }
   } else {
     if (opts.images && opts.images.length > 0) {
@@ -5409,7 +5538,7 @@ async function streamChatWithPuter(history, callbacks) {
     }
 }
 
-async function streamChat(history, callbacks, signal) {
+async function streamChat(history, callbacks, signal, opts = {}) {
   const onDelta = callbacks.onDelta;
   const onReasoning = callbacks.onReasoning;
   const providerKey = providerSelect.value;
@@ -5417,12 +5546,20 @@ async function streamChat(history, callbacks, signal) {
   const apiKey = apiKeys[providerKey];
   const model = getCurrentModel();
 
+  // Modèle image uniquement : chat/completions désactivé
+  if (providerKey === 'agnes' && isImageOnlyModel(model)) {
+    throw new Error(getImageOnlyNotice());
+  }
+
   // Autoriser l'absence de clé pour Puter
   if (!apiKey && !provider.noKey) {
       throw new Error(`Clé API manquante pour ${provider.label}. Ouvrez les paramètres.`);
   }
   if (!model) throw new Error('Veuillez sélectionner un modèle.');
   const apiMessages = buildApiMessages(history);
+  lastWebSources = [];
+  lastWebQueries = [];
+  const webMode = (!opts.noWeb && isWebSearchOn(providerKey, model)) ? getWebSearchMode(providerKey, model) : null;
 
   if (provider.format === 'openai') {
     const limits = getModelLimits(model);
@@ -5437,16 +5574,36 @@ async function streamChat(history, callbacks, signal) {
     if (currentPresPenalty > 0) body.presence_penalty = currentPresPenalty;
     const headers = { 'Content-Type': 'application/json' };
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
-    const res = await fetchWithRetry(provider.endpoint, {
+    if (webMode === 'groq') body.tools = [{ type: 'browser_search' }];
+    else if (webMode === 'openrouter') body.tools = [{ type: 'openrouter:web_search' }];
+    const doFetch = () => fetchWithRetry(provider.endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
       signal
     });
+    let res = await doFetch();
+    // Le modèle ne supporte pas l'outil de recherche : on réessaie sans recherche
+    if (!res.ok && body.tools && [400, 404, 422].includes(res.status)) {
+      delete body.tools;
+      showToast(webT('fallback'), 'warning');
+      res = await doFetch();
+    }
 
     if (!res.ok) { const t = await res.text(); throw new Error(`HTTP ${res.status}: ${t.slice(0,200)}`); }
     return await readSSE(res, d => {
-      const delta = d.choices?.[0]?.delta || {};
+      const choice = d.choices?.[0] || {};
+      const delta = choice.delta || {};
+      // Sources : annotations OpenRouter / OpenAI
+      const ann = delta.annotations || choice.message?.annotations;
+      if (Array.isArray(ann)) ann.forEach(a => { const u = a.url_citation || a; if (u && u.url) addWebSource(u.url, u.title); });
+      // Sources : outils exécutés côté serveur (Groq)
+      const ex = delta.executed_tools || choice.message?.executed_tools;
+      if (Array.isArray(ex)) ex.forEach(t => {
+        const rs = t.search_results?.results;
+        if (Array.isArray(rs)) rs.forEach(r => addWebSource(r.url, r.title));
+        if (t.arguments) { try { addWebQuery(JSON.parse(t.arguments).query); } catch (e) {} }
+      });
       return { content: delta.content || '', reasoning: delta.reasoning_content || delta.reasoning || delta.thinking || '' };
     }, onDelta, onReasoning);
   }
@@ -5479,14 +5636,28 @@ async function streamChat(history, callbacks, signal) {
       : currentMaxTokens;
     const genConfig = { temperature: currentTemperature, maxOutputTokens: safeMaxOutput };
     if (currentTopP < 1) genConfig.topP = currentTopP;
-    const res = await fetchWithRetry(endpoint, {
+    const reqBody = { contents, generationConfig: genConfig };
+    if (webMode === 'gemini') reqBody.tools = [{ google_search: {} }];
+    const doFetch = () => fetchWithRetry(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents, generationConfig: genConfig }),
+      body: JSON.stringify(reqBody),
       signal
     });
+    let res = await doFetch();
+    // Le modèle ne supporte pas google_search : on réessaie sans recherche
+    if (!res.ok && reqBody.tools && [400, 404, 422].includes(res.status)) {
+      delete reqBody.tools;
+      showToast(webT('fallback'), 'warning');
+      res = await doFetch();
+    }
     if (!res.ok) { const t = await res.text(); throw new Error(`HTTP ${res.status}: ${t.slice(0,200)}`); }
     return await readSSE(res, d => {
+      const gm = d.candidates?.[0]?.groundingMetadata;
+      if (gm) {
+        (gm.groundingChunks || []).forEach(c => { if (c.web) addWebSource(c.web.uri, c.web.title); });
+        (gm.webSearchQueries || []).forEach(addWebQuery);
+      }
       const parts = d.candidates?.[0]?.content?.parts || [];
       let content = '', reasoning = '';
       for (const p of parts) {
@@ -6156,8 +6327,17 @@ async function runCompletion() {
     try { renderMarkdown(contentEl, full, false); }
     catch (e) { console.error(e); contentEl.textContent = full; }
 
+    const webSrc = lastWebSources.slice();
+    const webQ = lastWebQueries.slice();
+    const srcEl = buildWebSourcesEl(webSrc, webQ);
+    if (srcEl) bubble.appendChild(srcEl);
+
     const duration = (reasoningStartTime && reasoningEndTime) ? (reasoningEndTime - reasoningStartTime) : null;
     const msgData = { role: 'assistant', content: full, timestamp: Date.now() };
+    if (webSrc.length) {
+      msgData.sources = webSrc;
+      if (webQ.length) msgData.webQueries = webQ;
+    }
     if (finalReasoning && finalReasoning.trim()) {
       msgData.reasoning = finalReasoning;
       if (duration) msgData.reasoningDuration = duration;
@@ -6365,7 +6545,7 @@ async function continueGeneration(body, bubble) {
           scheduleStreamRender(contentEl, streamingText);
           scrollToBottom();
         }
-      }, abortController.signal);
+      }, abortController.signal, { noWeb: true });
     }
 
     const full = stitchContinuation(originalContent, result.content, true);
@@ -7270,7 +7450,16 @@ function autoResize() {
 
 providerSelect.addEventListener('change', updateModelList);
 modelSelect.addEventListener('change', updateModelDescription);
+modelSelect.addEventListener('change', () => {
+  updateImageModeUI();
+  if (providerSelect.value === 'agnes' && isImageOnlyModel(getCurrentModel())) {
+    showToast(getImageOnlyNotice(), 'warning');
+  }
+});
+modelSelect.addEventListener('change', updateWebSearchButton);
 hfModelInput.addEventListener('input', updateModelDescription);
+hfModelInput.addEventListener('input', updateWebSearchButton);
+$('webSearchBtn').addEventListener('click', toggleWebSearch);
 hfModelInput.addEventListener('change', () => localStorage.setItem('deepchat_hfmodel', hfModelInput.value));
 sendBtn.addEventListener('click', () => { if (isStreaming) stopStreaming(); else sendMessage(); });
 messageInput.addEventListener('keydown', (e) => {
