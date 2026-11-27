@@ -85,7 +85,18 @@ This project is 100% static: no build step, no npm, no backend.
 
 ## 📄 License
 
-This project is under the MIT License. You are free to use and modify it for your own needs.
+This project is the personal property of **Bstudio136**. All rights reserved.
+
+**✅ Allowed:**
+- Viewing the source code and using the official hosted demo.
+- Contributing to improving the project (reporting bugs, suggesting features, or submitting pull requests) via the official repository.
+
+**❌ Strictly Prohibited:**
+- Copying, modifying, or redistributing this software (or any derivative work) for your own personal use.
+- Forking this project to use it in your own applications.
+- Selling, sublicensing, or commercially exploiting this software or any part of it.
+
+Any contribution submitted becomes the property of the author. Any use of the code outside the official repository requires explicit written permission from the author.
 
 <a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
 
@@ -171,7 +182,18 @@ Ce projet est 100% statique : aucune étape de build, pas de npm, pas de backend
 
 ## 📄 Licence
 
-Ce projet est sous licence MIT. Vous êtes libre de l'utiliser et de le modifier pour vos propres besoins.
+Ce projet est la propriété personnelle de **Bstudio136**. Tous droits réservés.
+
+**✅ Autorisé :**
+- Consulter le code source et utiliser la démo officielle hébergée.
+- Contribuer à l'amélioration du projet (rapports de bugs, suggestions de fonctionnalités, ou pull requests) via le dépôt officiel.
+
+**❌ Strictement interdit :**
+- Copier, modifier ou redistribuer ce logiciel (ou toute œuvre dérivée) pour votre usage personnel.
+- Forker ce projet pour l'utiliser dans vos propres applications.
+- Vendre, sous-licencier ou exploiter commercialement ce logiciel en tout ou en partie.
+
+Toute contribution soumise devient la propriété de l'auteur. Toute utilisation du code en dehors du dépôt officiel nécessite une autorisation écrite explicite de l'auteur.
 
 <a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
 
@@ -257,7 +279,18 @@ Questo progetto è 100% statico: nessuna fase di build, niente npm, nessun backe
 
 ## 📄 Licenza
 
-Questo progetto è rilasciato sotto licenza MIT. Sei libero di usarlo e modificarlo per le tue esigenze.
+Questo progetto è di proprietà personale di **Bstudio136**. Tutti i diritti riservati.
+
+**✅ Consentito:**
+- Visualizzare il codice sorgente e utilizzare la demo ufficiale ospitata.
+- Contribuire al miglioramento del progetto (segnalazione di bug, suggerimenti di funzionalità o pull request) tramite il repository ufficiale.
+
+**❌ Severamente Proibito:**
+- Copiare, modificare o ridistribuire questo software (o qualsiasi lavoro derivato) per uso personale.
+- Fare il fork di questo progetto per utilizzarlo nelle proprie applicazioni.
+- Vendere, sublicenziare o sfruttare commercialmente questo software o qualsiasi sua parte.
+
+Qualsiasi contributo inviato diventa di proprietà dell'autore. Qualsiasi utilizzo del codice al di fuori del repository ufficiale richiede un permesso scritto esplicito dall'autore.
 
 <a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
 
@@ -343,7 +376,18 @@ Bu proje %100 statiktir: derleme adımı yok, npm yok, sunucu yok.
 
 ## 📄 Lisans
 
-Bu proje MIT Lisansı altındadır. İhtiyaçlarınıza göre özgürce kullanabilir ve değiştirebilirsiniz.
+Bu proje **Bstudio136**'nın kişisel mülkiyetindedir. Tüm hakları saklıdır.
+
+**✅ İzin Verilenler:**
+- Kaynak kodunu görüntülemek ve resmi barındırılan demoyu kullanmak.
+- Resmi depo aracılığıyla projeyi geliştirmeye katkıda bulunmak (hata bildirimleri, özellik önerileri veya pull request'ler).
+
+**❌ Kesinlikle Yasak:**
+- Bu yazılımı (veya herhangi bir türev çalışmayı) kişisel kullanımınız için kopyalamak, değiştirmek veya yeniden dağıtmak.
+- Bu projeyi kendi uygulamalarınızda kullanmak için çatallamak (fork).
+- Bu yazılımı veya herhangi bir bölümünü satmak, alt lisanslamak veya ticari olarak kullanmak.
+
+Gönderilen her türlü katkı yazarın mülkiyetine geçer. Kodun resmi depo dışında herhangi bir kullanımı, yazardan açık yazılı izin gerektirir.
 
 <a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
 
@@ -429,7 +473,18 @@ Este proyecto es 100% estático: sin paso de compilación, sin npm, sin backend.
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Eres libre de usarlo y modificarlo para tus propias necesidades.
+Este proyecto es propiedad personal de **Bstudio136**. Todos los derechos reservados.
+
+**✅ Permitido:**
+- Ver el código fuente y utilizar la demostración oficial alojada.
+- Contribuir a mejorar el proyecto (informar de errores, sugerir funciones o enviar pull requests) a través del repositorio oficial.
+
+**❌ Estrictamente Prohibido:**
+- Copiar, modificar o redistribuir este software (o cualquier trabajo derivado) para su uso personal.
+- Hacer un fork de este proyecto para usarlo en sus propias aplicaciones.
+- Vender, sublicenciar o explotar comercialmente este software o cualquier parte de él.
+
+Cualquier contribución enviada pasa a ser propiedad del autor. Cualquier uso del código fuera del repositorio oficial requiere el permiso escrito explícito del autor.
 
 <a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
 
@@ -515,6 +570,17 @@ Dieses Projekt ist zu 100 % statisch: kein Build-Schritt, kein npm, kein Backend
 
 ## 📄 Lizenz
 
-Dieses Projekt steht unter der MIT-Lizenz. Du bist frei, es für deine eigenen Bedürfnisse zu nutzen und zu verändern.
+Dieses Projekt ist persönliches Eigentum von **Bstudio136**. Alle Rechte vorbehalten.
+
+**✅ Erlaubt:**
+- Den Quellcode anzeigen und die offizielle gehostete Demo nutzen.
+- Zur Verbesserung des Projekts beitragen (Fehlerberichte, Funktionsvorschläge oder Pull Requests) über das offizielle Repository.
+
+**❌ Streng Verboten:**
+- Diese Software (oder davon abgeleitete Werke) für den eigenen persönlichen Gebrauch kopieren, ändern oder weiterverbreiten.
+- Dieses Projekt forken, um es in eigenen Anwendungen zu verwenden.
+- Diese Software oder Teile davon verkaufen, unterlizenzieren oder kommerziell verwerten.
+
+Jeglicher eingereichte Beitrag wird Eigentum des Autors. Jegliche Nutzung des Codes außerhalb des offiziellen Repositorys erfordert die ausdrückliche schriftliche Genehmigung des Autors.
 
 <a href="https://hiddenswap.com/pay/AgRPwfFe" target="_blank" rel="noopener"><img src="https://hiddenswap.com/pay/AgRPwfFe/button.svg" alt="Donate with any coin" width="247" height="44"></a>
