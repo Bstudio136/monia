@@ -554,6 +554,16 @@ body.sidebar-collapsed .footer-btn { width: 44px; height: 44px; padding: 0; just
 .bubble p:first-child { margin-top: 0; }
 .bubble p:last-child { margin-bottom: 0; }
 .stream-content { contain: content; }
+/* Rendu par blocs (streaming) : mêmes marges que le rendu final */
+.stream-content > .md-block > p:first-child,
+.stream-content > .md-tail > p:first-child { margin-top: 6px; }
+.stream-content > .md-block > p:last-child { margin-bottom: 6px; }
+.stream-content > .md-block:first-child > p:first-child,
+.stream-content > .md-tail:first-child > p:first-child { margin-top: 0; }
+.stream-content > .md-tail > p:last-child { margin-bottom: 0; }
+/* Longues conversations : le navigateur saute le rendu des messages hors écran */
+.messages-inner > .message { content-visibility: auto; contain-intrinsic-size: auto 140px; }
+.messages-inner > .message:last-child { content-visibility: visible; }
 
 /* ============ IMAGE GÉNÉRÉE ============ */
 .generated-image-container {
@@ -4101,32 +4111,221 @@ function playNotification() {
   } catch(e) {}
 }
 
-const streamRenderState = { scheduled: false, pending: null, last: '', el: null };
-const STREAM_RENDER_INTERVAL = 70;
+// ============ STREAMING FLUIDE : tampon « goutte-à-goutte » + rendu par blocs ============
+// 1) Le texte reçu est mis en tampon (target) puis révélé à vitesse régulière (shown) :
+//    lent quand le retard est faible, de plus en plus rapide quand il grandit.
+// 2) Les blocs terminés (paragraphe, liste, titre, bloc de code…) sont rendus UNE seule fois.
+//    Seul le dernier bloc, encore en cours, est recalculé à chaque image.
+// 3) Un bloc de code en cours est affiché en texte brut (ajout incrémental, sans re-parser),
+//    puis coloré et équipé de ses boutons au moment où il se ferme.
+// Le rendu final complet (renderMarkdown) reste appliqué à la fin : résultat identique à avant.
+const SR_MIN_CPS = 50;   // vitesse minimale d'affichage (caractères / seconde)
+const SR_TAU = 140;      // constante de rattrapage en ms (plus petit = rattrape plus vite)
+const SR_RE_FENCE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
+const SR_RE_LIST = /^ {0,3}(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)/;
 
-function scheduleStreamRender(el, text) {
-  streamRenderState.el = el;
-  streamRenderState.pending = text;
-  if (streamRenderState.scheduled) return;
-  streamRenderState.scheduled = true;
-  setTimeout(() => {
-    streamRenderState.scheduled = false;
-    const pending = streamRenderState.pending;
-    if (pending === null || pending === streamRenderState.last) return;
-    streamRenderState.last = pending;
-    try {
-      renderMarkdown(streamRenderState.el, pending, false);
-    } catch (e) {
-      streamRenderState.el.textContent = pending;
+const SR = {
+  want: null, el: null, tail: null,
+  target: '', shown: 0,
+  raf: 0, lastTs: 0, draining: false, finished: false, broken: false,
+  resolvers: [], drainTimer: 0,
+  committed: 0, scanPos: 0,
+  inFence: false, fenceCh: '', fenceLen: 0,
+  prevBlank: false, hasContent: false, isList: false,
+  opensFence: false, headerStart: -1, headerEnd: -1, live: null
+};
+
+function srResetChunk() {
+  SR.prevBlank = false; SR.hasContent = false; SR.isList = false;
+  SR.opensFence = false; SR.headerStart = -1; SR.headerEnd = -1;
+}
+
+function srAttach(el) {
+  SR.el = el;
+  el.textContent = '';
+  SR.tail = document.createElement('div');
+  SR.tail.className = 'md-tail';
+  el.appendChild(SR.tail);
+  SR.committed = 0; SR.scanPos = 0;
+  SR.inFence = false; SR.fenceCh = ''; SR.fenceLen = 0;
+  SR.live = null;
+  srResetChunk();
+}
+
+// Termine le bloc courant : [committed, to) est rendu une fois pour toutes
+function srCommit(to) {
+  const chunk = SR.target.slice(SR.committed, to);
+  if (chunk.trim()) {
+    const node = document.createElement('div');
+    node.className = 'md-block';
+    try { renderMarkdown(node, chunk, false); } catch (e) { node.textContent = chunk; }
+    SR.el.insertBefore(node, SR.tail);
+  }
+  if (SR.tail.firstChild) SR.tail.textContent = '';
+  SR.live = null;
+  SR.committed = to;
+  srResetChunk();
+}
+
+function srScanLine(line, ls, next) {
+  // --- dans un bloc de code : on cherche la clôture ---
+  if (SR.inFence) {
+    const c = SR_RE_FENCE.exec(line);
+    if (c && c[1][0] === SR.fenceCh && c[1].length >= SR.fenceLen && !c[2].trim()) {
+      SR.inFence = false;
+      srCommit(next);                 // bloc de code terminé (clôture comprise)
     }
-  }, STREAM_RENDER_INTERVAL);
+    return;
+  }
+  // --- ouverture d'un bloc de code ---
+  const m = SR_RE_FENCE.exec(line);
+  if (m && !(m[1][0] === '`' && m[2].indexOf('`') !== -1)) {
+    if (SR.hasContent && !/^\s/.test(line)) srCommit(ls);   // coupe avant le bloc de code
+    if (!SR.hasContent) { SR.opensFence = true; SR.headerStart = ls; SR.headerEnd = next; }
+    SR.inFence = true; SR.fenceCh = m[1][0]; SR.fenceLen = m[1].length;
+    SR.hasContent = true; SR.prevBlank = false;
+    return;
+  }
+  // --- ligne vide ---
+  if (!line.trim()) { SR.prevBlank = true; return; }
+  // --- nouveau bloc après une ligne vide (sauf suite de liste ou ligne indentée) ---
+  if (SR.hasContent && SR.prevBlank && !/^\s/.test(line) && !(SR.isList && SR_RE_LIST.test(line))) {
+    srCommit(ls);
+  }
+  if (!SR.hasContent) { SR.hasContent = true; SR.isList = SR_RE_LIST.test(line); }
+  SR.prevBlank = false;
+  // ``` au milieu d'une ligne (« Voici :```js ») : renderMarkdown le traite comme une ouverture de bloc
+  if (line.indexOf('```') !== -1 && (line.split('```').length - 1) % 2 === 1) {
+    SR.inFence = true; SR.fenceCh = '`'; SR.fenceLen = 3;
+  }
+}
+
+// Analyse uniquement les lignes complètes nouvellement affichées
+function srScan() {
+  const T = SR.target, lim = SR.shown;
+  let pos = SR.scanPos;
+  while (pos < lim) {
+    const nl = T.indexOf('\n', pos);
+    if (nl === -1 || nl >= lim) break;
+    srScanLine(T.slice(pos, nl), pos, nl + 1);
+    pos = nl + 1;
+  }
+  SR.scanPos = pos;
+}
+
+// Bloc de code en cours : on ajoute seulement les nouveaux caractères
+function srRenderLiveCode() {
+  const T = SR.target;
+  if (!SR.live) {
+    const header = T.slice(SR.headerStart, SR.headerEnd - 1);
+    const lang = header.replace(/^ {0,3}[`~]+/, '').trim().split(/\s+/)[0].replace(/[^\w+#.-]/g, '');
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    code.className = 'hljs' + (lang ? ' language-' + lang : '');
+    const text = document.createTextNode('');
+    code.appendChild(text);
+    pre.appendChild(code);
+    SR.tail.textContent = '';
+    SR.tail.appendChild(pre);
+    SR.live = { text: text, len: 0 };
+  }
+  let body = T.slice(SR.headerEnd, SR.shown);
+  const lastNl = body.lastIndexOf('\n');
+  // début de clôture (« ` », « `` »…) : on le masque en attendant la suite
+  if (/^ {0,3}[`~]+[ \t]*$/.test(body.slice(lastNl + 1))) body = body.slice(0, lastNl + 1);
+  if (body.length > SR.live.len) {
+    SR.live.text.appendData(body.slice(SR.live.len));
+    SR.live.len = body.length;
+  }
+}
+
+function srRender() {
+  if (SR.want !== SR.el) srAttach(SR.want);
+  if (SR.broken) { renderMarkdown(SR.el, SR.target.slice(0, SR.shown), false); return; }
+  srScan();
+  if (SR.inFence && SR.opensFence && SR.headerEnd > 0 && SR.headerEnd <= SR.shown) {
+    srRenderLiveCode();
+    return;
+  }
+  SR.live = null;
+  const tailText = SR.target.slice(SR.committed, SR.shown);
+  if (!tailText.trim()) { if (SR.tail.firstChild) SR.tail.textContent = ''; return; }
+  renderMarkdown(SR.tail, tailText, true);   // true = sans coloration ni boutons (bloc encore ouvert)
+}
+
+function srFinish() {
+  SR.finished = true;
+  if (SR.raf) { cancelAnimationFrame(SR.raf); SR.raf = 0; }
+  clearTimeout(SR.drainTimer);
+  const r = SR.resolvers; SR.resolvers = [];
+  r.forEach(f => f());
+}
+
+function srFrame(ts) {
+  SR.raf = 0;
+  if (SR.finished || !SR.want) return;
+  const dt = SR.lastTs ? Math.min(100, ts - SR.lastTs) : 16;
+  SR.lastTs = ts;
+  const backlog = SR.target.length - SR.shown;
+  if (backlog > 0) {
+    let step;
+    if (SR.draining) {
+      step = Math.max(Math.ceil(backlog * 0.3), 60);                 // fin de flux : on vide vite
+    } else {
+      step = Math.ceil(backlog * (1 - Math.exp(-dt / SR_TAU)));      // plus de retard = plus vite
+      step = Math.max(step, Math.ceil(dt * SR_MIN_CPS / 1000));      // jamais en dessous du minimum
+    }
+    SR.shown = Math.min(SR.target.length, SR.shown + step);
+    const c = SR.target.charCodeAt(SR.shown - 1);
+    if (c >= 0xD800 && c <= 0xDBFF && SR.shown < SR.target.length) SR.shown++;   // pas de coupe au milieu d'un emoji
+    try { srRender(); }
+    catch (e) { console.warn('[DeepChat] rendu par blocs désactivé :', e); SR.broken = true; try { srRender(); } catch (e2) {} }
+    scrollToBottom();
+  }
+  if (SR.shown < SR.target.length) SR.raf = requestAnimationFrame(srFrame);
+  else { SR.lastTs = 0; if (SR.draining) srFinish(); }
+}
+
+// Appelée à chaque morceau reçu avec le TEXTE COMPLET reçu jusque-là
+function scheduleStreamRender(el, text) {
+  if (SR.finished) return;
+  if (text.indexOf('\r') !== -1) text = text.replace(/\r\n?/g, '\n');
+  SR.want = el;
+  SR.target = text;
+  if (SR.shown > text.length) SR.shown = text.length;
+  if (!SR.raf && SR.shown < text.length) SR.raf = requestAnimationFrame(srFrame);
+}
+
+// « Continuer » : le texte déjà affiché ne doit pas être ré-écrit lettre par lettre
+function primeStreamRender(text) { SR.shown = text.length; }
+
+// Fin du flux : laisse l'effet finir (~0,3 s), puis l'appelant fait le rendu final complet.
+// Retourne tout de suite si l'onglet est caché ou s'il n'y a rien à rattraper.
+function drainStreamRender() {
+  if (SR.finished || !SR.want || SR.shown >= SR.target.length || document.hidden) {
+    srFinish();
+    return Promise.resolve();
+  }
+  return new Promise(resolve => {
+    SR.resolvers.push(resolve);
+    SR.draining = true;
+    SR.drainTimer = setTimeout(srFinish, 1500);   // sécurité
+    if (!SR.raf) SR.raf = requestAnimationFrame(srFrame);
+  });
 }
 
 function resetStreamRenderState() {
-  streamRenderState.scheduled = false;
-  streamRenderState.pending = null;
-  streamRenderState.last = '';
-  streamRenderState.el = null;
+  if (SR.raf) cancelAnimationFrame(SR.raf);
+  clearTimeout(SR.drainTimer);
+  const r = SR.resolvers; SR.resolvers = [];
+  r.forEach(f => f());
+  SR.want = null; SR.el = null; SR.tail = null;
+  SR.target = ''; SR.shown = 0;
+  SR.raf = 0; SR.lastTs = 0; SR.draining = false; SR.finished = false; SR.broken = false;
+  SR.committed = 0; SR.scanPos = 0;
+  SR.inFence = false; SR.fenceCh = ''; SR.fenceLen = 0;
+  SR.live = null;
+  srResetChunk();
 }
 
 function applyAccent(color) {
@@ -5108,6 +5307,7 @@ function renderCurrentConversation() {
     });
   });
   scrollToBottom(true);
+  requestAnimationFrame(() => { scrollToBottom(true); requestAnimationFrame(() => scrollToBottom(true)); });
   updateTokenCounter();
 }
 function renderWelcome() {
@@ -6322,6 +6522,7 @@ async function runCompletion() {
       }
     }
 
+    await drainStreamRender();
     cursorEl.remove();
     try { renderMarkdown(contentEl, full, false); }
     catch (e) { console.error(e); contentEl.textContent = full; }
@@ -6498,6 +6699,7 @@ async function continueGeneration(body, bubble) {
   const contentEl = document.createElement('div');
   contentEl.className = 'stream-content';
   renderMarkdown(contentEl, originalContent, true);
+  primeStreamRender(originalContent);
   bubble.appendChild(contentEl);
 
   const cursorEl = document.createElement('span');
@@ -6561,6 +6763,7 @@ async function continueGeneration(body, bubble) {
       }
     }
 
+    await drainStreamRender();
     cursorEl.remove();
     try { renderMarkdown(contentEl, originalContent + full, false); }
     catch { contentEl.textContent = originalContent + full; }
